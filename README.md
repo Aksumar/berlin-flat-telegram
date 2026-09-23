@@ -1,55 +1,85 @@
-# Berlin flat Telegram
+# Berlin flat Telegram — Kafka → Telegram
 
-Отдельный отправитель уведомлений для
-[berlin-flat-watcher](https://github.com/Aksumar/berlin-flat-watcher).
-Python 3.12, только стандартная библиотека, установка зависимостей не нужна.
+Читает новые объявления парсеров из Kafka. Межрепозиторное чтение файлов удалено;
+`WATCHER_READ_TOKEN` больше не требуется.
 
-## Настройка
+## Отправка
 
-Settings → Secrets and variables → Actions: добавьте **в этот репозиторий**:
+Consumer group по умолчанию `berlin-flat-telegram-v1` (переменная KAFKA_GROUP_ID).
+Автокоммит и автоматическое сохранение offsets отключены. Порядок: проверить событие →
+отправить Telegram → сохранить ID в sent.json → синхронно подтвердить offset.
+При ошибке Telegram/невалидном событии offset не подтверждается, процесс завершится с ошибкой.
+При повторе ID из sent.json сообщение не отправляется, но offset подтверждается.
+Ветка delivery-state сохраняется между Actions-запусками, Docker использует volume.
+Не удаляйте sent.json и не запускайте несколько процессов с общим JSON-файлом.
+Эта реализация рассчитана на один экземпляр потребителя, а не горизонтальное масштабирование.
+Сбой после sendMessage до сохранения ID может привести к дублю.
 
-- `TELEGRAM_BOT_TOKEN`: токен от @BotFather. Отправьте своему боту `/start`.
-- `TELEGRAM_CHAT_ID`: ID чата, например `message.chat.id` из Telegram Bot API getUpdates.
-- `WATCHER_READ_TOKEN`: GitHub fine-grained personal access token. Resource owner: Aksumar;
-  Repository access: Only select repositories → berlin-flat-watcher;
-  Repository permissions: Contents → Read-only (Metadata Read-only добавится автоматически).
-  Выберите срок действия и обновляйте секрет до истечения токена.
+## Настройка Telegram
 
-Создание токена: https://github.com/settings/personal-access-tokens/new
-Секреты: https://github.com/Aksumar/berlin-flat-telegram/settings/secrets/actions
+Actions Secrets этого репозитория:
+- TELEGRAM_BOT_TOKEN — токен @BotFather;
+- TELEGRAM_CHAT_ID — ID чата, которому бот может писать (сначала отправьте боту /start).
 
-Обычный GITHUB_TOKEN ограничен текущим репозиторием и не читает другой приватный репозиторий.
-Токен чтения не должен иметь доступа на запись. Реальные токены не коммитить и не вставлять в issues.
-Можно использовать `gh secret set NAME --repo Aksumar/berlin-flat-telegram` с интерактивным вводом.
-Старые Telegram-секреты в watcher больше не используются.
+Также настройте Kafka ниже. Секреты не помещайте в код и историю команд.
+Если адрес Kafka или Telegram-секреты отсутствуют, workflow пропускает доставку с предупреждением.
+После настройки: Actions → Telegram delivery → Run workflow.
 
-После настройки: Actions → Telegram delivery → Run workflow, main.
-Без любого из трёх секретов отправка пропускается с предупреждением; очередь не теряется.
-
-## Доставка и состояние
-
-Каждый час в :27 UTC и вручную. Парсер обычно работает в :17; независимые расписания могут
-задерживаться, тогда доставка произойдёт в следующем цикле. Первый запуск отправителя отправит
-все накопившиеся новые события; первоначальный baseline парсер никогда не кладёт в очередь.
-
-Читает `seen.json` из ветки `watcher-state` репозитория парсеров.
-Доставленные ID хранит в `sent.json` отдельной ветки `delivery-state` этого репозитория.
-Ветка создаётся автоматически, коммиты только при изменениях. Очередь не удаляет.
-Состояние записывается после каждого подтверждённого сообщения; при сбое следующий запуск
-повторяет только недоставленные события. Ошибки не выводят токены в лог.
-
-Семантика at-least-once: сбой между Telegram и сохранением на GitHub/неоднозначный тайм-аут
-может дать дубль. При ошибке push восстановите recovery artifact (30 дней хранения)
-в `delivery-state` до следующего запуска. Не удаляйте ветку доставки — это вызовет повтор
-всей накопленной очереди. Не редактируйте состояние одновременно с workflow.
-Workflow имеет contents:write только в этом репозитории. Для источника используется read-only token.
-
-## Проверка
+В Actions потребитель работает 120 секунд каждый час в :27 UTC; сообщения между запусками
+хранятся в Kafka. Расписание может задерживаться. Для постоянного чтения используйте Docker
+или `python -m notifier.main --duration 0`. Только один production-способ запуска одновременно.
+Для локального полного стека см. compose.yaml и README в соседнем berlin-flat-watcher.
 
 ```sh
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 python -m unittest discover -s tests -v
-python -m notifier.main --queue /path/to/seen.json --state state/sent.json
+# Экспортируйте переменные окружения из .env.example; Python не читает .env автоматически.
+python -m notifier.main --duration 120 --state state/sent.json
 ```
 
-Локально Telegram-секреты передаются через окружение. Не запускайте параллельные копии
-с одним файлом sent.json. Тесты не отправляют сообщения.
+Dockerfile запускает один ограниченный проход по умолчанию; полный Compose задаёт duration=0.
+compose.test.yaml содержит только Kafka для интеграционных тестов.
+При обновлении сохраните delivery-state/sent.json. Старые события из outbox парсер мигрирует
+в Kafka, старые sent ID предотвращают повторную отправку. Первый consumer group читает с earliest.
+При ошибке сохранения на GitHub восстановите recovery artifact; его срок хранения 30 дней.
+CI проверяет реальные offsets: ошибка отправки не подтверждается, успешная — подтверждается.
+## Kafka: внешний кластер
+
+Создайте топик `berlin-flat-listings-v1` (1 partition достаточно). Для production используйте
+репликацию 3/min.insync.replicas=2, если кластер это поддерживает. Retention должен превышать
+максимальное время простоя потребителя; в локальном примере это 30 дней. Истёкшие по retention
+события восстановить из Kafka нельзя. Не меняйте имя consumer group при обычном обновлении.
+
+В каждом репозитории задайте Actions Secrets:
+- `KAFKA_BOOTSTRAP_SERVERS` — broker addresses через запятую;
+- `KAFKA_SASL_USERNAME`, `KAFKA_SASL_PASSWORD` — отдельные credentials каждого сервиса.
+
+Actions Variables (значения по умолчанию):
+- `KAFKA_SECURITY_PROTOCOL=SASL_SSL` (локально явно PLAINTEXT);
+- `KAFKA_SASL_MECHANISM=PLAIN` (также SCRAM-SHA-256/SCRAM-SHA-512);
+- `KAFKA_TOPIC=berlin-flat-listings-v1`.
+
+Выдайте парсеру право записи в топик и необходимые кластеру права idempotent producer;
+Telegram-сервису — чтение топика и доступ к group `berlin-flat-telegram-v1`.
+Сервисы используют TLS с проверкой сертификата. При локальном запуске/в контейнере можно
+задать `KAFKA_SSL_CA_LOCATION` для собственного CA (смонтируйте файл).
+Broker должен быть доступен с runners GitHub Actions; localhost Docker Compose с GitHub недоступен.
+Облачный кластер этим проектом не создаётся.
+
+## Контракт события
+
+Kafka key: UTF-8 JSON-массив `[source,id]` без пробелов, например `["allod","650.65001.2.1012"]`.
+Значение — UTF-8 JSON:
+
+```json
+{"version":1,"source":"allod","id":"650.65001.2.1012","title":"Wohnung","url":"https://www.allod.de/angebote","details":"Адрес и параметры"}
+```
+
+`source` — allod/rbb; id, title, url, details — строки. RBB использует URL как ID.
+Несовместимое событие останавливает потребителя без подтверждения offset: исправьте причину
+перед перезапуском. Автоматического пропуска и dead-letter topic пока нет.
+
+Доставка at-least-once: авария после внешнего эффекта, но до сохранения состояния может дать дубль.
+Telegram API не поддерживает ключ идемпотентности; абсолютная гарантия exactly-once отсутствует.

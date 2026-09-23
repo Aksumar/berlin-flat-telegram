@@ -20,20 +20,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install
+        working-directory: app
+        run: pip install -r requirements.txt
       - name: Tests
         working-directory: app
         run: python -m unittest discover -s tests -v
       - name: Check configuration
         id: config
         env:
-          READ_TOKEN: ${{ secrets.WATCHER_READ_TOKEN }}
+          KAFKA_SERVERS: ${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ -n "$READ_TOKEN" ] && [ -n "$BOT_TOKEN" ] && [ -n "$CHAT_ID" ]; then
+          if [ -n "$KAFKA_SERVERS" ] && [ -n "$BOT_TOKEN" ] && [ -n "$CHAT_ID" ]; then
             echo 'ready=true' >> "$GITHUB_OUTPUT"
           else
-            echo '::warning::Configure WATCHER_READ_TOKEN, TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.'
+            echo '::warning::Configure KAFKA_BOOTSTRAP_SERVERS, TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.'
             echo 'ready=false' >> "$GITHUB_OUTPUT"
           fi
       - name: Initialize durable state branch if absent
@@ -53,23 +56,21 @@ jobs:
         with:
           ref: delivery-state
           path: durable-state
-      - name: Read parser queue
-        if: steps.config.outputs.ready == 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: Aksumar/berlin-flat-watcher
-          ref: watcher-state
-          token: ${{ secrets.WATCHER_READ_TOKEN }}
-          path: parser-state
-          persist-credentials: false
       - name: Deliver queued listings
         if: steps.config.outputs.ready == 'true'
         id: monitor
         working-directory: app
         env:
+          KAFKA_BOOTSTRAP_SERVERS: ${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}
+          KAFKA_SECURITY_PROTOCOL: ${{ vars.KAFKA_SECURITY_PROTOCOL || 'SASL_SSL' }}
+          KAFKA_SASL_MECHANISM: ${{ vars.KAFKA_SASL_MECHANISM || 'PLAIN' }}
+          KAFKA_SASL_USERNAME: ${{ secrets.KAFKA_SASL_USERNAME }}
+          KAFKA_SASL_PASSWORD: ${{ secrets.KAFKA_SASL_PASSWORD }}
+          KAFKA_TOPIC: ${{ vars.KAFKA_TOPIC || 'berlin-flat-listings-v1' }}
+          KAFKA_GROUP_ID: ${{ vars.KAFKA_GROUP_ID || 'berlin-flat-telegram-v1' }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m notifier.main --queue ../parser-state/seen.json --state ../durable-state/sent.json
+        run: python -m notifier.main --duration 120 --state ../durable-state/sent.json
       - name: Persist successful progress even after partial failure
         if: always() && (steps.monitor.outcome == 'success' || steps.monitor.outcome == 'failure')
         working-directory: durable-state
