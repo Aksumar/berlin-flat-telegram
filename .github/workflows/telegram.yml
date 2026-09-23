@@ -1,0 +1,96 @@
+name: Telegram delivery
+on:
+  schedule:
+    - cron: '27 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: telegram-delivery
+  cancel-in-progress: false
+jobs:
+  watch:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: app
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tests
+        working-directory: app
+        run: python -m unittest discover -s tests -v
+      - name: Check configuration
+        id: config
+        env:
+          READ_TOKEN: ${{ secrets.WATCHER_READ_TOKEN }}
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$READ_TOKEN" ] && [ -n "$BOT_TOKEN" ] && [ -n "$CHAT_ID" ]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo '::warning::Configure WATCHER_READ_TOKEN, TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.'
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Initialize durable state branch if absent
+        if: steps.config.outputs.ready == 'true'
+        working-directory: app
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          remote_refs=$(git ls-remote --heads origin refs/heads/delivery-state)
+          if [ -z "$remote_refs" ]; then
+            tree=$(git mktree </dev/null)
+            commit=$(printf 'Initialize watcher state\n' | git commit-tree "$tree")
+            git push origin "$commit:refs/heads/delivery-state"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.ready == 'true'
+        with:
+          ref: delivery-state
+          path: durable-state
+      - name: Read parser queue
+        if: steps.config.outputs.ready == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: Aksumar/berlin-flat-watcher
+          ref: watcher-state
+          token: ${{ secrets.WATCHER_READ_TOKEN }}
+          path: parser-state
+          persist-credentials: false
+      - name: Deliver queued listings
+        if: steps.config.outputs.ready == 'true'
+        id: monitor
+        working-directory: app
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m notifier.main --queue ../parser-state/seen.json --state ../durable-state/sent.json
+      - name: Persist successful progress even after partial failure
+        if: always() && (steps.monitor.outcome == 'success' || steps.monitor.outcome == 'failure')
+        working-directory: durable-state
+        run: |
+          test -f sent.json || exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add sent.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Update seen listings'
+            for attempt in 1 2 3; do
+              if git push origin HEAD:delivery-state; then exit 0; fi
+              sleep 5
+            done
+            exit 1
+          fi
+      - name: Recovery copy if run fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-state-recovery
+          path: durable-state/sent.json
+          if-no-files-found: ignore
+          retention-days: 30
