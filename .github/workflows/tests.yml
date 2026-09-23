@@ -14,3 +14,31 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -v
+  kafka-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Build service image
+        run: docker build -t service-test .
+      - name: Start real Kafka
+        run: |
+          docker compose -f compose.test.yaml up -d --wait kafka
+          docker compose -f compose.test.yaml run --rm kafka-init
+      - name: Test Kafka delivery
+        env:
+          RUN_KAFKA_INTEGRATION: '1'
+          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+          KAFKA_TOPIC: berlin-flat-listings-v1
+        run: python -m unittest discover -s tests -v
+      - name: Broker logs
+        if: failure()
+        run: docker compose -f compose.test.yaml logs kafka
+      - name: Stop test broker
+        if: always()
+        run: docker compose -f compose.test.yaml down -v

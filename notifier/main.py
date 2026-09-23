@@ -19,41 +19,65 @@ def save(path, data):
     tmp.replace(path)
 
 
-def run(queue_path, state_path, deliver=send):
-    queue = json.loads(queue_path.read_text())
-    if queue.get("version") != 1 or not isinstance(queue.get("outbox"), dict):
-        raise ValueError("Invalid producer outbox; run the updated watcher first")
-    state = json.loads(state_path.read_text()) if state_path.exists() else {"version": 1, "sent": []}
+def load_state(path):
+    state = json.loads(path.read_text()) if path.exists() else {"version": 1, "sent": []}
     if state.get("version") != 1 or not isinstance(state.get("sent"), list) or not all(isinstance(x, str) for x in state["sent"]):
         raise ValueError("Invalid delivery state")
-    events = []
-    for key, event in queue["outbox"].items():
-        if not isinstance(event, dict) or not all(isinstance(event.get(k), str) for k in ("source", "id", "title", "url", "details")):
-            raise ValueError("Invalid event")
-        if event["source"] not in ("allod", "rbb") or key != json.dumps([event["source"], event["id"]], separators=(",", ":")):
-            raise ValueError("Invalid event identity")
-        events.append((key, event))
-    sent = set(state["sent"])
-    for key, event in events:
-        if key in sent:
-            continue
-        listing = Listing(**{k: event[k] for k in ("id", "title", "url", "details")})
-        deliver(event["source"], listing)
-        sent.add(key)
-        state["sent"] = sorted(sent)
+    return state
+
+
+def process(message, consumer, state_path, state, deliver=send):
+    if message.error():
+        raise RuntimeError("Kafka consumer error")
+    event = json.loads(message.value())
+    if event.get("version") != 1 or not all(isinstance(event.get(k), str) for k in ("source", "id", "title", "url", "details")):
+        raise ValueError("Invalid Kafka event")
+    key = json.dumps([event["source"], event["id"]], separators=(",", ":"))
+    if event["source"] not in ("allod", "rbb") or message.key() != key.encode():
+        raise ValueError("Invalid Kafka event identity")
+    if key not in state["sent"]:
+        deliver(event["source"], Listing(**{k: event[k] for k in ("id", "title", "url", "details")}))
+        state["sent"].append(key)
         save(state_path, state)
-    save(state_path, state)
-    logging.info("Queue: %d; delivered total: %d", len(events), len(sent))
+    committed = consumer.commit(message=message, asynchronous=False)
+    if any(getattr(partition, "error", None) for partition in (committed or [])):
+        raise RuntimeError("Kafka offset commit failed")
+
+
+def run(state_path, duration=120, consumer=None, deliver=send):
+    import time
+    from .kafka_config import config, topic
+    state = load_state(state_path)
+    if consumer is None:
+        from confluent_kafka import Consumer
+        consumer = Consumer({**config(), "group.id": os.environ.get("KAFKA_GROUP_ID", "berlin-flat-telegram-v1"),
+                             "enable.auto.commit": False, "enable.auto.offset.store": False,
+                             "auto.offset.reset": "earliest"})
+    deadline = time.monotonic() + duration if duration else None
+    try:
+        consumer.subscribe([topic()])
+        # Fail on unreachable cluster instead of reporting an empty successful run.
+        metadata = consumer.list_topics(topic=topic(), timeout=30)
+        if topic() not in metadata.topics or metadata.topics[topic()].error:
+            raise RuntimeError("Kafka topic unavailable")
+        while deadline is None or time.monotonic() < deadline:
+            message = consumer.poll(1.0)
+            if message is not None:
+                process(message, consumer, state_path, state, deliver)
+    finally:
+        consumer.close()
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--queue", type=Path, required=True)
+    parser.add_argument("--duration", type=int, default=120, help="Seconds to consume; 0 runs continuously")
     parser.add_argument("--state", type=Path, default=Path("state/sent.json"))
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     try:
-        run(args.queue, args.state)
+        if args.duration < 0:
+            raise ValueError("Duration must be nonnegative")
+        run(args.state, args.duration)
     except Exception as exc:
         logging.error("Delivery failed (%s); retained progress. Check secrets, queue and connectivity.", type(exc).__name__)
         return 1
