@@ -51,3 +51,18 @@ class DeliveryTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 process(message(), consumer, path, load_state(path), send)
             self.assertEqual(len(load_state(path)["sent"]), 1)
+
+    def test_berlinhaus_delivery_and_deduplication(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / 'sent.json'
+            consumer = Mock(); consumer.commit.return_value = []
+            send = Mock(); m = message('8172')
+            event = json.loads(m.value())
+            event.update(source='berlinhaus', url='https://www.berlinhaus.com/immobilie/flat/')
+            m.value.return_value = json.dumps(event).encode()
+            m.key.return_value = b'["berlinhaus","8172"]'
+            process(m, consumer, path, load_state(path), send)
+            process(m, consumer, path, load_state(path), send)
+            send.assert_called_once()
+            self.assertEqual(send.call_args.args[0], 'berlinhaus')
+            self.assertEqual(consumer.commit.call_count, 2)
