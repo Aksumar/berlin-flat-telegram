@@ -94,3 +94,17 @@ class DeliveryTests(unittest.TestCase):
             process(m, consumer, path, load_state(path), deliver)
             deliver.assert_called_once()
             self.assertEqual(deliver.call_args.args[0], 'berlinovo')
+
+    def test_gewobag_delivery_and_deduplication(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / 'sent.json'
+            consumer = Mock(); consumer.commit.return_value = []
+            deliver = Mock(); m = message('21896')
+            event = json.loads(m.value())
+            event.update(source='gewobag', details='WBS: erforderlich', url='https://www.gewobag.de/fuer-mietinteressentinnen/mietangebote/0100-01921-0101-0036/')
+            m.value.return_value = json.dumps(event).encode()
+            m.key.return_value = b'["gewobag","21896"]'
+            process(m, consumer, path, load_state(path), deliver)
+            process(m, consumer, path, load_state(path), deliver)
+            deliver.assert_called_once()
+            self.assertEqual(deliver.call_args.args[0], 'gewobag')
