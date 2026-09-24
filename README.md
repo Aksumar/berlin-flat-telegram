@@ -83,3 +83,18 @@ Kafka key: UTF-8 JSON-массив `[source,id]` без пробелов, нап
 
 Доставка at-least-once: авария после внешнего эффекта, но до сохранения состояния может дать дубль.
 Telegram API не поддерживает ключ идемпотентности; абсолютная гарантия exactly-once отсутствует.
+
+### CI: тесты, артефакты и Docker images
+
+На push в любую ветку кода, теги `v*`, pull request и ручной запуск
+workflow `Build, test and publish` выполняет unit-тесты и интеграцию с реальным
+тестовым Kafka, собирает Linux AMD64 image и проверяет `--help` внутри контейнера.
+В Artifacts сохраняются Docker archive (`docker load` после распаковки gzip),
+архив исходников, image metadata, commit SHA, SHA256SUMS и отчёты (14 дней).
+Публикуется именно собранный и проверенный образ, только после успешных тестов.
+
+Push и ручной запуск публикуют `ghcr.io/aksumar/berlin-flat-telegram:sha-<полный SHA>`
+и `branch-<ветка>`; default branch также обновляет `latest`, теги `v*` — одноимённый
+тег образа. PR проверяются без публикации. Ветка состояния исключена.
+Используется встроенный `GITHUB_TOKEN` с `packages: write`; отдельный пароль не нужен.
+Видимость GHCR package управляется в GitHub Packages. Деплой сервера выполняется отдельно.
