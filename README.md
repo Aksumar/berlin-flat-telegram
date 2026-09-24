@@ -77,7 +77,7 @@ Kafka key: UTF-8 JSON-массив `[source,id]` без пробелов, нап
 {"version":1,"source":"allod","id":"650.65001.2.1012","title":"Wohnung","url":"https://www.allod.de/angebote","details":"Адрес и параметры"}
 ```
 
-`source` — allod/rbb; id, title, url, details — строки. RBB использует URL как ID.
+`source` — allod/rbb/berlinhaus; id, title, url, details — строки. RBB использует URL как ID.
 Несовместимое событие останавливает потребителя без подтверждения offset: исправьте причину
 перед перезапуском. Автоматического пропуска и dead-letter topic пока нет.
 
