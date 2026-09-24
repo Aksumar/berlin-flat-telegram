@@ -1,8 +1,9 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from notifier.main import process, load_state
 
 
@@ -14,7 +15,51 @@ def message(id="a"):
     return m
 
 
+@patch.dict(os.environ, {"TELEGRAM_CHAT_IDS": "123"})
 class DeliveryTests(unittest.TestCase):
+    def test_two_chats_resume_after_partial_failure(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"TELEGRAM_CHAT_IDS": "123,456"}):
+            path = Path(directory) / "sent.json"
+            consumer = Mock()
+            consumer.commit.return_value = []
+            deliver = Mock(side_effect=[None, RuntimeError("unavailable")])
+            with self.assertRaises(RuntimeError):
+                process(message(), consumer, path, load_state(path), deliver)
+            consumer.commit.assert_not_called()
+            state = load_state(path)
+            self.assertEqual(state["sent"], [])
+            self.assertEqual(state["pending"], {'["allod","a"]': ["123"]})
+            self.assertEqual([call.args[2] for call in deliver.call_args_list], ["123", "456"])
+
+            retry = Mock()
+            process(message(), consumer, path, state, retry)
+            retry.assert_called_once()
+            self.assertEqual(retry.call_args.args[2], "456")
+            consumer.commit.assert_called_once()
+            self.assertEqual(load_state(path)["pending"], {})
+            process(message(), consumer, path, load_state(path), retry)
+            retry.assert_called_once()
+
+    def test_legacy_sent_state_is_not_resent_to_new_chat(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"TELEGRAM_CHAT_IDS": "123,456"}):
+            path = Path(directory) / "sent.json"
+            path.write_text(json.dumps({"version": 1, "sent": ['["allod","a"]']}))
+            consumer = Mock()
+            consumer.commit.return_value = []
+            deliver = Mock()
+            process(message(), consumer, path, load_state(path), deliver)
+            deliver.assert_not_called()
+            consumer.commit.assert_called_once()
+
+    def test_invalid_pending_state_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "sent.json"
+            for pending in ([], {"key": "123"}, {"key": [123]}):
+                with self.subTest(pending=pending):
+                    path.write_text(json.dumps({"version": 1, "sent": [], "pending": pending}))
+                    with self.assertRaises(ValueError):
+                        load_state(path)
+
     def test_failure_never_commits_and_retry_deduplicates(self):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d)/"sent.json"; state = load_state(path)

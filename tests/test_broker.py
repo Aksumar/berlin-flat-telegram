@@ -5,9 +5,10 @@ import time
 import unittest
 import uuid
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 @unittest.skipUnless(os.environ.get("RUN_KAFKA_INTEGRATION"), "requires Kafka")
+@patch.dict(os.environ, {"TELEGRAM_CHAT_IDS": "123"})
 class BrokerTest(unittest.TestCase):
     def test_delivery(self):
         from confluent_kafka import Producer, Consumer

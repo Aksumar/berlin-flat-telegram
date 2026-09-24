@@ -3,11 +3,18 @@ import os
 from urllib.request import Request, urlopen
 
 
-def send(source, listing):
+def chat_ids():
+    configured = os.environ.get("TELEGRAM_CHAT_IDS", "").strip() or os.environ.get("TELEGRAM_CHAT_ID", "")
+    chats = list(dict.fromkeys(chat.strip() for chat in configured.split(",") if chat.strip()))
+    if not chats:
+        raise RuntimeError("Set TELEGRAM_CHAT_IDS or TELEGRAM_CHAT_ID")
+    return chats
+
+
+def send(source, listing, chat):
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    chat = os.environ.get("TELEGRAM_CHAT_ID", "")
     if not token or not chat:
-        raise RuntimeError("Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Actions Secrets")
+        raise RuntimeError("Set TELEGRAM_BOT_TOKEN and a destination chat")
     text = f"🏠 {source.upper()}: новое объявление\n{listing.title}\n{listing.details}"[:3400]
     text += f"\n{listing.url}"
     request = Request(

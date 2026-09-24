@@ -4,7 +4,7 @@ import logging
 import os
 from pathlib import Path
 from .model import Listing
-from .telegram import send
+from .telegram import chat_ids, send
 
 def save(path, data):
     content = json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
@@ -23,6 +23,12 @@ def load_state(path):
     state = json.loads(path.read_text()) if path.exists() else {"version": 1, "sent": []}
     if state.get("version") != 1 or not isinstance(state.get("sent"), list) or not all(isinstance(x, str) for x in state["sent"]):
         raise ValueError("Invalid delivery state")
+    pending = state.get("pending", {})
+    if not isinstance(pending, dict) or not all(
+        isinstance(key, str) and isinstance(chats, list) and all(isinstance(chat, str) for chat in chats)
+        for key, chats in pending.items()
+    ):
+        raise ValueError("Invalid pending delivery state")
     return state
 
 
@@ -36,8 +42,16 @@ def process(message, consumer, state_path, state, deliver=send):
     if event["source"] not in ("allod", "rbb", "berlinhaus", "inberlinwohnen", "berlinovo", "gewobag") or message.key() != key.encode():
         raise ValueError("Invalid Kafka event identity")
     if key not in state["sent"]:
-        deliver(event["source"], Listing(**{k: event[k] for k in ("id", "title", "url", "details")}))
+        chats = chat_ids()
+        listing = Listing(**{k: event[k] for k in ("id", "title", "url", "details")})
+        delivered = state.setdefault("pending", {}).setdefault(key, [])
+        for chat in chats:
+            if chat not in delivered:
+                deliver(event["source"], listing, chat)
+                delivered.append(chat)
+                save(state_path, state)
         state["sent"].append(key)
+        del state["pending"][key]
         save(state_path, state)
     committed = consumer.commit(message=message, asynchronous=False)
     if any(getattr(partition, "error", None) for partition in (committed or [])):

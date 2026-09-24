@@ -31,12 +31,12 @@ jobs:
         env:
           KAFKA_SERVERS: ${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_IDS || secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ -n "$KAFKA_SERVERS" ] && [ -n "$BOT_TOKEN" ] && [ -n "$CHAT_ID" ]; then
             echo 'ready=true' >> "$GITHUB_OUTPUT"
           else
-            echo '::warning::Configure KAFKA_BOOTSTRAP_SERVERS, TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.'
+            echo '::warning::Configure KAFKA_BOOTSTRAP_SERVERS, TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_IDS (or TELEGRAM_CHAT_ID).'
             echo 'ready=false' >> "$GITHUB_OUTPUT"
           fi
       - name: Initialize durable state branch if absent
@@ -69,6 +69,7 @@ jobs:
           KAFKA_TOPIC: ${{ vars.KAFKA_TOPIC || 'berlin-flat-listings-v1' }}
           KAFKA_GROUP_ID: ${{ vars.KAFKA_GROUP_ID || 'berlin-flat-telegram-v1' }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python -m notifier.main --duration 120 --state ../durable-state/sent.json
       - name: Persist successful progress even after partial failure
