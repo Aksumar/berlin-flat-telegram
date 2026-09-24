@@ -33,7 +33,7 @@ def process(message, consumer, state_path, state, deliver=send):
     if event.get("version") != 1 or not all(isinstance(event.get(k), str) for k in ("source", "id", "title", "url", "details")):
         raise ValueError("Invalid Kafka event")
     key = json.dumps([event["source"], event["id"]], separators=(",", ":"))
-    if event["source"] not in ("allod", "rbb", "berlinhaus") or message.key() != key.encode():
+    if event["source"] not in ("allod", "rbb", "berlinhaus", "inberlinwohnen") or message.key() != key.encode():
         raise ValueError("Invalid Kafka event identity")
     if key not in state["sent"]:
         deliver(event["source"], Listing(**{k: event[k] for k in ("id", "title", "url", "details")}))
