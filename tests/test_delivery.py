@@ -66,3 +66,17 @@ class DeliveryTests(unittest.TestCase):
             send.assert_called_once()
             self.assertEqual(send.call_args.args[0], 'berlinhaus')
             self.assertEqual(consumer.commit.call_count, 2)
+
+    def test_inberlinwohnen_delivery_and_deduplication(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / 'sent.json'
+            consumer = Mock(); consumer.commit.return_value = []
+            deliver = Mock(); m = message('21896')
+            event = json.loads(m.value())
+            event.update(source='inberlinwohnen', details='WBS: erforderlich')
+            m.value.return_value = json.dumps(event).encode()
+            m.key.return_value = b'["inberlinwohnen","21896"]'
+            process(m, consumer, path, load_state(path), deliver)
+            process(m, consumer, path, load_state(path), deliver)
+            deliver.assert_called_once()
+            self.assertEqual(deliver.call_args.args[0], 'inberlinwohnen')
