@@ -14,7 +14,6 @@ import kotlin.system.exitProcess
 
 @ConfigurationProperties("app")
 class AppProperties {
-    var duration: Long = 120
     var state: String = "state/sent.json"
     var bootstrapServers: String = ""
     var securityProtocol: String = "SASL_SSL"
@@ -72,17 +71,17 @@ class Application {
 
 fun main(args: Array<String>) {
     if (args.contains("--help")) {
-        println("Telegram Kafka v2 consumer. Usage: java -jar app.jar [--duration SECONDS] [--state PATH]\nDuration defaults to 120; 0 runs continuously. Configure Kafka and Telegram using environment variables.")
+        println("Telegram Kafka v2 consumer. Usage: java -jar app.jar [--state PATH]\nRuns continuously until stopped. Configure Kafka and Telegram using environment variables.")
         return
     }
     val normalized = mutableListOf<String>()
     var index = 0
     while (index < args.size) {
         val arg = args[index++]
-        if (arg == "--duration" || arg == "--state") {
+        if (arg == "--state") {
             if (index == args.size) { System.err.println("Missing command option value"); exitProcess(1) }
             normalized += "--app.${arg.removePrefix("--")}=${args[index++]}"
-        } else if (arg.startsWith("--duration=") || arg.startsWith("--state=")) {
+        } else if (arg.startsWith("--state=")) {
             normalized += "--app." + arg.removePrefix("--")
         } else normalized += arg
     }
