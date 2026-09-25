@@ -8,13 +8,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.SpringApplication
 import org.springframework.context.annotation.Bean
-import java.nio.file.Path
 import java.nio.file.Files
 import kotlin.system.exitProcess
 
 @ConfigurationProperties("app")
 class AppProperties {
-    var state: String = "state/sent.json"
     var bootstrapServers: String = ""
     var securityProtocol: String = "SASL_SSL"
     var saslMechanism: String = "PLAIN"
@@ -65,32 +63,20 @@ class AppProperties {
 @SpringBootApplication(exclude = [KafkaAutoConfiguration::class])
 @EnableConfigurationProperties(AppProperties::class)
 class Application {
-    @Bean(destroyMethod = "close") fun deliveryState(properties: AppProperties) = DeliveryState(Path.of(properties.state))
     @Bean fun telegramSender(properties: AppProperties): TelegramSender = TelegramClient(properties.botToken)
 }
 
 fun main(args: Array<String>) {
     if (args.contains("--help")) {
-        println("Telegram Kafka v2 consumer. Usage: java -jar app.jar [--state PATH]\nRuns continuously until stopped. Configure Kafka and Telegram using environment variables.")
+        println("Telegram Kafka v2 consumer. Usage: java -jar app.jar\nRuns continuously until stopped. Configure Kafka and Telegram using environment variables.")
         return
     }
-    val normalized = mutableListOf<String>()
-    var index = 0
-    while (index < args.size) {
-        val arg = args[index++]
-        if (arg == "--state") {
-            if (index == args.size) { System.err.println("Missing command option value"); exitProcess(1) }
-            normalized += "--app.${arg.removePrefix("--")}=${args[index++]}"
-        } else if (arg.startsWith("--state=")) {
-            normalized += "--app." + arg.removePrefix("--")
-        } else normalized += arg
-    }
     val result = try {
-        SpringApplication.run(Application::class.java, *normalized.toTypedArray()).use { context ->
+        SpringApplication.run(Application::class.java, *args).use { context ->
             context.getBean(DeliveryRuntime::class.java).run()
         }
     } catch (_: Exception) {
-        System.err.println("Delivery failed; retained progress. Check configuration, state and connectivity.")
+        System.err.println("Delivery failed. Check configuration and connectivity.")
         1
     }
     exitProcess(result)
