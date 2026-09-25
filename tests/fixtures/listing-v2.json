@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "source": "gewobag",
+  "id": "123",
+  "title": "Wohnung",
+  "url": "https://example.com/123",
+  "address": {
+    "full": "Musterstraße 12, 10115 Berlin",
+    "street": "Musterstraße",
+    "house_number": "12",
+    "postal_code": "10115",
+    "city": "Berlin",
+    "district": "Mitte"
+  },
+  "area_m2": 64.5,
+  "rooms": 2,
+  "floor": "3",
+  "rent": {
+    "currency": "EUR",
+    "cold": 650,
+    "warm": 890,
+    "operating_costs": 160,
+    "heating_costs": 80,
+    "deposit": 1950,
+    "warm_from": false
+  },
+  "availability": {
+    "date": "2026-11-01",
+    "text": "01.11.2026"
+  },
+  "wbs": {
+    "required": false,
+    "text": null
+  },
+  "features": {
+    "balcony": true,
+    "elevator": null,
+    "built_in_kitchen": null
+  },
+  "provider": "Gewobag"
+}

@@ -11,7 +11,9 @@ def message(id="a"):
     m = Mock()
     m.error.return_value = None
     m.key.return_value = json.dumps(["allod",id], separators=(",", ":")).encode()
-    m.value.return_value = json.dumps(dict(version=1, source="allod", id=id, title=id, url="https://www.allod.de/angebote", details="")).encode()
+    event = json.loads((Path(__file__).parent / 'fixtures/listing-v2.json').read_text())
+    event.update(source="allod", id=id, title=id, url="https://www.allod.de/angebote")
+    m.value.return_value = json.dumps(event).encode()
     return m
 
 
@@ -118,7 +120,7 @@ class DeliveryTests(unittest.TestCase):
             consumer = Mock(); consumer.commit.return_value = []
             deliver = Mock(); m = message('21896')
             event = json.loads(m.value())
-            event.update(source='inberlinwohnen', details='WBS: erforderlich')
+            event.update(source='inberlinwohnen', wbs={'required': True, 'text': 'WBS: erforderlich'})
             m.value.return_value = json.dumps(event).encode()
             m.key.return_value = b'["inberlinwohnen","21896"]'
             process(m, consumer, path, load_state(path), deliver)
@@ -132,7 +134,7 @@ class DeliveryTests(unittest.TestCase):
             consumer = Mock(); consumer.commit.return_value = []
             deliver = Mock(); m = message('21896')
             event = json.loads(m.value())
-            event.update(source='berlinovo', details='WBS: erforderlich')
+            event.update(source='berlinovo', wbs={'required': True, 'text': 'WBS: erforderlich'})
             m.value.return_value = json.dumps(event).encode()
             m.key.return_value = b'["berlinovo","21896"]'
             process(m, consumer, path, load_state(path), deliver)
@@ -146,7 +148,7 @@ class DeliveryTests(unittest.TestCase):
             consumer = Mock(); consumer.commit.return_value = []
             deliver = Mock(); m = message('21896')
             event = json.loads(m.value())
-            event.update(source='gewobag', details='WBS: erforderlich', url='https://www.gewobag.de/fuer-mietinteressentinnen/mietangebote/0100-01921-0101-0036/')
+            event.update(source='gewobag', wbs={'required': True, 'text': 'WBS: erforderlich'}, url='https://www.gewobag.de/fuer-mietinteressentinnen/mietangebote/0100-01921-0101-0036/')
             m.value.return_value = json.dumps(event).encode()
             m.key.return_value = b'["gewobag","21896"]'
             process(m, consumer, path, load_state(path), deliver)

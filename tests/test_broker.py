@@ -16,9 +16,10 @@ class BrokerTest(unittest.TestCase):
         topic = os.environ["KAFKA_TOPIC"]
         id = str(uuid.uuid4())
         key = json.dumps(["allod", id], separators=(",", ":"))
-        event = dict(source="allod", id=id, title="Integration test", url="https://www.allod.de/angebote", details="")
+        event = json.loads((Path(__file__).parent / "fixtures/listing-v2.json").read_text())
+        event.update(source="allod", id=id)
         producer = Producer({"bootstrap.servers":servers})
-        producer.produce(topic, key=key.encode(), value=json.dumps({"version":1, **event}).encode())
+        producer.produce(topic, key=key.encode(), value=json.dumps(event).encode())
         self.assertEqual(producer.flush(30), 0)
         group = "test-" + id
         config = {"bootstrap.servers":servers, "group.id":group, "auto.offset.reset":"earliest", "enable.auto.commit":False}

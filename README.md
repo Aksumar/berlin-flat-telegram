@@ -82,10 +82,50 @@ Kafka key: UTF-8 JSON-массив `[source,id]` без пробелов, нап
 Значение — UTF-8 JSON:
 
 ```json
-{"version":1,"source":"allod","id":"650.65001.2.1012","title":"Wohnung","url":"https://www.allod.de/angebote","details":"Адрес и параметры"}
+{
+  "version": 2,
+  "source": "gewobag",
+  "id": "123",
+  "title": "Wohnung",
+  "url": "https://example.com/123",
+  "address": {
+    "full": "Musterstraße 12, 10115 Berlin",
+    "street": "Musterstraße",
+    "house_number": "12",
+    "postal_code": "10115",
+    "city": "Berlin",
+    "district": "Mitte"
+  },
+  "area_m2": 64.5,
+  "rooms": 2,
+  "floor": "3",
+  "rent": {
+    "currency": "EUR",
+    "cold": 650,
+    "warm": 890,
+    "operating_costs": 160,
+    "heating_costs": 80,
+    "deposit": 1950,
+    "warm_from": false
+  },
+  "availability": {
+    "date": "2026-11-01",
+    "text": "01.11.2026"
+  },
+  "wbs": {
+    "required": false,
+    "text": null
+  },
+  "features": {
+    "balcony": true,
+    "elevator": null,
+    "built_in_kitchen": null
+  },
+  "provider": "Gewobag"
+}
 ```
 
-`source` — allod/rbb/berlinhaus/inberlinwohnen/berlinovo/gewobag; id, title, url, details — строки. RBB использует URL как ID.
+`source` — allod/rbb/berlinhaus/inberlinwohnen/berlinovo/gewobag; id, title, url — строки. RBB использует URL как ID. Поддерживается только `version: 2`; сообщения v1 отклоняются без отправки и подтверждения offset.
 Несовместимое событие останавливает потребителя без подтверждения offset: исправьте причину
 перед перезапуском. Автоматического пропуска и dead-letter topic пока нет.
 
@@ -106,3 +146,8 @@ Push и ручной запуск публикуют `ghcr.io/aksumar/berlin-fla
 тег образа. PR проверяются без публикации. Ветка состояния исключена.
 Используется встроенный `GITHUB_TOKEN` с `packages: write`; отдельный пароль не нужен.
 Видимость GHCR package управляется в GitHub Packages. Деплой сервера выполняется отдельно.
+
+## Unified listing format
+
+See [Kafka contract v2](docs/listing-v2.md) for fields, source coverage and rollout order.
+Telegram accepts only v2. Stop the old watcher and drain v1 messages with the old consumer before switching both services; retain Kafka keys, consumer group and state.
