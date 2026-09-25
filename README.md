@@ -1,153 +1,114 @@
-# Berlin flat Telegram — Kafka → Telegram
+# Berlin Flat Telegram
 
-Читает новые объявления парсеров из Kafka. Межрепозиторное чтение файлов удалено;
-`WATCHER_READ_TOKEN` больше не требуется.
+Kotlin/JVM 21 and Spring Boot consumer for apartment notifications. Accepts **only
+Kafka listing contract v2** and renders one Russian Telegram template with one house
+emoji. See [the event contract](docs/listing-v2.md) for fields and source semantics.
 
-## Отправка
+## Build and run
 
-Consumer group по умолчанию `berlin-flat-telegram-v1` (переменная KAFKA_GROUP_ID).
-Автокоммит и автоматическое сохранение offsets отключены. Порядок: проверить событие →
-отправить Telegram в каждый чат, сохраняя прогресс в sent.json → сохранить ID как доставленный → синхронно подтвердить offset.
-Если отправка в один из чатов упала, повторный запуск продолжит с недоставленных чатов.
-При ошибке Telegram/невалидном событии offset не подтверждается, процесс завершится с ошибкой.
-При повторе ID из sent.json сообщение не отправляется, но offset подтверждается.
-Ветка delivery-state сохраняется между Actions-запусками, Docker использует volume.
-Не удаляйте sent.json и не запускайте несколько процессов с общим JSON-файлом.
-Эта реализация рассчитана на один экземпляр потребителя, а не горизонтальное масштабирование.
-Сбой после sendMessage до сохранения ID может привести к дублю.
-
-## Настройка Telegram
-
-Actions Secrets этого репозитория:
-- TELEGRAM_BOT_TOKEN — токен @BotFather;
-- TELEGRAM_CHAT_IDS — ID чатов через запятую, например `123456789,-1001234567890`.
-  Каждое новое объявление отправляется во все указанные чаты. Бот должен иметь право
-  писать в каждый чат (в личке сначала отправьте боту /start, в группе добавьте бота).
-- TELEGRAM_CHAT_ID — прежняя настройка; используется, если TELEGRAM_CHAT_IDS пуст.
-
-Для двух чатов задайте `TELEGRAM_CHAT_IDS` с двумя ID в Actions Secrets или окружении
-контейнера. Повторяющиеся ID игнорируются. Уже доставленные объявления из sent.json
-не рассылаются заново при добавлении чата; новый чат получает новые объявления.
-
-Также настройте Kafka ниже. Секреты не помещайте в код и историю команд.
-Если адрес Kafka или Telegram-секреты отсутствуют, workflow пропускает доставку с предупреждением.
-После настройки: Actions → Telegram delivery → Run workflow.
-
-В Actions потребитель работает 120 секунд каждый час в :27 UTC; сообщения между запусками
-хранятся в Kafka. Расписание может задерживаться. Для постоянного чтения используйте Docker
-или `python -m notifier.main --duration 0`. Только один production-способ запуска одновременно.
-Для локального полного стека см. compose.yaml и README в соседнем berlin-flat-watcher.
+Requires JDK 21; Gradle is provided by the checked-in wrapper.
 
 ```sh
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m unittest discover -s tests -v
-# Экспортируйте переменные окружения из .env.example; Python не читает .env автоматически.
-python -m notifier.main --duration 120 --state state/sent.json
+./gradlew test bootJar
+java -jar build/libs/app.jar --duration 120 --state state/sent.json
 ```
 
-Dockerfile запускает один ограниченный проход по умолчанию; полный Compose задаёт duration=0.
-compose.test.yaml содержит только Kafka для интеграционных тестов.
-При обновлении сохраните delivery-state/sent.json. Старые события из outbox парсер мигрирует
-в Kafka, старые sent ID предотвращают повторную отправку. Первый consumer group читает с earliest.
-При ошибке сохранения на GitHub восстановите recovery artifact; его срок хранения 30 дней.
-CI проверяет реальные offsets: ошибка отправки не подтверждается, успешная — подтверждается.
-## Kafka: внешний кластер
+`--duration` defaults to 120 seconds; `0` runs continuously. `--state` defaults to
+`state/sent.json`. Both `--option value` and `--option=value` forms work. `--help`
+prints usage without requiring Kafka or Telegram credentials. Environment equivalents
+are `DURATION_SECONDS` and `STATE_PATH`.
 
-Создайте топик `berlin-flat-listings-v1` (1 partition достаточно). Для production используйте
-репликацию 3/min.insync.replicas=2, если кластер это поддерживает. Retention должен превышать
-максимальное время простоя потребителя; в локальном примере это 30 дней. Истёкшие по retention
-события восстановить из Kafka нельзя. Не меняйте имя consumer group при обычном обновлении.
+Copy `.env.example` for reference and export the variables through your shell,
+container or deployment system. The application does not automatically load `.env`.
 
-В каждом репозитории задайте Actions Secrets:
-- `KAFKA_BOOTSTRAP_SERVERS` — broker addresses через запятую;
-- `KAFKA_SASL_USERNAME`, `KAFKA_SASL_PASSWORD` — отдельные credentials каждого сервиса.
+| Variable | Default / meaning |
+| --- | --- |
+| `KAFKA_BOOTSTRAP_SERVERS` | Required broker addresses |
+| `KAFKA_SECURITY_PROTOCOL` | `SASL_SSL`; also `SSL` or `PLAINTEXT` |
+| `KAFKA_SASL_MECHANISM` | `PLAIN`; also `SCRAM-SHA-256`, `SCRAM-SHA-512` |
+| `KAFKA_SASL_USERNAME`, `KAFKA_SASL_PASSWORD` | Required for SASL_SSL |
+| `KAFKA_SSL_CA_LOCATION` | Optional PEM CA file; translated to the Java client's PEM truststore |
+| `KAFKA_TOPIC` | `berlin-flat-listings-v1` (name is independent of payload version) |
+| `KAFKA_GROUP_ID` | `berlin-flat-telegram-v1` |
+| `TELEGRAM_BOT_TOKEN` | Required |
+| `TELEGRAM_CHAT_IDS` | Comma-separated chat IDs; blanks removed and duplicates collapsed |
+| `TELEGRAM_CHAT_ID` | Fallback when CHAT_IDS is empty |
+| `DURATION_SECONDS` | `120`; `0` for a long-running service |
+| `STATE_PATH` | `state/sent.json` |
 
-Actions Variables (значения по умолчанию):
-- `KAFKA_SECURITY_PROTOCOL=SASL_SSL` (локально явно PLAINTEXT);
-- `KAFKA_SASL_MECHANISM=PLAIN` (также SCRAM-SHA-256/SCRAM-SHA-512);
-- `KAFKA_TOPIC=berlin-flat-listings-v1`.
+## Delivery and recovery
 
-Выдайте парсеру право записи в топик и необходимые кластеру права idempotent producer;
-Telegram-сервису — чтение топика и доступ к group `berlin-flat-telegram-v1`.
-Сервисы используют TLS с проверкой сертификата. При локальном запуске/в контейнере можно
-задать `KAFKA_SSL_CA_LOCATION` для собственного CA (смонтируйте файл).
-Broker должен быть доступен с runners GitHub Actions; localhost Docker Compose с GitHub недоступен.
-Облачный кластер этим проектом не создаётся.
+Spring Kafka uses one record listener, one consumer thread, auto-commit disabled and
+`MANUAL_IMMEDIATE` synchronous acknowledgments. The service verifies broker/topic
+availability before starting the listener. Its error handler stops consumption on
+failure; there is no automatic message skipping or dead-letter recovery. Malformed
+JSON, v1, wrong keys, failed Telegram requests and persistence failures leave the
+record unacknowledged and result in a nonzero exit code. Restart after fixing the cause.
 
-## Контракт события
+After each successful chat delivery, progress is atomically saved and flushed to disk.
+Only after all configured chats are complete does the service mark the listing sent
+and acknowledge Kafka. On restart, it sends only to chats missing from `pending`.
+A commit failure after state persistence does not resend the listing.
 
-Kafka key: UTF-8 JSON-массив `[source,id]` без пробелов, например `["allod","650.65001.2.1012"]`.
-Значение — UTF-8 JSON:
+The JSON file remains compatible with the Python service:
 
 ```json
-{
-  "version": 2,
-  "source": "gewobag",
-  "id": "123",
-  "title": "Wohnung",
-  "url": "https://example.com/123",
-  "address": {
-    "full": "Musterstraße 12, 10115 Berlin",
-    "street": "Musterstraße",
-    "house_number": "12",
-    "postal_code": "10115",
-    "city": "Berlin",
-    "district": "Mitte"
-  },
-  "area_m2": 64.5,
-  "rooms": 2,
-  "floor": "3",
-  "rent": {
-    "currency": "EUR",
-    "cold": 650,
-    "warm": 890,
-    "operating_costs": 160,
-    "heating_costs": 80,
-    "deposit": 1950,
-    "warm_from": false
-  },
-  "availability": {
-    "date": "2026-11-01",
-    "text": "01.11.2026"
-  },
-  "wbs": {
-    "required": false,
-    "text": null
-  },
-  "features": {
-    "balcony": true,
-    "elevator": null,
-    "built_in_kitchen": null
-  },
-  "provider": "Gewobag"
-}
+{"version":1,"sent":["[\"allod\",\"old-id\"]"],"pending":{"[\"gewobag\",\"123\"]":["123"]}}
 ```
 
-`source` — allod/rbb/berlinhaus/inberlinwohnen/berlinovo/gewobag; id, title, url — строки. RBB использует URL как ID. Поддерживается только `version: 2`; сообщения v1 отклоняются без отправки и подтверждения offset.
-Несовместимое событие останавливает потребителя без подтверждения offset: исправьте причину
-перед перезапуском. Автоматического пропуска и dead-letter topic пока нет.
+State version 1 is unrelated to Kafka payload version 2. Missing `pending` is accepted.
+Corrupt state is fatal and is never reset. Kafka keys retain Python's compact ASCII
+JSON encoding, including Unicode escaping. A file lock prevents two processes from
+writing the same state path. Run a **single service instance** with a durable local
+volume; different state files do not coordinate deduplication.
 
-Доставка at-least-once: авария после внешнего эффекта, но до сохранения состояния может дать дубль.
-Telegram API не поддерживает ключ идемпотентности; абсолютная гарантия exactly-once отсутствует.
+Delivery remains at-least-once: a crash between Telegram accepting a message and
+saving the result can cause a duplicate. Telegram does not offer an idempotency key.
+SIGTERM stops the listener through Spring's shutdown lifecycle; allow time for an
+in-flight HTTP request (30-second timeout) and state persistence before force-killing.
 
-### CI: тесты, артефакты и Docker images
+## Docker
 
-На push в любую ветку кода, теги `v*`, pull request и ручной запуск
-workflow `Build, test and publish` выполняет unit-тесты и интеграцию с реальным
-тестовым Kafka, собирает Linux AMD64 image и проверяет `--help` внутри контейнера.
-В Artifacts сохраняются Docker archive (`docker load` после распаковки gzip),
-архив исходников, image metadata, commit SHA, SHA256SUMS и отчёты (14 дней).
-Публикуется именно собранный и проверенный образ, только после успешных тестов.
+```sh
+docker build -t berlin-flat-telegram .
+docker run --rm berlin-flat-telegram --help
+docker run --rm --env-file .env -v "$PWD/state:/app/state" \
+  berlin-flat-telegram --duration 0
+```
 
-Push и ручной запуск публикуют `ghcr.io/aksumar/berlin-flat-telegram:sha-<полный SHA>`
-и `branch-<ветка>`; default branch также обновляет `latest`, теги `v*` — одноимённый
-тег образа. PR проверяются без публикации. Ветка состояния исключена.
-Используется встроенный `GITHUB_TOKEN` с `packages: write`; отдельный пароль не нужен.
-Видимость GHCR package управляется в GitHub Packages. Деплой сервера выполняется отдельно.
+The image builds with JDK 21 and runs on JRE 21. Its entrypoint is `java -jar /app/app.jar`.
+**Remove old Compose commands such as `python -m notifier.main`.** Use:
 
-## Unified listing format
+```yaml
+command: ["--duration", "0", "--state", "state/sent.json"]
+stop_grace_period: 90s
+```
 
-See [Kafka contract v2](docs/listing-v2.md) for fields, source coverage and rollout order.
-Telegram accepts only v2. Stop the old watcher and drain v1 messages with the old consumer before switching both services; retain Kafka keys, consumer group and state.
+## Tests and CI
+
+```sh
+./gradlew test                  # Unit tests; fake local HTTP server, no real Telegram
+./gradlew integrationTest       # Docker required: isolated Kafka via Testcontainers
+./gradlew check bootJar         # Both suites plus executable JAR
+```
+
+Tests cover the exact Python message template, strict v2 validation, UTF-16 limits,
+HTTP failures without token disclosure, state compatibility, partial delivery across
+process restarts, failed persistence and failed commits. Integration tests start the
+real Spring listener against Kafka, verify committed offsets and ensure v1 stops
+consumption before a subsequent v2 event. Telegram delivery is replaced in broker tests.
+
+The build workflow runs both suites, builds/verifies the image, uploads reports and
+image/source archives, then publishes branch/SHA images to GHCR on pushes (`latest`
+only from the default branch). The scheduled delivery workflow runs the JAR for
+120 seconds and persists `sent.json` to `delivery-state`, including partial progress
+when delivery fails. Its existing secrets and schedule are retained.
+
+## Migration
+
+This implementation replaces Python after the v2-format PR. Stop the Python consumer,
+then start Kotlin with the **same consumer group, topic and state volume**; do not
+reset offsets or delete state. Drain any older v1 backlog with an old v1-capable
+consumer before the v2-only rollout, as described in the contract document. Do not run
+Python and Kotlin simultaneously during handover. A rollback to the v2-only Python
+consumer can use the same state file after Kotlin is stopped.

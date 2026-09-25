@@ -17,15 +17,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: app
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-java@v4
         with:
-          python-version: '3.12'
-      - name: Install
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and unit tests
         working-directory: app
-        run: pip install -r requirements.txt
-      - name: Tests
-        working-directory: app
-        run: python -m unittest discover -s tests -v
+        run: ./gradlew test bootJar --no-daemon
       - name: Check configuration
         id: config
         env:
@@ -71,7 +70,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m notifier.main --duration 120 --state ../durable-state/sent.json
+        run: java -jar build/libs/app.jar --duration 120 --state ../durable-state/sent.json
       - name: Persist successful progress even after partial failure
         if: always() && (steps.monitor.outcome == 'success' || steps.monitor.outcome == 'failure')
         working-directory: durable-state
