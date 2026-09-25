@@ -1,4 +1,4 @@
-"""Versioned Kafka decoding. Reject malformed events before delivery/commit."""
+"""Kafka v2 decoding. Reject malformed events before delivery/commit."""
 import math
 from datetime import date
 from .model import Listing
@@ -25,14 +25,10 @@ def valid(value, kind):
 
 
 def decode(event):
-    if not isinstance(event, dict) or type(event.get('version')) is not int or event['version'] not in (1, 2):
+    if not isinstance(event, dict) or type(event.get('version')) is not int or event['version'] != 2:
         raise ValueError('Invalid Kafka version')
     if not all(isinstance(event.get(k), str) for k in (*STRINGS, 'source')):
         raise ValueError('Invalid Kafka identity')
-    if event['version'] == 1:
-        if not isinstance(event.get('details'), str):
-            raise ValueError('Invalid legacy details')
-        return Listing(**{k: event[k] for k in (*STRINGS, 'details')})
     for group, fields in GROUPS.items():
         values = event.get(group)
         if not isinstance(values, dict) or any(k not in values or not valid(values[k], kind) for k, kind in fields.items()):

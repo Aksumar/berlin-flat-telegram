@@ -48,9 +48,6 @@ def format_message(source, listing):
             extra.append(label + ': ' + ('есть' if listing.features[key] else 'нет'))
     if extra:
         lines += ['', *extra]
-    # Legacy queue remains readable; v2 never passes raw details to the renderer.
-    if listing.details:
-        lines += ['', text(listing.title), listing.details]
     lines.append('')
     if listing.provider:
         lines.append('Компания: ' + text(listing.provider))

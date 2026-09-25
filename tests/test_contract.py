@@ -1,4 +1,3 @@
-import copy
 import json
 import os
 import tempfile
@@ -61,7 +60,7 @@ class ContractTests(unittest.TestCase):
         self.assertTrue(text.endswith(event['url']))
 
     @patch.dict(os.environ, {'TELEGRAM_CHAT_IDS': '123,456'})
-    def test_v2_retry_and_cross_version_dedup(self):
+    def test_v2_retry_and_dedup(self):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / 'sent.json'
             event = self.event()
@@ -76,9 +75,6 @@ class ContractTests(unittest.TestCase):
             retry = Mock()
             process(message, consumer, path, load_state(path), retry)
             self.assertEqual(retry.call_args.args[2], '456')
-            legacy = {k: event[k] for k in ('source', 'id', 'title', 'url')}
-            legacy.update(version=1, details='old')
-            message.value.return_value = json.dumps(legacy).encode()
             process(message, consumer, path, load_state(path), retry)
             retry.assert_called_once()
 
@@ -94,3 +90,21 @@ class ContractTests(unittest.TestCase):
                 process(message, consumer, path, load_state(path), deliver)
             consumer.commit.assert_not_called(); deliver.assert_not_called()
             self.assertFalse(path.exists())
+
+    @patch.dict(os.environ, {'TELEGRAM_CHAT_IDS': '123'})
+    def test_v1_rejected_without_delivery_or_commit(self):
+        legacy = dict(version=1, source='gewobag', id='123', title='Old',
+                      url='https://example.com/123', details='Old format')
+        mislabeled = self.event(); mislabeled['version'] = 1
+        for event in (legacy, mislabeled):
+            with self.subTest(event=event), tempfile.TemporaryDirectory() as d:
+                path = Path(d) / 'sent.json'
+                message = Mock(); message.error.return_value = None
+                message.key.return_value = b'["gewobag","123"]'
+                message.value.return_value = json.dumps(event).encode()
+                consumer = Mock(); deliver = Mock()
+                with self.assertRaisesRegex(ValueError, 'Invalid Kafka version'):
+                    process(message, consumer, path, load_state(path), deliver)
+                consumer.commit.assert_not_called()
+                deliver.assert_not_called()
+                self.assertFalse(path.exists())

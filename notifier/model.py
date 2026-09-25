@@ -15,7 +15,6 @@ class Listing:
     id: str
     title: str
     url: str
-    details: str = ""  # Legacy/debug text; never rendered for v2 events.
     address: dict = field(default_factory=address_fields)
     area_m2: float | None = None
     rooms: float | None = None
