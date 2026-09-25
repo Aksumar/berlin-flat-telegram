@@ -13,8 +13,7 @@ Requires JDK 21; Gradle is provided by the checked-in wrapper.
 java -jar build/libs/app.jar
 ```
 
-`--help` prints usage without requiring Kafka or Telegram credentials. The application
-runs continuously until it is stopped.
+The application runs continuously until it is stopped.
 
 Copy `.env.example` for reference and export the variables through your shell,
 container or deployment system. The application does not automatically load `.env`.
@@ -56,7 +55,6 @@ in-flight HTTP request (30-second timeout) before force-killing.
 
 ```sh
 docker build -t berlin-flat-telegram .
-docker run --rm berlin-flat-telegram --help
 docker run --rm --env-file .env berlin-flat-telegram
 ```
 
