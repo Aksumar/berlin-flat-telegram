@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.SpringApplication
 import org.springframework.context.annotation.Bean
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.system.exitProcess
 
 @ConfigurationProperties("app")
@@ -67,10 +68,6 @@ class Application {
 }
 
 fun main(args: Array<String>) {
-    if (args.contains("--help")) {
-        println("Telegram Kafka v2 consumer. Usage: java -jar app.jar\nRuns continuously until stopped. Configure Kafka and Telegram using environment variables.")
-        return
-    }
     val result = try {
         SpringApplication.run(Application::class.java, *args).use { context ->
             context.getBean(DeliveryRuntime::class.java).run()
