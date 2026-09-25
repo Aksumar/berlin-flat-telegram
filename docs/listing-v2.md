@@ -1,16 +1,11 @@
 # Listing Kafka contract v2
 
-New events use `version: 2`. The Kafka topic remains `berlin-flat-listings-v1`:
-the topic name does not specify the payload version. The key remains compact JSON
-`[source,id]`; IDs, baselines and Telegram delivery state must not be reset.
+The payload contract is `version: 2`. The Kafka topic is `berlin-flat-listings-v1`;
+the topic name is independent of the payload version. The key is compact JSON
+`[source,id]`.
 
-The Telegram consumer accepts **only v2**. A v1 event is rejected before delivery
-or offset commit and stops that consumer run; it is not silently skipped.
-
-For rollout, stop the old watcher and drain any v1 backlog/outbox with the old
-consumer before switching both services to v2. Keep the same consumer group and
-state volumes. Do not resume a v1 producer against the v2-only consumer. Payload
-versions are independent of the delivery-state version and topic/group names.
+The Telegram consumer accepts only contract version 2. Any other version is treated
+as an invalid record.
 
 ## Fields
 
@@ -35,7 +30,7 @@ use nullable booleans: absent mention does not imply false. `wbs.text` preserves
 published eligibility restrictions. Only explicit positive feature labels are extracted;
 free prose is not treated as proof that a feature exists.
 
-V2 excludes the old unstructured `details` field. Consumers may ignore additional
+The contract does not include an unstructured `details` field. Consumers may ignore additional
 future fields but must reject invalid known field types before acknowledging Kafka.
 
 ## Example
@@ -89,8 +84,7 @@ future fields but must reject invalid known field types before acknowledging Kaf
 One house emoji in the heading. Address, area, rooms, Warmmiete and Kaltmiete always
 appear (`не указано` for unknown values). Other unknown fields are omitted. Company,
 source and the full listing URL end the message. Long messages are truncated within
-Telegram's 4096 UTF-16-unit limit while retaining the URL. There is no legacy
-v1 rendering path.
+Telegram's 4096 UTF-16-unit limit while retaining the URL. 
 
 ## Source coverage
 
