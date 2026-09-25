@@ -51,7 +51,7 @@ class KafkaIntegrationTest {
     private fun context(topic: String, group: String) = SpringApplicationBuilder(Application::class.java, Overrides::class.java)
         .run("--app.bootstrap-servers=${kafka.bootstrapServers}", "--app.security-protocol=PLAINTEXT",
             "--app.topic=$topic", "--app.group-id=$group", "--app.chat-ids=123,456", "--app.bot-token=fake",
-            "--app.state=${directory.resolve("sent.json")}", "--app.duration=0")
+            "--app.state=${directory.resolve("sent.json")}")
 
     private fun topic(): String {
         val name = "test-${UUID.randomUUID()}"
