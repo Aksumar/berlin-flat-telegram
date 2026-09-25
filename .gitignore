@@ -1,8 +1,22 @@
-.venv/
-__pycache__/
-*.py[cod]
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Local environment
 .env
 .env.*
-state/
-debug/
 !.env.example
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# macOS
+.DS_Store
