@@ -28,10 +28,7 @@ class RunControl {
     private val done = CountDownLatch(1)
     fun finish() { done.countDown() }
     fun fail() { failed.set(true); done.countDown() }
-    fun await(seconds: Long) {
-        require(seconds >= 0) { "Duration must be nonnegative" }
-        if (seconds == 0L) done.await() else done.await(seconds, TimeUnit.SECONDS)
-    }
+    fun await() { done.await() }
 }
 
 @Configuration
@@ -94,12 +91,11 @@ class DeliveryRuntime(private val registry: KafkaListenerEndpointRegistry,
     private val control: RunControl) {
     fun run(): Int {
         try {
-            require(properties.duration >= 0)
             factory.createConsumer().use { consumer ->
                 require(!consumer.partitionsFor(properties.topic, Duration.ofSeconds(30)).isNullOrEmpty())
             }
             registry.start()
-            control.await(properties.duration)
+            control.await()
         } catch (_: Exception) {
             control.fail()
         } finally {
