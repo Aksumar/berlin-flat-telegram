@@ -21,10 +21,6 @@ container or deployment system. The application does not automatically load `.en
 | Variable | Default / meaning |
 | --- | --- |
 | `KAFKA_BOOTSTRAP_SERVERS` | Required broker addresses |
-| `KAFKA_SECURITY_PROTOCOL` | `SASL_SSL`; also `SSL` or `PLAINTEXT` |
-| `KAFKA_SASL_MECHANISM` | `PLAIN`; also `SCRAM-SHA-256`, `SCRAM-SHA-512` |
-| `KAFKA_SASL_USERNAME`, `KAFKA_SASL_PASSWORD` | Required for SASL_SSL |
-| `KAFKA_SSL_CA_LOCATION` | Optional PEM CA file; translated to the Java client's PEM truststore |
 | `KAFKA_TOPIC` | `berlin-flat-listings-v1` (name is independent of payload version) |
 | `KAFKA_GROUP_ID` | `berlin-flat-telegram-v1` |
 | `TELEGRAM_BOT_TOKEN` | Required |
@@ -33,6 +29,7 @@ container or deployment system. The application does not automatically load `.en
 
 ## Delivery and recovery
 
+Kafka connections currently use `PLAINTEXT`; see `TODO.md` for the planned SASL_SSL hardening.
 Spring Kafka uses one record listener, one consumer thread, auto-commit disabled and
 `MANUAL_IMMEDIATE` synchronous acknowledgments. The service verifies broker/topic
 availability before starting the listener. Its error handler stops consumption on
