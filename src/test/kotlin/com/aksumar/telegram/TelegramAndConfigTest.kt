@@ -41,11 +41,12 @@ class TelegramAndConfigTest {
         p.chatId = ""
         assertThrows(IllegalArgumentException::class.java) { p.chats() }
     }
-    @Test fun `Kafka configuration keeps manual commits and translates SASL`() {
-        val p = AppProperties().apply { bootstrapServers = "localhost:9092"; chatId = "123"; securityProtocol = "PLAINTEXT" }
+    @Test fun `Kafka configuration keeps manual commits and uses plaintext`() {
+        val p = AppProperties().apply { bootstrapServers = "localhost:9092"; chatId = "123" }
         assertEquals(false, p.kafkaConfig()["enable.auto.commit"])
         assertEquals(false, p.kafkaConfig()["allow.auto.create.topics"])
         assertEquals("berlin-flat-telegram-v1", p.kafkaConfig()["group.id"])
+        assertEquals("PLAINTEXT", p.kafkaConfig()["security.protocol"])
         p.securityProtocol = "SASL_SSL"
         assertThrows(IllegalArgumentException::class.java) { p.kafkaConfig() }
         p.saslUsername = "user"; p.saslPassword = "a\"b\\c"; p.saslMechanism = "SCRAM-SHA-512"
