@@ -48,7 +48,7 @@ class KafkaConfiguration {
             setCommonErrorHandler(object : CommonContainerStoppingErrorHandler() {
                 override fun handleRemaining(ex: Exception, records: MutableList<ConsumerRecord<*, *>>, consumer: Consumer<*, *>, container: MessageListenerContainer) {
                     control.fail()
-                    super.handleRemaining(DeliveryException("Delivery failed; progress retained"), records, consumer, container)
+                    super.handleRemaining(DeliveryException("Delivery failed"), records, consumer, container)
                 }
                 override fun handleOtherException(ex: Exception, consumer: Consumer<*, *>, container: MessageListenerContainer, batchListener: Boolean) {
                     control.fail()
@@ -61,26 +61,18 @@ class KafkaConfiguration {
 
 @Component
 class ListingListener(private val contract: Contract, private val formatter: MessageFormatter,
-    private val state: DeliveryState, private val sender: TelegramSender, private val properties: AppProperties) {
+    private val sender: TelegramSender, private val properties: AppProperties) {
     @KafkaListener(id = "listings", topics = ["\${app.topic}"], groupId = "\${app.group-id}")
     fun receive(record: ConsumerRecord<String, String>, acknowledgment: Acknowledgment) {
         try {
             val item = contract.decode(record.value())
             val key = listingKey(item.source, item.id)
             if (record.key() != key) throw DeliveryException("Invalid Kafka event identity")
-            if (!state.isSent(key)) {
-                val text = formatter.format(item)
-                for (chat in properties.chats()) {
-                    if (chat !in state.deliveredChats(key)) {
-                        sender.send(chat, text)
-                        state.recordChat(key, chat)
-                    }
-                }
-                state.complete(key)
-            }
+            val text = formatter.format(item)
+            for (chat in properties.chats()) sender.send(chat, text)
             acknowledgment.acknowledge()
         } catch (_: Exception) {
-            throw DeliveryException("Listing delivery failed; progress retained")
+            throw DeliveryException("Listing delivery failed")
         }
     }
 }
