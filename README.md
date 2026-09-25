@@ -10,12 +10,11 @@ Requires JDK 21; Gradle is provided by the checked-in wrapper.
 
 ```sh
 ./gradlew test bootJar
-java -jar build/libs/app.jar --state state/sent.json
+java -jar build/libs/app.jar
 ```
 
-`--state` defaults to `state/sent.json`. Both `--state value` and `--state=value` forms work.
 `--help` prints usage without requiring Kafka or Telegram credentials. The application
-runs continuously until it is stopped. The environment equivalent is `STATE_PATH`.
+runs continuously until it is stopped.
 
 Copy `.env.example` for reference and export the variables through your shell,
 container or deployment system. The application does not automatically load `.env`.
@@ -32,55 +31,38 @@ container or deployment system. The application does not automatically load `.en
 | `TELEGRAM_BOT_TOKEN` | Required |
 | `TELEGRAM_CHAT_IDS` | Comma-separated chat IDs; blanks removed and duplicates collapsed |
 | `TELEGRAM_CHAT_ID` | Fallback when CHAT_IDS is empty |
-| `STATE_PATH` | `state/sent.json` |
 
 ## Delivery and recovery
 
 Spring Kafka uses one record listener, one consumer thread, auto-commit disabled and
 `MANUAL_IMMEDIATE` synchronous acknowledgments. The service verifies broker/topic
 availability before starting the listener. Its error handler stops consumption on
-failure; there is no automatic message skipping or dead-letter recovery. Malformed
-JSON, v1, wrong keys, failed Telegram requests and persistence failures leave the
-record unacknowledged and result in a nonzero exit code. Restart after fixing the cause.
+failure; there is no automatic message skipping or dead-letter recovery. Malformed JSON, v1, wrong keys and failed Telegram requests leave the record
+unacknowledged and result in a nonzero exit code. Restart after fixing the cause.
 
-After each successful chat delivery, progress is atomically saved and flushed to disk.
-Only after all configured chats are complete does the service mark the listing sent
-and acknowledge Kafka. On restart, it sends only to chats missing from `pending`.
-A commit failure after state persistence does not resend the listing.
+Kafka offsets are the only delivery state. The listener acknowledges an event only after
+it has been sent successfully to every configured Telegram chat. If delivery fails,
+the offset is not committed and Kafka will retry the event after restart.
 
-The JSON file remains compatible with the Python service:
+This provides at-least-once delivery, not exactly-once delivery. A crash after Telegram
+accepts a message but before the Kafka offset is committed can cause a duplicate. With
+multiple chats, if one chat succeeds and a later chat fails, the successful chat can
+receive the same event again on retry. Telegram does not provide an idempotency key.
 
-```json
-{"version":1,"sent":["[\"allod\",\"old-id\"]"],"pending":{"[\"gewobag\",\"123\"]":["123"]}}
-```
-
-State version 1 is unrelated to Kafka payload version 2. Missing `pending` is accepted.
-Corrupt state is fatal and is never reset. Kafka keys retain Python's compact ASCII
-JSON encoding, including Unicode escaping. A file lock prevents two processes from
-writing the same state path. Run a **single service instance** with a durable local
-volume; different state files do not coordinate deduplication.
-
-Delivery remains at-least-once: a crash between Telegram accepting a message and
-saving the result can cause a duplicate. Telegram does not offer an idempotency key.
 SIGTERM stops the listener through Spring's shutdown lifecycle; allow time for an
-in-flight HTTP request (30-second timeout) and state persistence before force-killing.
+in-flight HTTP request (30-second timeout) before force-killing.
 
 ## Docker
 
 ```sh
 docker build -t berlin-flat-telegram .
 docker run --rm berlin-flat-telegram --help
-docker run --rm --env-file .env -v "$PWD/state:/app/state" \
-  berlin-flat-telegram
+docker run --rm --env-file .env berlin-flat-telegram
 ```
 
 The image builds with JDK 21 and runs on JRE 21. Its entrypoint is `java -jar /app/app.jar`.
-**Remove old Compose commands such as `python -m notifier.main`.** Use:
-
-```yaml
-command: ["--state", "state/sent.json"]
-stop_grace_period: 90s
-```
+**Remove old Compose commands such as `python -m notifier.main`.** The container runs continuously by default.
+Use `stop_grace_period: 90s` so an in-flight Telegram request can finish cleanly.
 
 ## Tests and CI
 
@@ -91,8 +73,8 @@ stop_grace_period: 90s
 ```
 
 Tests cover the exact Python message template, strict v2 validation, UTF-16 limits,
-HTTP failures without token disclosure, state compatibility, partial delivery across
-process restarts, failed persistence and failed commits. Integration tests start the
+HTTP failures without token disclosure, failed delivery without Kafka acknowledgment,
+and successful retry/commit behavior. Integration tests start the
 real Spring listener against Kafka, verify committed offsets and ensure v1 stops
 consumption before a subsequent v2 event. Telegram delivery is replaced in broker tests.
 
@@ -104,8 +86,6 @@ no scheduled GitHub Actions consumer.
 ## Migration
 
 This implementation replaces Python after the v2-format PR. Stop the Python consumer,
-then start Kotlin with the **same consumer group, topic and state volume**; do not
-reset offsets or delete state. Drain any older v1 backlog with an old v1-capable
+then start Kotlin with the **same consumer group and topic**; do not reset offsets. Drain any older v1 backlog with an old v1-capable
 consumer before the v2-only rollout, as described in the contract document. Do not run
-Python and Kotlin simultaneously during handover. A rollback to the v2-only Python
-consumer can use the same state file after Kotlin is stopped.
+Python and Kotlin simultaneously during handover. A rollback should reuse the same Kafka consumer group after Kotlin is stopped.
