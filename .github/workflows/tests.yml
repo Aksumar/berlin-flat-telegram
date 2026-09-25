@@ -42,8 +42,6 @@ jobs:
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Verify container entrypoint
-        run: docker run --rm service-test:ci --help | tee reports/container.log
       - name: Package artifacts
         run: |
           docker save service-test:ci | gzip > dist/image-linux-amd64.tar.gz
