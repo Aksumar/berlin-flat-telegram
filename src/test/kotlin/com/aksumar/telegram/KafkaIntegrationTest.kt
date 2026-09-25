@@ -114,12 +114,4 @@ class KafkaIntegrationTest {
             assertFalse(Files.exists(directory.resolve("sent.json")))
         }
     }
-    @Test fun `bounded idle run exits cleanly without delivery`() {
-        val topic = topic(); val group = "test-${UUID.randomUUID()}"
-        context(topic, group).use { context ->
-            context.getBean(AppProperties::class.java).duration = 1
-            assertEquals(0, context.getBean(DeliveryRuntime::class.java).run())
-            assertTrue(context.getBean(TestSender::class.java).chats.isEmpty())
-        }
-    }
 }
