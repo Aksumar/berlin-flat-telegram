@@ -106,3 +106,8 @@ Push и ручной запуск публикуют `ghcr.io/aksumar/berlin-fla
 тег образа. PR проверяются без публикации. Ветка состояния исключена.
 Используется встроенный `GITHUB_TOKEN` с `packages: write`; отдельный пароль не нужен.
 Видимость GHCR package управляется в GitHub Packages. Деплой сервера выполняется отдельно.
+
+## Unified listing format
+
+See [Kafka contract v2](docs/listing-v2.md) for fields, source coverage and rollout order.
+Deploy the v1/v2-compatible Telegram consumer before the v2 watcher; retain Kafka keys, consumer group and state.

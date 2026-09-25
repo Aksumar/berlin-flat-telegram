@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from .model import Listing
+from .contract import decode
 from .telegram import chat_ids, send
 
 def save(path, data):
@@ -36,14 +36,12 @@ def process(message, consumer, state_path, state, deliver=send):
     if message.error():
         raise RuntimeError("Kafka consumer error")
     event = json.loads(message.value())
-    if event.get("version") != 1 or not all(isinstance(event.get(k), str) for k in ("source", "id", "title", "url", "details")):
-        raise ValueError("Invalid Kafka event")
+    listing = decode(event)
     key = json.dumps([event["source"], event["id"]], separators=(",", ":"))
     if event["source"] not in ("allod", "rbb", "berlinhaus", "inberlinwohnen", "berlinovo", "gewobag") or message.key() != key.encode():
         raise ValueError("Invalid Kafka event identity")
     if key not in state["sent"]:
         chats = chat_ids()
-        listing = Listing(**{k: event[k] for k in ("id", "title", "url", "details")})
         delivered = state.setdefault("pending", {}).setdefault(key, [])
         for chat in chats:
             if chat not in delivered:
