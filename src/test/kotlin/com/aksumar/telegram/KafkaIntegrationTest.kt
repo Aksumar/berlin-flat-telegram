@@ -11,15 +11,12 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.io.TempDir
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
 import org.testcontainers.kafka.KafkaContainer
 import org.testcontainers.utility.DockerImageName
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -28,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Tag("integration")
 class KafkaIntegrationTest {
-    @TempDir lateinit var directory: Path
     companion object {
         val kafka = KafkaContainer(DockerImageName.parse("apache/kafka:4.1.2"))
         @BeforeAll @JvmStatic fun startKafka() { kafka.start() }
@@ -50,8 +46,7 @@ class KafkaIntegrationTest {
 
     private fun context(topic: String, group: String) = SpringApplicationBuilder(Application::class.java, Overrides::class.java)
         .run("--app.bootstrap-servers=${kafka.bootstrapServers}", "--app.security-protocol=PLAINTEXT",
-            "--app.topic=$topic", "--app.group-id=$group", "--app.chat-ids=123,456", "--app.bot-token=fake",
-            "--app.state=${directory.resolve("sent.json")}")
+            "--app.topic=$topic", "--app.group-id=$group", "--app.chat-ids=123,456", "--app.bot-token=fake")
 
     private fun topic(): String {
         val name = "test-${UUID.randomUUID()}"
@@ -77,7 +72,7 @@ class KafkaIntegrationTest {
         }
     }
 
-    @Test fun `real listener resumes partial delivery and commits only after durable completion`() {
+    @Test fun `failed delivery is retried from Kafka and commits only after success`() {
         val topic = topic(); val group = "test-${UUID.randomUUID()}"
         publish(topic)
         context(topic, group).use { context ->
@@ -87,17 +82,12 @@ class KafkaIntegrationTest {
             assertEquals(1, run.get(45, TimeUnit.SECONDS))
             assertEquals(listOf("123"), sender.chats)
             assertNull(offset(group, topic))
-            val state = jsonMapper().readTree(Files.readString(directory.resolve("sent.json")))
-            assertEquals("123", state["pending"][listingKey("gewobag", "123")][0].asText())
         }
         context(topic, group).use { context ->
             val run = CompletableFuture.supplyAsync { context.getBean(DeliveryRuntime::class.java).run() }
             try {
                 await { offset(group, topic) == 1L }
-                assertEquals(listOf("456"), context.getBean(TestSender::class.java).chats)
-                publish(topic)
-                await { offset(group, topic) == 2L }
-                assertEquals(listOf("456"), context.getBean(TestSender::class.java).chats)
+                assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)
             } finally { context.getBean(RunControl::class.java).finish() }
             assertEquals(0, run.get(30, TimeUnit.SECONDS))
         }
@@ -111,7 +101,6 @@ class KafkaIntegrationTest {
             assertEquals(1, run.get(45, TimeUnit.SECONDS))
             assertTrue(context.getBean(TestSender::class.java).chats.isEmpty())
             assertNull(offset(group, topic))
-            assertFalse(Files.exists(directory.resolve("sent.json")))
         }
     }
 }
