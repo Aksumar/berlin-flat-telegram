@@ -10,13 +10,12 @@ Requires JDK 21; Gradle is provided by the checked-in wrapper.
 
 ```sh
 ./gradlew test bootJar
-java -jar build/libs/app.jar --duration 120 --state state/sent.json
+java -jar build/libs/app.jar --state state/sent.json
 ```
 
-`--duration` defaults to 120 seconds; `0` runs continuously. `--state` defaults to
-`state/sent.json`. Both `--option value` and `--option=value` forms work. `--help`
-prints usage without requiring Kafka or Telegram credentials. Environment equivalents
-are `DURATION_SECONDS` and `STATE_PATH`.
+`--state` defaults to `state/sent.json`. Both `--state value` and `--state=value` forms work.
+`--help` prints usage without requiring Kafka or Telegram credentials. The application
+runs continuously until it is stopped. The environment equivalent is `STATE_PATH`.
 
 Copy `.env.example` for reference and export the variables through your shell,
 container or deployment system. The application does not automatically load `.env`.
@@ -33,7 +32,6 @@ container or deployment system. The application does not automatically load `.en
 | `TELEGRAM_BOT_TOKEN` | Required |
 | `TELEGRAM_CHAT_IDS` | Comma-separated chat IDs; blanks removed and duplicates collapsed |
 | `TELEGRAM_CHAT_ID` | Fallback when CHAT_IDS is empty |
-| `DURATION_SECONDS` | `120`; `0` for a long-running service |
 | `STATE_PATH` | `state/sent.json` |
 
 ## Delivery and recovery
@@ -73,14 +71,14 @@ in-flight HTTP request (30-second timeout) and state persistence before force-ki
 docker build -t berlin-flat-telegram .
 docker run --rm berlin-flat-telegram --help
 docker run --rm --env-file .env -v "$PWD/state:/app/state" \
-  berlin-flat-telegram --duration 0
+  berlin-flat-telegram
 ```
 
 The image builds with JDK 21 and runs on JRE 21. Its entrypoint is `java -jar /app/app.jar`.
 **Remove old Compose commands such as `python -m notifier.main`.** Use:
 
 ```yaml
-command: ["--duration", "0", "--state", "state/sent.json"]
+command: ["--state", "state/sent.json"]
 stop_grace_period: 90s
 ```
 
@@ -100,9 +98,8 @@ consumption before a subsequent v2 event. Telegram delivery is replaced in broke
 
 The build workflow runs both suites, builds/verifies the image, uploads reports and
 image/source archives, then publishes branch/SHA images to GHCR on pushes (`latest`
-only from the default branch). The scheduled delivery workflow runs the JAR for
-120 seconds and persists `sent.json` to `delivery-state`, including partial progress
-when delivery fails. Its existing secrets and schedule are retained.
+only from the default branch). Production delivery is a long-running service; there is
+no scheduled GitHub Actions consumer.
 
 ## Migration
 
