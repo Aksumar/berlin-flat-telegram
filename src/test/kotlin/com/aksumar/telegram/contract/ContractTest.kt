@@ -1,5 +1,7 @@
 package com.aksumar.telegram.contract
 
+import com.aksumar.telegram.contract.exceptions.DeliveryException
+
 import com.aksumar.telegram.support.fixture
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.junit.jupiter.api.Assertions.assertThrows

@@ -1,5 +1,7 @@
 package com.aksumar.telegram.client
 
+import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
+
 import com.aksumar.telegram.maps.ListingMap
 import com.aksumar.telegram.contract.jsonMapper
 import com.sun.net.httpserver.HttpServer

@@ -4,7 +4,8 @@ import com.aksumar.telegram.maps.ListingMap
 import java.io.ByteArrayOutputStream
 import java.util.UUID
 import com.aksumar.telegram.config.AppProperties
-import com.aksumar.telegram.contract.DeliveryException
+import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
+import com.aksumar.telegram.contract.exceptions.DeliveryException
 import com.aksumar.telegram.contract.jsonMapper
 import java.net.URI
 import java.net.http.HttpClient
@@ -22,11 +23,6 @@ fun interface TelegramSender {
     fun sendListing(chat: String, text: String, listingUrl: String, map: ListingMap?): CompletableFuture<Void> =
         send(chat, text)
 }
-
-class TelegramDeliveryException(
-    message: String,
-    val retryable: Boolean
-) : DeliveryException(message)
 
 @Component
 class TelegramClient internal constructor(

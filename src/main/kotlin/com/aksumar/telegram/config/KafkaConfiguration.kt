@@ -1,6 +1,6 @@
 package com.aksumar.telegram.config
 
-import com.aksumar.telegram.contract.DeliveryException
+import com.aksumar.telegram.contract.exceptions.DeliveryException
 import com.aksumar.telegram.kafka.RunControl
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord

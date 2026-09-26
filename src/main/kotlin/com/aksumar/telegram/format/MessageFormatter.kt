@@ -1,6 +1,6 @@
 package com.aksumar.telegram.format
 
-import com.aksumar.telegram.contract.DeliveryException
+import com.aksumar.telegram.contract.exceptions.DeliveryException
 import com.aksumar.telegram.contract.Listing
 import org.springframework.stereotype.Component
 import java.math.BigDecimal

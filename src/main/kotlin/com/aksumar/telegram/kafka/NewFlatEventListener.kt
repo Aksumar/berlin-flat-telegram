@@ -1,10 +1,10 @@
 package com.aksumar.telegram.kafka
 
-import com.aksumar.telegram.client.TelegramDeliveryException
+import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.maps.ListingMaps
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.config.AppProperties
-import com.aksumar.telegram.contract.DeliveryException
+import com.aksumar.telegram.contract.exceptions.DeliveryException
 import com.aksumar.telegram.contract.ListingContract
 import com.aksumar.telegram.contract.matchesListingKey
 import com.aksumar.telegram.format.MessageFormatter
