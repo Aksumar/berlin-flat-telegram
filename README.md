@@ -129,7 +129,10 @@ Only this job has `packages: write`. Images receive `sha-<commit>` and either
 `branch-<branch>` or the Git tag; `latest` is updated only from the default branch.
 The tested JAR and image recipe are transferred between jobs as a one-day artifact.
 
-Test reports are retained for 14 days, including when tests fail. Image/source
+Test/publication report uploads and Docker build-record uploads are temporarily
+disabled because the artifact storage quota is exhausted. Logs remain available in
+the Actions run. The JAR handoff and requested archives still require artifact
+storage. When report uploads are restored, their retention is 14 days. Image/source
 archives, image metadata, commit ID, and SHA256 checksums are exported only for tag
 runs or manual runs with **export_archives** enabled, and retained for 14 days.
 Use Actions → Build, test and publish → Run workflow to select a branch and enable
