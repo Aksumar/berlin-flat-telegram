@@ -1,4 +1,4 @@
-package com.aksumar.telegram.contract.exceptions
+package com.aksumar.telegram.exception
 
 open class DeliveryException(
     message: String,

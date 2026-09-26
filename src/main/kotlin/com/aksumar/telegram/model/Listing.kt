@@ -1,4 +1,4 @@
-package com.aksumar.telegram.contract
+package com.aksumar.telegram.model
 
 import java.math.BigDecimal
 

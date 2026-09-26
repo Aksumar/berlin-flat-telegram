@@ -1,6 +1,6 @@
 package com.aksumar.telegram.client.exceptions
 
-import com.aksumar.telegram.contract.exceptions.DeliveryException
+import com.aksumar.telegram.exception.DeliveryException
 
 class TelegramDeliveryException(
     message: String,

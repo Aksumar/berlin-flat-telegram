@@ -1,6 +1,8 @@
 package com.aksumar.telegram.maps
 
-import com.aksumar.telegram.contract.Address
+import com.aksumar.telegram.support.testMapper
+
+import com.aksumar.telegram.model.Address
 import com.aksumar.telegram.support.event
 
 import com.sun.net.httpserver.HttpServer
@@ -41,7 +43,7 @@ class ListingMapsTest {
             }
             server.start()
         }
-        fun maps(key: String = "test-secret") = GeoapifyMaps(key,
+        fun maps(key: String = "test-secret") = GeoapifyMaps(key, testMapper,
             "http://127.0.0.1:${server.address.port}/geocode", "http://127.0.0.1:${server.address.port}/staticmap")
         override fun close() { server.stop(0) }
     }

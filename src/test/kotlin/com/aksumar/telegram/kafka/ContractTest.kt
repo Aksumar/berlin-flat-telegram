@@ -1,6 +1,8 @@
-package com.aksumar.telegram.contract
+package com.aksumar.telegram.kafka
 
-import com.aksumar.telegram.contract.exceptions.DeliveryException
+import com.aksumar.telegram.support.testMapper
+
+import com.aksumar.telegram.exception.DeliveryException
 
 import com.aksumar.telegram.support.fixture
 import com.fasterxml.jackson.databind.node.ObjectNode
@@ -10,7 +12,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 
 class ContractTest {
-    private val contract = ListingContract()
+    private val contract = ListingContract(testMapper)
 
     @Test
     fun `accepts Degewo Python event`() {
@@ -22,7 +24,7 @@ class ContractTest {
 
     @Test
     fun `accepts WBM listing source`() {
-        val tree = jsonMapper().readTree(fixture()) as ObjectNode
+        val tree = testMapper.readTree(fixture()) as ObjectNode
         tree.put("source", "wbm")
         tree.put("provider", "WBM")
         tree.put("id", "50-867500/10/144")
@@ -49,14 +51,14 @@ class ContractTest {
             assertThrows(DeliveryException::class.java) { contract.decode(it) }
         }
 
-        val missing = jsonMapper().readTree(fixture()) as ObjectNode
+        val missing = testMapper.readTree(fixture()) as ObjectNode
         missing.remove("rooms")
         assertThrows(DeliveryException::class.java) { contract.decode(missing.toString()) }
     }
 
     @Test
     fun `unknown values and additive fields are safe`() {
-        val tree = jsonMapper().readTree(fixture()) as ObjectNode
+        val tree = testMapper.readTree(fixture()) as ObjectNode
         tree.putNull("rooms")
         tree.putNull("area_m2")
         tree.put("details", "DO NOT SHOW")

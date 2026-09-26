@@ -5,8 +5,8 @@ import java.io.ByteArrayOutputStream
 import java.util.UUID
 import com.aksumar.telegram.config.AppProperties
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
-import com.aksumar.telegram.contract.exceptions.DeliveryException
-import com.aksumar.telegram.contract.jsonMapper
+import com.aksumar.telegram.exception.DeliveryException
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -19,23 +19,25 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 fun interface TelegramSender {
-    fun send(chat: String, text: String): CompletableFuture<Void>
     fun sendListing(chat: String, text: String, listingUrl: String, map: ListingMap?): CompletableFuture<Void> =
         send(chat, text)
+
+    fun send(chat: String, text: String): CompletableFuture<Void>
 }
 
 @Component
 class TelegramClient internal constructor(
     token: String,
-    baseUrl: String
+    baseUrl: String,
+    private val mapper: ObjectMapper
 ) : TelegramSender {
     @Autowired
-    constructor(properties: AppProperties) : this(
+    constructor(properties: AppProperties, mapper: ObjectMapper) : this(
         properties.botToken,
-        "https://api.telegram.org"
+        "https://api.telegram.org",
+        mapper
     )
 
-    private val mapper = jsonMapper()
     private val endpoint: String
     private val client = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(30))

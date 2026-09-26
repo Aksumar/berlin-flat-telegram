@@ -1,6 +1,6 @@
 package com.aksumar.telegram.format
 
-import com.aksumar.telegram.contract.exceptions.DeliveryException
+import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.support.event
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test

@@ -1,9 +1,10 @@
 package com.aksumar.telegram.client
 
+import com.aksumar.telegram.support.testMapper
+
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 
 import com.aksumar.telegram.maps.ListingMap
-import com.aksumar.telegram.contract.jsonMapper
 import com.sun.net.httpserver.HttpServer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -25,7 +26,7 @@ class TelegramClientTest {
             }
             server.start()
         }
-        fun client() = TelegramClient("test", "http://127.0.0.1:${server.address.port}")
+        fun client() = TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
         override fun close() { server.stop(0) }
     }
 
@@ -54,7 +55,7 @@ class TelegramClientTest {
             assertEquals(listOf("sendPhoto", "sendMessage"), server.requests.map { it.first })
             assertTrue(server.requests[0].second.contains("Примерное расположение"))
             assertFalse(server.requests[0].second.contains("я".repeat(1100)))
-            val message = jsonMapper().readTree(server.requests[1].second)
+            val message = testMapper.readTree(server.requests[1].second)
             assertEquals(text, message["text"].asText())
             assertTrue(message["disable_notification"].asBoolean())
         }
@@ -97,10 +98,10 @@ class TelegramClientTest {
         server.start()
 
         try {
-            val client = TelegramClient("test", "http://127.0.0.1:${server.address.port}")
+            val client = TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
             client.send("-123", "Привет").join()
 
-            val json = jsonMapper().readTree(request)
+            val json = testMapper.readTree(request)
             assertEquals("-123", json["chat_id"].asText())
             assertEquals("Привет", json["text"].asText())
             assertTrue(json["link_preview_options"]["is_disabled"].asBoolean())
@@ -125,7 +126,7 @@ class TelegramClientTest {
         server.start()
 
         try {
-            TelegramClient("test", "http://127.0.0.1:${server.address.port}")
+            TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
                 .send("1", "test")
                 .join()
 
@@ -155,7 +156,7 @@ class TelegramClientTest {
         server.start()
 
         try {
-            TelegramClient("test", "http://127.0.0.1:${server.address.port}")
+            TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
                 .send("1", "test")
                 .join()
 
@@ -179,7 +180,7 @@ class TelegramClientTest {
         server.start()
 
         try {
-            val client = TelegramClient("test", "http://127.0.0.1:${server.address.port}")
+            val client = TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
             val ex = assertThrows(CompletionException::class.java) {
                 client.send("1", "test").join()
             }

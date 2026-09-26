@@ -1,11 +1,12 @@
 package com.aksumar.telegram.kafka
 
+import com.aksumar.telegram.support.testMapper
+
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.maps.ListingMap
 import com.aksumar.telegram.maps.ListingMaps
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.config.AppProperties
-import com.aksumar.telegram.contract.ListingContract
 import com.aksumar.telegram.format.MessageFormatter
 import com.aksumar.telegram.support.fixture
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -26,10 +27,11 @@ class DeliveryTest {
 
     private fun listener(sender: TelegramSender) =
         NewFlatEventListener(
-            ListingContract(),
+            ListingContract(testMapper),
             MessageFormatter(),
             sender,
-            properties()
+            properties(),
+            testMapper
         )
 
     @Test
@@ -45,7 +47,7 @@ class DeliveryTest {
                 return CompletableFuture<Void>().also { completions += it }
             }
         }
-        val listener = NewFlatEventListener(ListingContract(), MessageFormatter(), sender, properties(),
+        val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(), sender, properties(), testMapper,
             ListingMaps { mapCalls++; expectedMap })
         val result = listener.receive(record())
         assertEquals(1, mapCalls)
@@ -64,7 +66,7 @@ class DeliveryTest {
             delivered += chat
             CompletableFuture.completedFuture(null)
         }
-        NewFlatEventListener(ListingContract(), MessageFormatter(), sender, properties(),
+        NewFlatEventListener(ListingContract(testMapper), MessageFormatter(), sender, properties(), testMapper,
             ListingMaps { error("provider unavailable") }).receive(record()).join()
         assertEquals(listOf("123", "456"), delivered)
     }

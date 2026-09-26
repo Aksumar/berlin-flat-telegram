@@ -1,7 +1,7 @@
 package com.aksumar.telegram.maps
 
-import com.aksumar.telegram.contract.Listing
-import com.aksumar.telegram.contract.jsonMapper
+import com.aksumar.telegram.model.Listing
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.aksumar.telegram.config.AppProperties
 import org.springframework.stereotype.Component
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,13 +27,13 @@ fun interface ListingMaps { fun create(item: Listing): ListingMap? }
 @Component
 class GeoapifyMaps(
     private val apiKey: String,
+    private val mapper: ObjectMapper,
     private val geocodeUrl: String = "https://api.geoapify.com/v1/geocode/search",
     private val staticMapUrl: String = "https://maps.geoapify.com/v1/staticmap"
 ) : ListingMaps {
     @Autowired
-    constructor(properties: AppProperties) : this(properties.geoapifyApiKey)
+    constructor(properties: AppProperties, mapper: ObjectMapper) : this(properties.geoapifyApiKey, mapper)
 
-    private val mapper = jsonMapper()
     private val logger = LoggerFactory.getLogger(GeoapifyMaps::class.java)
     private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
 

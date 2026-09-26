@@ -1,22 +1,14 @@
-package com.aksumar.telegram.contract
+package com.aksumar.telegram.kafka
 
-import com.fasterxml.jackson.databind.DeserializationFeature
+import com.aksumar.telegram.model.Listing
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.stereotype.Component
 import java.time.LocalDate
-import com.aksumar.telegram.contract.exceptions.DeliveryException
-
-fun jsonMapper(): ObjectMapper = jacksonObjectMapper()
-    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-    .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+import com.aksumar.telegram.exception.DeliveryException
 
 @Component
-class ListingContract {
-    private val mapper = jsonMapper()
+class ListingContract(private val mapper: ObjectMapper) {
 
     fun decode(payload: String?): Listing = try {
         val node = mapper.readTree(payload ?: error("Missing event"))

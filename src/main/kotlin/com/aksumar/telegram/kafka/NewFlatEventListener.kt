@@ -4,9 +4,8 @@ import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.maps.ListingMaps
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.config.AppProperties
-import com.aksumar.telegram.contract.exceptions.DeliveryException
-import com.aksumar.telegram.contract.ListingContract
-import com.aksumar.telegram.contract.matchesListingKey
+import com.aksumar.telegram.exception.DeliveryException
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.aksumar.telegram.format.MessageFormatter
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
@@ -21,6 +20,7 @@ class NewFlatEventListener(
     private val formatter: MessageFormatter,
     private val sender: TelegramSender,
     private val properties: AppProperties,
+    private val mapper: ObjectMapper,
     private val maps: ListingMaps = ListingMaps { null }
 ) {
     private val log = LoggerFactory.getLogger(NewFlatEventListener::class.java)
@@ -39,7 +39,7 @@ class NewFlatEventListener(
     fun receive(record: ConsumerRecord<String, String>): CompletableFuture<Void> {
         return try {
             val item = contract.decode(record.value())
-            if (!matchesListingKey(record.key(), item.source, item.id)) {
+            if (!mapper.matchesListingKey(record.key(), item.source, item.id)) {
                 throw DeliveryException("Invalid Kafka event identity")
             }
 

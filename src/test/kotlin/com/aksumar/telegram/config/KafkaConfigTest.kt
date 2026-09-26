@@ -11,7 +11,7 @@ class KafkaConfigTest {
             chatIds = listOf("123")
         }
 
-        val config = properties.kafkaConfig()
+        val config = KafkaConfig().consumerFactory(properties).configurationProperties
 
         assertEquals(false, config["enable.auto.commit"])
         assertEquals(false, config["allow.auto.create.topics"])

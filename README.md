@@ -86,8 +86,9 @@ Kafka offsets are the only delivery state. A crash after Telegram accepts a mess
 the Kafka offset is committed can still cause a duplicate because Telegram does not provide an
 idempotency key.
 
-The service verifies broker/topic availability before starting the listener. Kafka/broker-level
-consumer failures send a Telegram alert to all configured chats and then stop the service.
+Spring manages Kafka listener startup and shutdown. Missing topics prevent listener startup.
+Kafka/broker-level consumer failures send a Telegram alert to all configured chats and stop
+the listener; restart the service to resume consumption.
 
 SIGTERM stops the listener through Spring's shutdown lifecycle; allow time for an in-flight
 HTTP request (30-second timeout) before force-killing.
