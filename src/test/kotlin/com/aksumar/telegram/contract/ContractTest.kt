@@ -11,6 +11,14 @@ class ContractTest {
     private val contract = ListingContract()
 
     @Test
+    fun `accepts Degewo Python event`() {
+        val payload = javaClass.getResource("/degewo-v2.json")!!.readText()
+        val item = contract.decode(payload)
+        assertEquals("degewo", item.source)
+        assertEquals("W1300.42303.0131-0504", item.id)
+    }
+
+    @Test
     fun `accepts WBM listing source`() {
         val tree = jsonMapper().readTree(fixture()) as ObjectNode
         tree.put("source", "wbm")

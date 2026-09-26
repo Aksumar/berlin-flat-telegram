@@ -88,6 +88,8 @@ Telegram's 4096 UTF-16-unit limit while retaining the URL.
 
 ## Source coverage
 
+- Degewo: address, area, rooms, Warmmiete, availability, explicit WBS and features.
+
 - WBM: address, district, area, rooms, Warmmiete, explicit WBS and features.
 
 - Berlinhaus: location, area, rooms and labelled rent from result cards.
