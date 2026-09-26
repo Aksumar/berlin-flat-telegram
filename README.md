@@ -118,17 +118,16 @@ test sender in Kafka integration tests.
 
 The build workflow runs on pull requests, pushes to `main`, `v*` tags, and manual
 runs. Feature-branch pushes do not start a second pipeline alongside the PR check.
-Both test suites run on the runner. The same `Dockerfile` is used locally and in
-GitHub Actions to build the JAR from source and package it with Java 21.
-PRs, version tags, and manual runs (including manual runs on main) only test the
-application and verify the image build. They do not publish images or upload
-artifacts. This is a build check, not a container startup test.
+Both test suites run on the runner. PRs, version tags, and manual runs only run
+the tests; Docker images are built only by the publication job on pushes to `main`.
+The same `Dockerfile` is used locally and in GitHub Actions.
 
 Only a push to `main` (normally after merging a PR) publishes images to GHCR after
 successful tests. Direct pushes to main follow the same path. The separate
 publication job is the only job with `packages: write`. Images receive
 `sha-<commit>`, `branch-main`, and `latest` tags. The publication job checks out
 the same commit and builds directly from source; no artifact transfer is needed.
+The image build runs on `main` after the PR tests have passed.
 
 On pushes to main, image/source archives, image metadata, commit ID, and SHA256
 checksums are exported and retained for 14 days. Test/publication report uploads
