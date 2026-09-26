@@ -58,13 +58,12 @@ class ContractTest {
         tree.putNull("rooms")
         tree.putNull("area_m2")
         tree.put("details", "DO NOT SHOW")
-        (tree["rent"] as ObjectNode).putNull("cold").put("warm_from", true)
+        (tree["rent"] as ObjectNode).putNull("cold")
 
         val item = contract.decode(tree.toString())
 
         assertNull(item.rooms)
         assertNull(item.areaM2)
         assertNull(item.rent.cold)
-        assertEquals(true, item.rent.warmFrom)
     }
 }

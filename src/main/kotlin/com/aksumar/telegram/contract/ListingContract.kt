@@ -55,8 +55,6 @@ class ListingContract {
             "heating_costs",
             "deposit"
         )
-        requireNullableBooleans(rent, "warm_from")
-
         val availability = node.requiredObject("availability")
         requireNullableText(availability, "date", "text")
 

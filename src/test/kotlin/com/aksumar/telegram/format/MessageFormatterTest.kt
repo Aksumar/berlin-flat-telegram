@@ -49,7 +49,7 @@ class MessageFormatterTest {
         val item = base.copy(
             rooms = null,
             areaM2 = null,
-            rent = base.rent.copy(cold = null, warmFrom = true)
+            rent = base.rent.copy(cold = null)
         )
 
         val text = formatter.format(item)
@@ -57,7 +57,7 @@ class MessageFormatterTest {
         assertTrue(text.contains("Комнат: не указано"))
         assertTrue(text.contains("Площадь: не указано"))
         assertTrue(text.contains("Kaltmiete: не указано"))
-        assertTrue(text.contains("Warmmiete: от 890,00"))
+        assertTrue(text.contains("Warmmiete: 890,00"))
         assertFalse(text.contains("Лифт:"))
     }
 

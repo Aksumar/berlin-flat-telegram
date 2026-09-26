@@ -33,7 +33,7 @@ class MessageFormatter {
 
     private fun addRent(lines: MutableList<String>, item: Listing) {
         lines += ""
-        lines += "Warmmiete: ${price(item.rent.warm, item.rent.warmFrom)}${if (item.rent.warm != null) "/мес." else ""}"
+        lines += "Warmmiete: ${price(item.rent.warm)}${if (item.rent.warm != null) "/мес." else ""}"
         lines += "Kaltmiete: ${price(item.rent.cold)}${if (item.rent.cold != null) "/мес." else ""}"
 
         addOptionalPrice(lines, "Коммунальные", item.rent.operatingCosts)

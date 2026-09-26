@@ -19,8 +19,7 @@ the available location even when a street or house number is not published.
 Rooms may be fractional. Prices are EUR per month, except `deposit` (one-time).
 `cold` is Kaltmiete; `warm` is the explicitly displayed Warmmiete/Gesamtmiete.
 Heating inclusion and price components depend on the source; unknown components
-are not inferred by subtraction. `warm_from: true` preserves a displayed “ab” price;
-false means an exact displayed total, null means unavailable. Allod's displayed total
+are not inferred by subtraction. Allod's displayed total
 is BasePrice + OperatingCost, exactly as in its frontend. InBerlinWohnen uses the
 labelled Gesamtmiete, **not rentGross**, which can exclude heating.
 
@@ -59,8 +58,7 @@ future fields but must reject invalid known field types before acknowledging Kaf
     "warm": 890,
     "operating_costs": 160,
     "heating_costs": 80,
-    "deposit": 1950,
-    "warm_from": false
+    "deposit": 1950
   },
   "availability": {
     "date": "2026-11-01",
