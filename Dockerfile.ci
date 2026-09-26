@@ -1,0 +1,6 @@
+# syntax=docker/dockerfile:1
+# CI supplies a minimal context containing the tested app.jar and this Dockerfile.
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY app.jar /app/app.jar
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

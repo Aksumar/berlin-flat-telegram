@@ -116,7 +116,25 @@ transient retries, permanent rejection handling, invalid-record skipping, and Ka
 preservation after exhausted transient delivery failures. Telegram itself is replaced with a
 test sender in Kafka integration tests.
 
-The build workflow runs both suites, builds/verifies the image, uploads reports and
-image/source archives, then publishes branch/SHA images to GHCR on pushes (`latest`
-only from the default branch). Production delivery is a long-running service; there is
-no scheduled GitHub Actions consumer.
+The build workflow runs on pull requests, pushes to `main`, `v*` tags, and manual
+runs. Feature-branch pushes do not start a second pipeline alongside the PR check.
+Both test suites and `bootJar` run once. CI packages that JAR using `Dockerfile.ci`
+and a minimal build context; the regular `Dockerfile` still builds from source locally.
+PRs verify the image build without publishing. This is a build check, not a container
+startup test.
+
+After successful tests, a separate publication job publishes images to GHCR on
+`main`, tags, and manual runs (including manually selected feature branches).
+Only this job has `packages: write`. Images receive `sha-<commit>` and either
+`branch-<branch>` or the Git tag; `latest` is updated only from the default branch.
+The tested JAR and image recipe are transferred between jobs as a one-day artifact.
+
+Test reports are retained for 14 days, including when tests fail. Image/source
+archives, image metadata, commit ID, and SHA256 checksums are exported only for tag
+runs or manual runs with **export_archives** enabled, and retained for 14 days.
+Use Actions → Build, test and publish → Run workflow to select a branch and enable
+that option. Manual runs also publish the image to GHCR. Ordinary runs use GHCR
+without exporting an image archive.
+
+Production delivery is a long-running service; there is no scheduled GitHub Actions
+consumer.

@@ -1,10 +1,15 @@
 name: Build, test and publish
 on:
   push:
-    branches-ignore: [telegram-state, delivery-state]
+    branches: [main]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      export_archives:
+        description: Export Docker image and source archives
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -17,9 +22,6 @@ jobs:
     defaults:
       run:
         shell: bash
-    permissions:
-      contents: read
-      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -28,45 +30,73 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - name: Prepare reports
-        run: mkdir -p reports dist
+        run: mkdir -p reports
       - name: Unit and Kafka integration tests
         run: ./gradlew test integrationTest bootJar --no-daemon 2>&1 | tee reports/tests.log
+      - name: Prepare image context
+        run: |
+          mkdir -p image-context
+          cp build/libs/app.jar image-context/app.jar
+          cp Dockerfile.ci image-context/Dockerfile
       - uses: docker/setup-buildx-action@v3
-      - name: Build image
+        if: github.event_name == 'pull_request'
+      - name: Verify image build
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
         with:
-          context: .
-          load: true
+          context: image-context
           platforms: linux/amd64
           tags: service-test:ci
-          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: Package artifacts
-        run: |
-          docker save service-test:ci | gzip > dist/image-linux-amd64.tar.gz
-          git archive --format=tar.gz HEAD > dist/source.tar.gz
-          docker image inspect service-test:ci > dist/image-inspect.json
-          printf '%s\n' "$GITHUB_SHA" > dist/commit.txt
-          cd dist
-          sha256sum image-linux-amd64.tar.gz source.tar.gz image-inspect.json commit.txt > SHA256SUMS
-      - name: Upload build artifacts
+          cache-from: type=gha,scope=telegram-runtime
+          cache-to: type=gha,scope=telegram-runtime,mode=max
+      - name: Upload tested JAR and image recipe
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: berlin-flat-telegram-${{ github.sha }}
-          path: dist/
+          name: telegram-image-context-${{ github.run_id }}
+          path: image-context/
+          overwrite: true
           compression-level: 0
-          retention-days: 14
+          retention-days: 1
           if-no-files-found: error
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: berlin-flat-telegram-reports-${{ github.sha }}
+          path: |
+            reports/
+            build/reports/tests/
+            build/test-results/
+          retention-days: 14
+
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        if: github.ref_type == 'tag' || inputs.export_archives == true
+      - uses: actions/download-artifact@v4
+        with:
+          name: telegram-image-context-${{ github.run_id }}
+          path: image-context
+      - uses: docker/setup-buildx-action@v3
       - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish tested image
-        if: github.event_name != 'pull_request'
+      - name: Prepare image tags
+        id: image
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
@@ -79,19 +109,56 @@ jobs:
             tags+=("branch-$branch")
             if [[ "$GITHUB_REF_NAME" == "$DEFAULT_BRANCH" ]]; then tags+=(latest); fi
           fi
+          mkdir -p reports
           for tag in "${tags[@]}"; do
-            docker tag service-test:ci "$image:$tag"
-            docker push "$image:$tag" 2>&1 | tee -a reports/publish.log
-            printf '%s\n' "$image:$tag" >> reports/published-images.txt
+            printf '%s\n' "$image:$tag" >> reports/image-tags.txt
           done
+          {
+            echo 'tags<<IMAGE_TAGS'
+            cat reports/image-tags.txt
+            echo IMAGE_TAGS
+            echo "reference=$image:sha-$GITHUB_SHA"
+          } >> "$GITHUB_OUTPUT"
+      - name: Build and publish image from tested JAR
+        uses: docker/build-push-action@v6
+        with:
+          context: image-context
+          push: true
+          load: ${{ github.ref_type == 'tag' || inputs.export_archives == true }}
+          platforms: linux/amd64
+          tags: ${{ steps.image.outputs.tags }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=telegram-runtime
+          cache-to: type=gha,scope=telegram-runtime,mode=max
+      - name: Record published images
+        run: |
+          cp reports/image-tags.txt reports/published-images.txt
           cat reports/published-images.txt >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload test and publication reports
+      - name: Package archives
+        if: github.ref_type == 'tag' || inputs.export_archives == true
+        env:
+          IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
+        run: |
+          mkdir -p dist
+          docker save "$IMAGE_REFERENCE" | gzip > dist/image-linux-amd64.tar.gz
+          git archive --format=tar.gz HEAD > dist/source.tar.gz
+          docker image inspect "$IMAGE_REFERENCE" > dist/image-inspect.json
+          printf '%s\n' "$GITHUB_SHA" > dist/commit.txt
+          cd dist
+          sha256sum image-linux-amd64.tar.gz source.tar.gz image-inspect.json commit.txt > SHA256SUMS
+      - name: Upload archives
+        if: github.ref_type == 'tag' || inputs.export_archives == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: berlin-flat-telegram-${{ github.sha }}
+          path: dist/
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+      - name: Upload publication reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: berlin-flat-telegram-reports-${{ github.sha }}
-          path: |
-            reports/
-            build/reports/tests/
-            build/test-results/
+          name: berlin-flat-telegram-publication-${{ github.sha }}
+          path: reports/
           retention-days: 14
