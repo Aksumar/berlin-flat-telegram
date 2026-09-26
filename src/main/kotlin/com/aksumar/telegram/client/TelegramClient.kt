@@ -1,57 +1,30 @@
 package com.aksumar.telegram.client
 
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
-import com.aksumar.telegram.config.AppProperties
-import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.maps.ListingMap
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.ByteArrayOutputStream
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
-import java.util.concurrent.TimeUnit
 import org.springframework.stereotype.Component
 
-fun interface TelegramSender {
-    fun sendListing(
-        chat: String,
-        text: String,
-        listingUrl: String,
-        map: ListingMap?,
-    ): CompletableFuture<Void> = send(chat, text)
-
-    fun send(chat: String, text: String): CompletableFuture<Void>
-}
-
 @Component
-class TelegramClient(properties: AppProperties, private val mapper: ObjectMapper) : TelegramSender {
-
-    private val endpoint: String
-    private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30)).build()
-
-    init {
-        require(properties.botToken.isNotBlank()) { "Telegram token is required" }
-        endpoint = "${properties.telegramBaseUrl}/bot${properties.botToken}"
-    }
-
+class TelegramClient(private val transport: TelegramTransport, private val mapper: ObjectMapper) :
+    TelegramSender {
     override fun send(chat: String, text: String): CompletableFuture<Void> = sendText(chat, text)
 
     private fun sendText(
-        chat: String,
+        chatId: String,
         text: String,
         silent: Boolean = false,
     ): CompletableFuture<Void> =
-        deliver(
+        transport.deliver(
             "sendMessage",
             "application/json",
             mapper.writeValueAsBytes(
                 mapOf(
-                    "chat_id" to chat,
+                    "chat_id" to chatId,
                     "text" to text,
                     "disable_notification" to silent,
                     "link_preview_options" to mapOf("is_disabled" to true),
@@ -66,179 +39,90 @@ class TelegramClient(properties: AppProperties, private val mapper: ObjectMapper
         map: ListingMap?,
     ): CompletableFuture<Void> {
         if (map == null) return send(chat, text)
-        val note = if (map.approximate) "\n📍 Примерное расположение" else ""
-        val fits = text.length + note.length <= 1024
-        val heading = text.substringBefore('\n').take(900).dropLastWhile { it.isHighSurrogate() }
-        val caption = (if (fits) text else heading) + note
-        val keyboard =
-            mapOf(
-                "inline_keyboard" to
-                    listOf(
-                        listOf(mapOf("text" to "📍 Открыть на карте", "url" to map.url)),
-                        listOf(mapOf("text" to "Посмотреть объявление ↗", "url" to listingUrl)),
-                    )
-            )
-        val boundary = "map-${UUID.randomUUID()}"
-        val body =
-            ByteArrayOutputStream().use { out ->
-                fun write(value: String) {
-                    out.write(value.toByteArray(Charsets.UTF_8))
-                }
-                for ((name, value) in
-                    mapOf(
-                        "chat_id" to chat,
-                        "caption" to caption,
-                        "reply_markup" to mapper.writeValueAsString(keyboard),
-                    )) {
-                    write(
-                        "--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n"
-                    )
-                }
-                write(
-                    "--$boundary\r\nContent-Disposition: form-data; name=\"photo\"; filename=\"map.png\"\r\nContent-Type: image/png\r\n\r\n"
-                )
-                out.write(map.png)
-                write("\r\n--$boundary--\r\n")
-                out.toByteArray()
-            }
-        // A rejected photo must not discard the listing. Retry transient failures
-        // through the normal delivery path so Kafka retains uncommitted records.
-        return deliver("sendPhoto", "multipart/form-data; boundary=$boundary", body)
+
+        val locationNote = if (map.approximate) "\n📍 Примерное расположение" else ""
+        val fullTextFitsCaption = text.length + locationNote.length <= 1024
+        val caption = createMapCaption(text, locationNote, fullTextFitsCaption)
+
+        return sendMapPhoto(chat, caption, listingUrl, map)
             .handle { _, failure ->
-                if (failure == null) {
-                    if (fits) CompletableFuture.completedFuture<Void>(null)
-                    else sendText(chat, text, silent = true)
-                } else {
-                    val cause = unwrap(failure)
-                    if (cause is TelegramDeliveryException && !cause.retryable) send(chat, text)
-                    else CompletableFuture.failedFuture<Void>(cause)
-                }
+                if (failure != null) handlePhotoDeliveryFailure(chat, text, failure)
+                else if (fullTextFitsCaption) CompletableFuture.completedFuture<Void>(null)
+                else sendText(chat, text, silent = true)
             }
             .thenCompose { it }
     }
 
-    private fun deliver(
-        method: String,
-        contentType: String,
-        body: ByteArray,
-        attempt: Int = 1,
+    private fun createMapCaption(
+        text: String,
+        locationNote: String,
+        fullTextFits: Boolean,
+    ): String {
+        val captionText =
+            if (fullTextFits) text
+            else text.substringBefore('\n').take(900).dropLastWhile { it.isHighSurrogate() }
+        return captionText + locationNote
+    }
+
+    private fun sendMapPhoto(
+        chat: String,
+        caption: String,
+        listingUrl: String,
+        map: ListingMap,
     ): CompletableFuture<Void> {
-        return request(method, contentType, body)
-            .handle { response, failure ->
-                when {
-                    failure != null -> RetryDecision.retry(defaultRetryDelay(attempt))
-                    response!!.statusCode() in 200..299 && isTelegramSuccess(response.body()) ->
-                        RetryDecision.success()
+        val boundary = "map-${UUID.randomUUID()}"
+        val keyboard = createListingKeyboard(map.url, listingUrl)
+        val body = buildMapPhotoBody(chat, caption, keyboard, map.png, boundary)
+        return transport.deliver("sendPhoto", "multipart/form-data; boundary=$boundary", body)
+    }
 
-                    response.statusCode() == 429 ->
-                        RetryDecision.retry(
-                            retryAfter(response.body()) ?: defaultRetryDelay(attempt)
-                        )
-
-                    response.statusCode() >= 500 -> RetryDecision.retry(defaultRetryDelay(attempt))
-
-                    else -> RetryDecision.fail(retryable = false)
-                }
-            }
-            .thenCompose { decision ->
-                when {
-                    decision.success -> CompletableFuture.completedFuture<Void>(null)
-                    decision.retryDelay != null && attempt < MAX_ATTEMPTS ->
-                        CompletableFuture.runAsync(
-                                {},
-                                CompletableFuture.delayedExecutor(
-                                    decision.retryDelay.seconds,
-                                    TimeUnit.SECONDS,
-                                ),
-                            )
-                            .thenCompose { deliver(method, contentType, body, attempt + 1) }
-
-                    else ->
-                        CompletableFuture.failedFuture(
-                            TelegramDeliveryException(
-                                "Telegram delivery failed",
-                                retryable = decision.retryDelay != null || decision.retryable,
-                            )
-                        )
-                }
-            }
-            .exceptionallyCompose { error ->
-                val cause = unwrap(error)
-                if (cause is TelegramDeliveryException) {
-                    CompletableFuture.failedFuture(cause)
-                } else {
-                    CompletableFuture.failedFuture(
-                        TelegramDeliveryException("Telegram delivery failed", retryable = true)
+    private fun createListingKeyboard(mapUrl: String, listingUrl: String): String =
+        mapper.writeValueAsString(
+            mapOf(
+                "inline_keyboard" to
+                    listOf(
+                        listOf(mapOf("text" to "📍 Открыть на карте", "url" to mapUrl)),
+                        listOf(mapOf("text" to "Посмотреть объявление ↗", "url" to listingUrl)),
                     )
-                }
+            )
+        )
+
+    private fun buildMapPhotoBody(
+        chat: String,
+        caption: String,
+        keyboard: String,
+        png: ByteArray,
+        boundary: String,
+    ): ByteArray =
+        ByteArrayOutputStream().use { out ->
+            fun write(value: String) {
+                out.write(value.toByteArray(Charsets.UTF_8))
             }
-    }
-
-    private fun request(
-        method: String,
-        contentType: String,
-        body: ByteArray,
-    ): CompletableFuture<HttpResponse<String>> {
-        return try {
-            val request =
-                HttpRequest.newBuilder(URI.create("$endpoint/$method"))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("Content-Type", contentType)
-                    .POST(HttpRequest.BodyPublishers.ofByteArray(body))
-                    .build()
-
-            client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-        } catch (_: Exception) {
-            CompletableFuture.failedFuture(DeliveryException("Telegram request failed"))
+            for ((name, value) in
+                mapOf("chat_id" to chat, "caption" to caption, "reply_markup" to keyboard)) {
+                write(
+                    "--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n"
+                )
+            }
+            write(
+                "--$boundary\r\nContent-Disposition: form-data; name=\"photo\"; filename=\"map.png\"\r\nContent-Type: image/png\r\n\r\n"
+            )
+            out.write(png)
+            write("\r\n--$boundary--\r\n")
+            out.toByteArray()
         }
+
+    private fun handlePhotoDeliveryFailure(
+        chat: String,
+        text: String,
+        failure: Throwable,
+    ): CompletableFuture<Void> {
+        val cause = unwrap(failure)
+        // Only permanent photo rejection falls back to text; transient failures remain uncommitted.
+        return if (cause is TelegramDeliveryException && !cause.retryable) send(chat, text)
+        else CompletableFuture.failedFuture(cause)
     }
-
-    private fun isTelegramSuccess(body: String?): Boolean =
-        runCatching {
-                val ok = mapper.readTree(body ?: "null")?.get("ok")
-                ok?.isBoolean == true && ok.booleanValue()
-            }
-            .getOrDefault(false)
-
-    private fun retryAfter(body: String?): Duration? =
-        runCatching {
-                mapper
-                    .readTree(body ?: "null")
-                    ?.path("parameters")
-                    ?.path("retry_after")
-                    ?.takeIf { it.isIntegralNumber }
-                    ?.asLong()
-                    ?.coerceAtLeast(1)
-                    ?.coerceAtMost(MAX_RETRY_AFTER_SECONDS)
-                    ?.let(Duration::ofSeconds)
-            }
-            .getOrNull()
-
-    private fun defaultRetryDelay(attempt: Int): Duration =
-        Duration.ofSeconds((1L shl (attempt - 1)).coerceAtMost(MAX_BACKOFF_SECONDS))
 
     private fun unwrap(error: Throwable): Throwable =
         if (error is CompletionException && error.cause != null) error.cause!! else error
-
-    private data class RetryDecision(
-        val success: Boolean,
-        val retryDelay: Duration?,
-        val retryable: Boolean,
-    ) {
-        companion object {
-            fun success() = RetryDecision(success = true, retryDelay = null, retryable = false)
-
-            fun retry(delay: Duration) =
-                RetryDecision(success = false, retryDelay = delay, retryable = true)
-
-            fun fail(retryable: Boolean) =
-                RetryDecision(success = false, retryDelay = null, retryable = retryable)
-        }
-    }
-
-    companion object {
-        private const val MAX_ATTEMPTS = 4
-        private const val MAX_BACKOFF_SECONDS = 4L
-        private const val MAX_RETRY_AFTER_SECONDS = 30L
-    }
 }

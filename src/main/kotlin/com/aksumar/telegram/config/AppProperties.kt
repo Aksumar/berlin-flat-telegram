@@ -5,7 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties("app")
 class AppProperties {
     var bootstrapServers: String = ""
-    var topic: String = "berlin-flat-listings-v1"
     var groupId: String = "berlin-flat-telegram-v1"
     var geoapifyApiKey: String = ""
     var telegramBaseUrl: String = "https://api.telegram.org"

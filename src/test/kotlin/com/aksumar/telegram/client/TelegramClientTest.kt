@@ -29,10 +29,13 @@ class TelegramClientTest {
 
         fun client() =
             TelegramClient(
-                AppProperties().apply {
-                    botToken = "test"
-                    telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
-                },
+                TelegramTransport(
+                    AppProperties().apply {
+                        botToken = "test"
+                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                    },
+                    testMapper,
+                ),
                 testMapper,
             )
 
@@ -129,10 +132,13 @@ class TelegramClientTest {
         try {
             val client =
                 TelegramClient(
-                    AppProperties().apply {
-                        botToken = "test"
-                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
-                    },
+                    TelegramTransport(
+                        AppProperties().apply {
+                            botToken = "test"
+                            telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                        },
+                        testMapper,
+                    ),
                     testMapper,
                 )
             client.send("-123", "Привет").join()
@@ -163,10 +169,13 @@ class TelegramClientTest {
 
         try {
             TelegramClient(
-                    AppProperties().apply {
-                        botToken = "test"
-                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
-                    },
+                    TelegramTransport(
+                        AppProperties().apply {
+                            botToken = "test"
+                            telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                        },
+                        testMapper,
+                    ),
                     testMapper,
                 )
                 .send("1", "test")
@@ -200,10 +209,13 @@ class TelegramClientTest {
 
         try {
             TelegramClient(
-                    AppProperties().apply {
-                        botToken = "test"
-                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
-                    },
+                    TelegramTransport(
+                        AppProperties().apply {
+                            botToken = "test"
+                            telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                        },
+                        testMapper,
+                    ),
                     testMapper,
                 )
                 .send("1", "test")
@@ -231,10 +243,13 @@ class TelegramClientTest {
         try {
             val client =
                 TelegramClient(
-                    AppProperties().apply {
-                        botToken = "test"
-                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
-                    },
+                    TelegramTransport(
+                        AppProperties().apply {
+                            botToken = "test"
+                            telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                        },
+                        testMapper,
+                    ),
                     testMapper,
                 )
             val ex =
