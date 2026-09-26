@@ -31,32 +31,7 @@ jobs:
       - name: Prepare reports
         run: mkdir -p reports
       - name: Unit and Kafka integration tests
-        run: ./gradlew test integrationTest bootJar --no-daemon 2>&1 | tee reports/tests.log
-      - name: Prepare image context
-        run: |
-          mkdir -p image-context
-          cp build/libs/app.jar image-context/app.jar
-          cp Dockerfile.ci image-context/Dockerfile
-      - uses: docker/setup-buildx-action@v3
-        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
-      - name: Verify image build
-        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
-        run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            --output type=cacheonly \
-            --progress plain \
-            image-context
-      - name: Upload tested JAR and image recipe
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: telegram-image-context-${{ github.run_id }}
-          path: image-context/
-          overwrite: true
-          compression-level: 0
-          retention-days: 1
-          if-no-files-found: error
+        run: ./gradlew test integrationTest --no-daemon 2>&1 | tee reports/tests.log
       - name: Upload test reports
         if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && env.UPLOAD_REPORTS == 'true'
         uses: actions/upload-artifact@v4
@@ -81,10 +56,6 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: telegram-image-context-${{ github.run_id }}
-          path: image-context
       - uses: docker/setup-buildx-action@v3
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -107,17 +78,17 @@ jobs:
             echo IMAGE_TAGS
             echo "reference=$image:sha-$GITHUB_SHA"
           } >> "$GITHUB_OUTPUT"
-      - name: Build and publish image from tested JAR
+      - name: Build and publish image
         uses: docker/build-push-action@v6
         with:
-          context: image-context
+          context: .
           push: true
           load: true
           platforms: linux/amd64
           tags: ${{ steps.image.outputs.tags }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          cache-from: type=gha,scope=telegram-runtime
-          cache-to: type=gha,scope=telegram-runtime,mode=max
+          cache-from: type=gha,scope=telegram-image
+          cache-to: type=gha,scope=telegram-image,mode=max
       - name: Record published images
         run: |
           cp reports/image-tags.txt reports/published-images.txt
