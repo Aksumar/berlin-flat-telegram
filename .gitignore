@@ -1,11 +1,22 @@
+# Gradle / Kotlin
 .gradle/
 .kotlin/
 build/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Local environment
 .env
 .env.*
 !.env.example
-state/
-debug/
-.idea/
-*.iml
-__pycache__/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# macOS
+.DS_Store

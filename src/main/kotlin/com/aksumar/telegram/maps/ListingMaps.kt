@@ -1,4 +1,10 @@
-package com.aksumar.telegram
+package com.aksumar.telegram.maps
+
+import com.aksumar.telegram.contract.Listing
+import com.aksumar.telegram.contract.jsonMapper
+import com.aksumar.telegram.config.AppProperties
+import org.springframework.stereotype.Component
+import org.springframework.beans.factory.annotation.Autowired
 
 import org.slf4j.LoggerFactory
 import java.awt.Color
@@ -18,11 +24,15 @@ data class ListingMap(val png: ByteArray, val url: String, val approximate: Bool
 fun interface ListingMaps { fun create(item: Listing): ListingMap? }
 
 /** Optional enrichment: missing keys, uncertain locations and provider outages never suppress a listing. */
+@Component
 class GeoapifyMaps(
     private val apiKey: String,
     private val geocodeUrl: String = "https://api.geoapify.com/v1/geocode/search",
     private val staticMapUrl: String = "https://maps.geoapify.com/v1/staticmap"
 ) : ListingMaps {
+    @Autowired
+    constructor(properties: AppProperties) : this(properties.geoapifyApiKey)
+
     private val mapper = jsonMapper()
     private val logger = LoggerFactory.getLogger(GeoapifyMaps::class.java)
     private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build()
@@ -53,7 +63,7 @@ class GeoapifyMaps(
                 rank.path("match_type").asText() == "full_match"
             val zoom = when (type) { "building", "street" -> "15"; else -> "12" }
             val common = mapOf("style" to "osm-bright", "format" to "png", "lang" to "de",
-                "marker" to "lonlat:$lon,$lat;color:#e53935;size:36", "attribution" to "default")
+                "marker" to "lonlat:$lon,$lat;color:#e53935;size:36;icon:home;icontype:material", "attribution" to "default")
             val detail = readMap(get(staticMapUrl, common + mapOf("width" to "640", "height" to "400",
                 "center" to "lonlat:$lon,$lat", "zoom" to zoom)), 640, 400)
             val overview = readMap(get(staticMapUrl, common + mapOf("width" to "192", "height" to "160",

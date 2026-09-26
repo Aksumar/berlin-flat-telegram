@@ -1,16 +1,11 @@
 # Listing Kafka contract v2
 
-New events use `version: 2`. The Kafka topic remains `berlin-flat-listings-v1`:
-the topic name does not specify the payload version. The key remains compact JSON
-`[source,id]`; IDs, baselines and Telegram delivery state must not be reset.
+The payload contract is `version: 2`. The Kafka topic is `berlin-flat-listings-v1`;
+the topic name is independent of the payload version. The key is compact JSON
+`[source,id]`.
 
-The Telegram consumer accepts **only v2**. A v1 event is rejected before delivery
-or offset commit and stops that consumer run; it is not silently skipped.
-
-For rollout, stop the old watcher and drain any v1 backlog/outbox with the old
-consumer before switching both services to v2. Keep the same consumer group and
-state volumes. Do not resume a v1 producer against the v2-only consumer. Payload
-versions are independent of the delivery-state version and topic/group names.
+The Telegram consumer accepts only contract version 2. Any other version is treated
+as an invalid record.
 
 ## Fields
 
@@ -35,7 +30,7 @@ use nullable booleans: absent mention does not imply false. `wbs.text` preserves
 published eligibility restrictions. Only explicit positive feature labels are extracted;
 free prose is not treated as proof that a feature exists.
 
-V2 excludes the old unstructured `details` field. Consumers may ignore additional
+The contract does not include an unstructured `details` field. Consumers may ignore additional
 future fields but must reject invalid known field types before acknowledging Kafka.
 
 ## Example
@@ -86,20 +81,16 @@ future fields but must reject invalid known field types before acknowledging Kaf
 
 ## Telegram layout
 
-The heading contains the source website and optional district, without “Новая квартира”.
-Address, area, rooms, Warmmiete and Kaltmiete always appear (`не указано` for unknown
-values). Other unknown fields are omitted. The company appears near the end only
-when it differs from the source; the full listing URL ends the message. Long messages
-are truncated within Telegram's 4096 UTF-16-unit limit while retaining the URL.
-There is no legacy v1 rendering path.
-
-With `GEOAPIFY_API_KEY`, the consumer optionally enriches the address with a map photo
-and a Berlin overview inset. No payload changes are required. Approximate locations
-are labelled; unavailable or uncertain maps fall back to text. Captions exceeding
-1024 UTF-16 units use a short photo caption plus a separate silent full-text message.
-All Telegram requests must succeed before the event is acknowledged.
+One house emoji, source website and optional district in the heading; no “Новая квартира” label. Address, area, rooms, Warmmiete and Kaltmiete always
+appear (`не указано` for unknown values). Other unknown fields are omitted. The company appears only when it differs from the source. The full listing URL ends the message. Long messages are truncated within
+Telegram's 4096 UTF-16-unit limit while retaining the URL. With `GEOAPIFY_API_KEY`,
+a map with a Berlin overview accompanies the listing; approximate matches are labelled.
+Captions exceeding 1024 units use a heading on the photo and a separate quiet text message.
+Missing or failed map enrichment does not suppress delivery.
 
 ## Source coverage
+
+- Degewo: address, area, rooms, Warmmiete, availability, explicit WBS and features.
 
 - WBM: address, district, area, rooms, Warmmiete, explicit WBS and features.
 

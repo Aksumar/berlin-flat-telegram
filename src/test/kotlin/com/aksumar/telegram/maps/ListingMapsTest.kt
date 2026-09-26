@@ -1,4 +1,7 @@
-package com.aksumar.telegram
+package com.aksumar.telegram.maps
+
+import com.aksumar.telegram.contract.Address
+import com.aksumar.telegram.support.event
 
 import com.sun.net.httpserver.HttpServer
 import org.junit.jupiter.api.Assertions.*
