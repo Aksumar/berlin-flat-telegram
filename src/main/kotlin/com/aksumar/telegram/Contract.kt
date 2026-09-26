@@ -32,7 +32,7 @@ class Contract {
         val node = mapper.readTree(payload ?: error("Missing event"))
         require(node.isObject && node["version"]?.isIntegralNumber == true && node["version"].asText() == "2")
         listOf("source", "id", "title", "url").forEach { require(node[it]?.isTextual == true) }
-        require(node["source"].asText() in setOf("allod", "rbb", "berlinhaus", "berlinovo", "gewobag", "inberlinwohnen"))
+        require(node["source"].asText() in setOf("allod", "rbb", "berlinhaus", "berlinovo", "gewobag", "wbm", "degewo", "inberlinwohnen"))
         fields(node, "string", "floor", "provider")
         fields(node, "number", "area_m2", "rooms")
         fields(node.required("address"), "string", "full", "street", "house_number", "postal_code", "city", "district")

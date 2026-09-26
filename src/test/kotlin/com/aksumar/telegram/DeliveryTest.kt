@@ -6,6 +6,27 @@ import org.junit.jupiter.api.Test
 import org.springframework.kafka.support.Acknowledgment
 
 class DeliveryTest {
+    @Test fun `map is prepared once for all recipients and failed photo is not acknowledged`() {
+        var created = 0
+        var acked = false
+        val map = ListingMap(byteArrayOf(1), "https://www.openstreetmap.org/", false)
+        val maps = ListingMaps { created++; map }
+        val delivered = mutableListOf<String>()
+        val sender = object : TelegramSender {
+            override fun send(chat: String, text: String) { fail<Unit>("Expected photo") }
+            override fun sendListing(chat: String, text: String, listingUrl: String, map: ListingMap?) {
+                assertNotNull(map)
+                delivered += chat
+                if (chat == "456") throw DeliveryException("Photo failed")
+            }
+        }
+        val listener = ListingListener(Contract(), MessageFormatter(), sender, props(), maps)
+        assertThrows(DeliveryException::class.java) { listener.receive(record(), Acknowledgment { acked = true }) }
+        assertEquals(1, created)
+        assertEquals(listOf("123", "456"), delivered)
+        assertFalse(acked)
+    }
+
     private fun props() = AppProperties().apply { chatIds = "123, 456,123" }
     private fun record(value: String = fixture(), key: String = "[\"gewobag\",\"123\"]") =
         ConsumerRecord("test", 0, 0, key, value)

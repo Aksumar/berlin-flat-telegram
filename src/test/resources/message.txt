@@ -1,4 +1,4 @@
-🏠 Новая квартира · Mitte
+Gewobag · Mitte
 
 Адрес: Musterstraße 12, 10115 Berlin
 Площадь: 64,5 м²
@@ -15,6 +15,4 @@ Kaltmiete: 650,00 €/мес.
 WBS: не требуется
 Балкон: есть
 
-Компания: Gewobag
-Источник: Gewobag
 https://example.com/123

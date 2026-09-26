@@ -86,13 +86,22 @@ future fields but must reject invalid known field types before acknowledging Kaf
 
 ## Telegram layout
 
-One house emoji in the heading. Address, area, rooms, Warmmiete and Kaltmiete always
-appear (`не указано` for unknown values). Other unknown fields are omitted. Company,
-source and the full listing URL end the message. Long messages are truncated within
-Telegram's 4096 UTF-16-unit limit while retaining the URL. There is no legacy
-v1 rendering path.
+The heading contains the source website and optional district, without “Новая квартира”.
+Address, area, rooms, Warmmiete and Kaltmiete always appear (`не указано` for unknown
+values). Other unknown fields are omitted. The company appears near the end only
+when it differs from the source; the full listing URL ends the message. Long messages
+are truncated within Telegram's 4096 UTF-16-unit limit while retaining the URL.
+There is no legacy v1 rendering path.
+
+With `GEOAPIFY_API_KEY`, the consumer optionally enriches the address with a map photo
+and a Berlin overview inset. No payload changes are required. Approximate locations
+are labelled; unavailable or uncertain maps fall back to text. Captions exceeding
+1024 UTF-16 units use a short photo caption plus a separate silent full-text message.
+All Telegram requests must succeed before the event is acknowledged.
 
 ## Source coverage
+
+- WBM: address, district, area, rooms, Warmmiete, explicit WBS and features.
 
 - Berlinhaus: location, area, rooms and labelled rent from result cards.
 - Berlinovo: location, area if provided, rooms, floor, total rent, availability and WBS.

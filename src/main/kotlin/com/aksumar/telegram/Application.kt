@@ -18,6 +18,7 @@ class AppProperties {
     var botToken: String = ""
     var chatIds: String = ""
     var chatId: String = ""
+    var geoapifyApiKey: String = ""
 
     fun chats(): List<String> = (chatIds.trim().ifEmpty { chatId }).split(',').map { it.trim() }
         .filter { it.isNotEmpty() }.distinct().also { require(it.isNotEmpty()) { "Telegram destination is required" } }
@@ -31,7 +32,7 @@ class AppProperties {
             ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
             ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG to false,
             ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 1,
-            ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to maxOf(300_000, chats().size * 35_000 + 60_000),
+            ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to maxOf(300_000, chats().size * 65_000 + 60_000),
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
             ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
             "security.protocol" to "PLAINTEXT"
@@ -44,6 +45,7 @@ class AppProperties {
 @EnableConfigurationProperties(AppProperties::class)
 class Application {
     @Bean fun telegramSender(properties: AppProperties): TelegramSender = TelegramClient(properties.botToken)
+    @Bean fun listingMaps(properties: AppProperties): ListingMaps = GeoapifyMaps(properties.geoapifyApiKey)
 }
 
 fun main(args: Array<String>) {

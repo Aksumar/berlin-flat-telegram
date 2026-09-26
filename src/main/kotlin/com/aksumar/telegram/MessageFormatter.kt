@@ -23,7 +23,9 @@ class MessageFormatter {
             listOfNotNull(a.street, a.houseNumber).filter { it.isNotEmpty() }.joinToString(" "),
             listOfNotNull(a.postalCode, a.city).filter { it.isNotEmpty() }.joinToString(" ")
         ).filter { it.isNotEmpty() }.joinToString(", ").ifEmpty { null }
-        val heading = "🏠 Новая квартира" + (a.district?.takeIf { it.isNotEmpty() }?.let { " · ${text(it)}" } ?: "")
+        val source = mapOf("allod" to "Allod", "rbb" to "RBB", "berlinhaus" to "Berlinhaus", "berlinovo" to "Berlinovo",
+            "degewo" to "Degewo", "wbm" to "WBM", "gewobag" to "Gewobag", "inberlinwohnen" to "InBerlinWohnen").getValue(item.source)
+        val heading = source + (a.district?.takeIf { it.isNotEmpty() }?.let { " · ${text(it)}" } ?: "")
         val lines = mutableListOf(heading, "", "Адрес: ${text(location)}",
             "Площадь: ${number(item.areaM2)}" + if (item.areaM2 != null) " м²" else "", "Комнат: ${number(item.rooms)}")
         item.floor?.let { lines += "Этаж: ${text(it)}" }
@@ -41,10 +43,7 @@ class MessageFormatter {
             .forEach { (label, value) -> if (value != null) extra += "$label: ${if (value) "есть" else "нет"}" }
         if (extra.isNotEmpty()) lines += listOf("") + extra
         lines += ""
-        item.provider?.takeIf { it.isNotEmpty() }?.let { lines += "Компания: ${text(it)}" }
-        val source = mapOf("allod" to "Allod", "rbb" to "RBB", "berlinhaus" to "Berlinhaus", "berlinovo" to "Berlinovo",
-            "gewobag" to "Gewobag", "inberlinwohnen" to "InBerlinWohnen").getValue(item.source)
-        lines += "Источник: $source"
+        item.provider?.takeIf { it.isNotEmpty() && !it.equals(source, ignoreCase = true) }?.let { lines += "Компания: ${text(it)}" }
         var body = lines.joinToString("\n")
         val budget = 4096 - item.url.length - 1
         if (budget < 1) throw DeliveryException("Listing URL exceeds Telegram limit")

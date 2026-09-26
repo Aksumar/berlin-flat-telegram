@@ -11,9 +11,34 @@ class ContractAndFormatterTest {
     private val contract = Contract()
     private val formatter = MessageFormatter()
 
-    @Test fun `renders exactly the existing Python template`() {
-        val expected = javaClass.getResource("/message.txt")!!.readText()
+    @Test fun `renders the source first notification template`() {
+        val expected = javaClass.getResource("/message.txt")!!.readText().trimEnd('\n')
         assertEquals(expected, formatter.format(event()))
+    }
+    @Test fun `source site is distinct from housing company`() {
+        val text = formatter.format(event().copy(source = "inberlinwohnen", provider = "Gewobag"))
+        assertTrue(text.startsWith("InBerlinWohnen · Mitte\n"))
+        assertTrue(text.contains("Компания: Gewobag"))
+        assertFalse(text.contains("Новая квартира"))
+        assertFalse(text.contains("Источник:"))
+    }
+    @Test fun `accepts and renders WBM source`() {
+        val tree = jsonMapper().readTree(fixture()) as ObjectNode
+        tree.put("source", "wbm"); tree.put("provider", "WBM")
+        tree.put("id", "50-867500/10/144")
+        tree.put("url", "https://www.wbm.de/wohnungen-berlin/angebote/details/example/")
+        val item = contract.decode(tree.toString())
+        assertEquals("wbm", item.source)
+        assertTrue(formatter.format(item).contains("WBM"))
+        assertTrue(formatter.format(item).endsWith(item.url))
+    }
+    @Test fun `accepts and renders Degewo source`() {
+        val tree = jsonMapper().readTree(fixture()) as ObjectNode
+        tree.put("source", "degewo"); tree.put("provider", "Degewo")
+        val item = contract.decode(tree.toString())
+        assertEquals("degewo", item.source)
+        assertTrue(formatter.format(item).contains("Degewo"))
+        assertTrue(formatter.format(item).endsWith(item.url))
     }
     @Test fun `rejects old versions and malformed known fields`() {
         val invalid = listOf("null", "[]", "{}", "{\"version\":1}", fixture().replace("\"version\": 2", "\"version\": true"),

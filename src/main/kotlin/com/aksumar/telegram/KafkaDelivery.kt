@@ -61,7 +61,8 @@ class KafkaConfiguration {
 
 @Component
 class ListingListener(private val contract: Contract, private val formatter: MessageFormatter,
-    private val sender: TelegramSender, private val properties: AppProperties) {
+    private val sender: TelegramSender, private val properties: AppProperties,
+    private val maps: ListingMaps = ListingMaps { null }) {
     @KafkaListener(id = "listings", topics = ["\${app.topic}"], groupId = "\${app.group-id}")
     fun receive(record: ConsumerRecord<String, String>, acknowledgment: Acknowledgment) {
         try {
@@ -69,7 +70,8 @@ class ListingListener(private val contract: Contract, private val formatter: Mes
             val key = listingKey(item.source, item.id)
             if (record.key() != key) throw DeliveryException("Invalid Kafka event identity")
             val text = formatter.format(item)
-            for (chat in properties.chats()) sender.send(chat, text)
+            val map = maps.create(item)
+            for (chat in properties.chats()) sender.sendListing(chat, text, item.url, map)
             acknowledgment.acknowledge()
         } catch (_: Exception) {
             throw DeliveryException("Listing delivery failed")

@@ -1,8 +1,6 @@
 # Berlin Flat Telegram
 
-Kotlin/JVM 21 and Spring Boot consumer for apartment notifications. Accepts **only
-Kafka listing contract v2** and renders one Russian Telegram template with one house
-emoji. See [the event contract](docs/listing-v2.md) for fields and source semantics.
+Kotlin/JVM 21 and Spring Boot consumer for apartment notifications. Sends notifications to Telegram.
 
 ## Build and run
 
@@ -12,8 +10,6 @@ Requires JDK 21; Gradle is provided by the checked-in wrapper.
 ./gradlew test bootJar
 java -jar build/libs/app.jar
 ```
-
-The application runs continuously until it is stopped.
 
 Copy `.env.example` for reference and export the variables through your shell,
 container or deployment system. The application does not automatically load `.env`.
@@ -26,6 +22,40 @@ container or deployment system. The application does not automatically load `.en
 | `TELEGRAM_BOT_TOKEN` | Required |
 | `TELEGRAM_CHAT_IDS` | Comma-separated chat IDs; blanks removed and duplicates collapsed |
 | `TELEGRAM_CHAT_ID` | Fallback when CHAT_IDS is empty |
+| `GEOAPIFY_API_KEY` | Optional; enables map photos. Empty means text-only delivery |
+
+## Map notifications
+
+The heading is the source website and district (for example `Gewobag · Mitte`).
+The housing company is shown separately only when it differs from the source.
+
+To enable maps, create a Geoapify project and API key at
+https://myprojects.geoapify.com/ and set `GEOAPIFY_API_KEY` in the service environment.
+Restart the service after changing the environment. The application does not read a
+local `.env` automatically; use the deployment environment or Docker `--env-file`.
+Never commit real keys. Geocoding and Static Maps are used; Routing API is not needed.
+
+For each listing, the service finds coordinates within the Berlin search area, downloads
+a 640×400 neighborhood map and a small city overview, and combines them into one PNG.
+The photo is generated once and reused for all recipients. Geoapify and map-data
+attribution remain visible. Provider URLs and credentials are not sent to Telegram:
+the PNG is uploaded, and the map button opens OpenStreetMap.
+
+Street, district and postcode matches are explicitly marked as approximate. City-only,
+out-of-area and low-confidence results produce text-only notifications. Requests time
+out after five seconds each; missing keys, quota errors and map failures also fall back
+to text. These optional failures do not cause Kafka redelivery.
+
+Photo captions contain the listing and map precision note when they fit Telegram's
+1,024-character limit. Longer listings use a short photo caption followed by the full
+text with `disable_notification=true`. Both requests must succeed before acknowledgment;
+a failure or restart between them can repeat the photo, consistent with at-least-once
+delivery. Photo notifications have map and listing buttons. Text-only notifications
+retain the listing URL.
+
+Geoapify has a Free tier; check current quotas and attribution requirements at
+https://www.geoapify.com/pricing/ and https://apidocs.geoapify.com/docs/maps/static/.
+Maps stay disabled until a key is configured. No subscription is created by this app.
 
 ## Delivery and recovery
 
@@ -67,7 +97,8 @@ Use `stop_grace_period: 90s` so an in-flight Telegram request can finish cleanly
 ./gradlew check bootJar         # Both suites plus executable JAR
 ```
 
-Tests cover the exact Python message template, strict v2 validation, UTF-16 limits,
+Tests cover the source-first message template, strict v2 validation, UTF-16 limits,
+map composition and fallback, photo uploads, long-caption delivery,
 HTTP failures without token disclosure, failed delivery without Kafka acknowledgment,
 and successful retry/commit behavior. Integration tests start the
 real Spring listener against Kafka, verify committed offsets and ensure v1 stops

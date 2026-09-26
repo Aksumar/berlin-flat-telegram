@@ -58,7 +58,8 @@ class KafkaIntegrationTest {
     private fun publish(topic: String, payload: String = fixture()) {
         KafkaProducer<String, String>(mapOf("bootstrap.servers" to kafka.bootstrapServers,
             "key.serializer" to StringSerializer::class.java, "value.serializer" to StringSerializer::class.java)).use {
-            it.send(ProducerRecord(topic, listingKey("gewobag", "123"), payload)).get(30, TimeUnit.SECONDS)
+            val tree = jsonMapper().readTree(payload)
+            it.send(ProducerRecord(topic, listingKey(tree["source"].asText(), tree["id"].asText()), payload)).get(30, TimeUnit.SECONDS)
         }
     }
     private fun offset(group: String, topic: String): Long? = AdminClient.create(mapOf("bootstrap.servers" to kafka.bootstrapServers)).use {
@@ -83,6 +84,19 @@ class KafkaIntegrationTest {
             assertEquals(listOf("123"), sender.chats)
             assertNull(offset(group, topic))
         }
+        context(topic, group).use { context ->
+            val run = CompletableFuture.supplyAsync { context.getBean(DeliveryRuntime::class.java).run() }
+            try {
+                await { offset(group, topic) == 1L }
+                assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)
+            } finally { context.getBean(RunControl::class.java).finish() }
+            assertEquals(0, run.get(30, TimeUnit.SECONDS))
+        }
+    }
+    @Test fun `Degewo Python event is consumed and acknowledged`() {
+        val topic = topic(); val group = "test-${UUID.randomUUID()}"
+        val payload = javaClass.getResource("/degewo-v2.json")!!.readText()
+        publish(topic, payload)
         context(topic, group).use { context ->
             val run = CompletableFuture.supplyAsync { context.getBean(DeliveryRuntime::class.java).run() }
             try {
