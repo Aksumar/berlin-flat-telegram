@@ -1,15 +1,13 @@
 package com.aksumar.telegram.kafka
 
-import com.aksumar.telegram.support.testMapper
-
 import com.aksumar.telegram.exception.DeliveryException
-
 import com.aksumar.telegram.support.fixture
+import com.aksumar.telegram.support.testMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
 
 class ContractTest {
     private val contract = ListingContract(testMapper)
@@ -33,23 +31,22 @@ class ContractTest {
 
     @Test
     fun `rejects unsupported versions and malformed known fields`() {
-        val invalid = listOf(
-            "null",
-            "[]",
-            "{}",
-            fixture().replace("\"version\": 2", "\"version\": true"),
-            fixture().replace("\"version\": 2", "\"version\": 3"),
-            fixture().replace("\"rooms\": 2", "\"rooms\": \"2\""),
-            fixture().replace("\"rooms\": 2", "\"rooms\": -1"),
-            fixture().replace("\"rooms\": 2", "\"rooms\": true"),
-            fixture().replace("2026-11-01", "2026-99-01"),
-            fixture().replace("\"currency\": \"EUR\"", "\"currency\": \"USD\""),
-            fixture().replace("\"source\": \"gewobag\"", "\"source\": \"unknown\"")
-        )
+        val invalid =
+            listOf(
+                "null",
+                "[]",
+                "{}",
+                fixture().replace("\"version\": 2", "\"version\": true"),
+                fixture().replace("\"version\": 2", "\"version\": 3"),
+                fixture().replace("\"rooms\": 2", "\"rooms\": \"2\""),
+                fixture().replace("\"rooms\": 2", "\"rooms\": -1"),
+                fixture().replace("\"rooms\": 2", "\"rooms\": true"),
+                fixture().replace("2026-11-01", "2026-99-01"),
+                fixture().replace("\"currency\": \"EUR\"", "\"currency\": \"USD\""),
+                fixture().replace("\"source\": \"gewobag\"", "\"source\": \"unknown\""),
+            )
 
-        invalid.forEach {
-            assertThrows(DeliveryException::class.java) { contract.decode(it) }
-        }
+        invalid.forEach { assertThrows(DeliveryException::class.java) { contract.decode(it) } }
 
         val missing = testMapper.readTree(fixture()) as ObjectNode
         missing.remove("rooms")

@@ -17,8 +17,13 @@ class MessageFormatterTest {
 
     @Test
     fun `renders WBM provider and source`() {
-        val item = event().copy(source = "wbm", provider = "WBM",
-            url = "https://www.wbm.de/wohnungen-berlin/angebote/details/example/")
+        val item =
+            event()
+                .copy(
+                    source = "wbm",
+                    provider = "WBM",
+                    url = "https://www.wbm.de/wohnungen-berlin/angebote/details/example/",
+                )
         val text = formatter.format(item)
         assertTrue(text.contains("🏠 WBM"))
         assertFalse(text.contains("Источник: WBM"))
@@ -46,11 +51,7 @@ class MessageFormatterTest {
     @Test
     fun `renders unknown values safely`() {
         val base = event()
-        val item = base.copy(
-            rooms = null,
-            areaM2 = null,
-            rent = base.rent.copy(cold = null)
-        )
+        val item = base.copy(rooms = null, areaM2 = null, rent = base.rent.copy(cold = null))
 
         val text = formatter.format(item)
 

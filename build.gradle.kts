@@ -6,12 +6,16 @@ plugins {
 }
 
 group = "com.aksumar"
+
 version = "2.0.0"
+
 repositories { mavenCentral() }
+
 kotlin {
     jvmToolchain(21)
     compilerOptions { freeCompilerArgs.add("-Xjsr305=strict") }
 }
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.kafka:spring-kafka")
@@ -22,15 +26,21 @@ dependencies {
     testImplementation("org.testcontainers:kafka")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
+
 tasks.test { useJUnitPlatform { excludeTags("integration") } }
-val integrationTest by tasks.registering(Test::class) {
-    description = "Kafka Testcontainers integration tests (requires Docker)"
-    group = "verification"
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    classpath = sourceSets.test.get().runtimeClasspath
-    useJUnitPlatform { includeTags("integration") }
-    shouldRunAfter(tasks.test)
-}
+
+val integrationTest by
+    tasks.registering(Test::class) {
+        description = "Kafka Testcontainers integration tests (requires Docker)"
+        group = "verification"
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        useJUnitPlatform { includeTags("integration") }
+        shouldRunAfter(tasks.test)
+    }
+
 tasks.check { dependsOn(integrationTest) }
+
 tasks.bootJar { archiveFileName.set("app.jar") }
+
 tasks.jar { enabled = false }

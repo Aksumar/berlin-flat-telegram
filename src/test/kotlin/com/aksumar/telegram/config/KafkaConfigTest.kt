@@ -6,10 +6,11 @@ import org.junit.jupiter.api.Test
 class KafkaConfigTest {
     @Test
     fun `Kafka configuration uses plaintext and manual offset control`() {
-        val properties = AppProperties().apply {
-            bootstrapServers = "localhost:9092"
-            chatIds = listOf("123")
-        }
+        val properties =
+            AppProperties().apply {
+                bootstrapServers = "localhost:9092"
+                chatIds = listOf("123")
+            }
 
         val config = KafkaConfig().consumerFactory(properties).configurationProperties
 

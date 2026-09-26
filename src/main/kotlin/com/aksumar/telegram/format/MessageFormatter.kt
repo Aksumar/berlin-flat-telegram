@@ -2,12 +2,12 @@ package com.aksumar.telegram.format
 
 import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.model.Listing
-import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import org.springframework.stereotype.Component
 
 @Component
 class MessageFormatter {
@@ -44,9 +44,8 @@ class MessageFormatter {
     private fun addDetails(lines: MutableList<String>, item: Listing) {
         val details = mutableListOf<String>()
 
-        val availability = item.availability.text
-            ?.takeIf { it.isNotEmpty() }
-            ?: item.availability.date
+        val availability =
+            item.availability.text?.takeIf { it.isNotEmpty() } ?: item.availability.date
         availability?.let { details += "Доступна: ${text(it)}" }
 
         if (item.wbs.required != null || !item.wbs.text.isNullOrEmpty()) {
@@ -72,10 +71,8 @@ class MessageFormatter {
     }
 
     private fun heading(item: Listing): String {
-        val district = item.address.district
-            ?.takeIf { it.isNotEmpty() }
-            ?.let { " · ${text(it)}" }
-            ?: ""
+        val district =
+            item.address.district?.takeIf { it.isNotEmpty() }?.let { " · ${text(it)}" } ?: ""
 
         return "🏠 ${sourceName(item.source)}$district"
     }
@@ -85,33 +82,32 @@ class MessageFormatter {
 
         address.full
             ?.takeIf { it.isNotEmpty() }
-            ?.let { return it }
+            ?.let {
+                return it
+            }
 
-        val street = listOfNotNull(address.street, address.houseNumber)
-            .filter { it.isNotEmpty() }
-            .joinToString(" ")
+        val street =
+            listOfNotNull(address.street, address.houseNumber)
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
 
-        val city = listOfNotNull(address.postalCode, address.city)
-            .filter { it.isNotEmpty() }
-            .joinToString(" ")
+        val city =
+            listOfNotNull(address.postalCode, address.city)
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
 
-        return listOf(street, city)
-            .filter { it.isNotEmpty() }
-            .joinToString(", ")
-            .ifEmpty { null }
+        return listOf(street, city).filter { it.isNotEmpty() }.joinToString(", ").ifEmpty { null }
     }
 
     private fun wbs(item: Listing): String {
-        val status = when (item.wbs.required) {
-            true -> "требуется"
-            false -> "не требуется"
-            null -> "не указано"
-        }
+        val status =
+            when (item.wbs.required) {
+                true -> "требуется"
+                false -> "не требуется"
+                null -> "не указано"
+            }
 
-        val note = item.wbs.text
-            ?.takeIf { it.isNotEmpty() }
-            ?.let { " (${text(it)})" }
-            ?: ""
+        val note = item.wbs.text?.takeIf { it.isNotEmpty() }?.let { " (${text(it)})" } ?: ""
 
         return "WBS: $status$note"
     }
@@ -124,43 +120,37 @@ class MessageFormatter {
         value?.let { lines += "$label: ${if (it) "есть" else "нет"}" }
     }
 
-    private fun sourceName(source: String): String = when (source) {
-        "allod" -> "Allod"
-        "rbb" -> "RBB"
-        "berlinhaus" -> "Berlinhaus"
-        "berlinovo" -> "Berlinovo"
-        "gewobag" -> "Gewobag"
-        "wbm" -> "WBM"
-        "degewo" -> "Degewo"
-        "inberlinwohnen" -> "InBerlinWohnen"
-        else -> error("Unsupported source: $source")
-    }
+    private fun sourceName(source: String): String =
+        when (source) {
+            "allod" -> "Allod"
+            "rbb" -> "RBB"
+            "berlinhaus" -> "Berlinhaus"
+            "berlinovo" -> "Berlinovo"
+            "gewobag" -> "Gewobag"
+            "wbm" -> "WBM"
+            "degewo" -> "Degewo"
+            "inberlinwohnen" -> "InBerlinWohnen"
+            else -> error("Unsupported source: $source")
+        }
 
     private fun text(value: String?): String =
-        value
-            ?.replace(Regex("(?U)\\s+"), " ")
-            ?.trim()
-            ?: "не указано"
+        value?.replace(Regex("(?U)\\s+"), " ")?.trim() ?: "не указано"
 
     private fun number(value: BigDecimal?): String =
-        value
-            ?.stripTrailingZeros()
-            ?.toPlainString()
-            ?.replace('.', ',')
-            ?: "не указано"
+        value?.stripTrailingZeros()?.toPlainString()?.replace('.', ',') ?: "не указано"
 
     private fun price(value: BigDecimal?, starting: Boolean? = false): String {
         if (value == null) {
             return "не указано"
         }
 
-        val symbols = DecimalFormatSymbols(Locale.ROOT).apply {
-            decimalSeparator = ','
-            groupingSeparator = ' '
-        }
-        val format = DecimalFormat("#,##0.00", symbols).apply {
-            roundingMode = RoundingMode.HALF_EVEN
-        }
+        val symbols =
+            DecimalFormatSymbols(Locale.ROOT).apply {
+                decimalSeparator = ','
+                groupingSeparator = ' '
+            }
+        val format =
+            DecimalFormat("#,##0.00", symbols).apply { roundingMode = RoundingMode.HALF_EVEN }
 
         val prefix = if (starting == true) "от " else ""
         return "$prefix${format.format(value)} €"

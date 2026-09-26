@@ -14,7 +14,7 @@ data class Address(
     /** City; null if unspecified. */
     val city: String?,
     /** City district; null if unspecified. */
-    val district: String?
+    val district: String?,
 )
 
 data class Rent(
@@ -36,14 +36,17 @@ data class Availability(
     /** Availability date in YYYY-MM-DD format; null if the exact date is unknown. */
     val date: String?,
     /** Availability details from the listing; null if absent. */
-    val text: String?
+    val text: String?,
 )
 
 data class Wbs(
-    /** Whether a Wohnberechtigungsschein (eligibility certificate for subsidized housing) is required; null if unknown. */
+    /**
+     * Whether a Wohnberechtigungsschein (eligibility certificate for subsidized housing) is
+     * required; null if unknown.
+     */
     val required: Boolean?,
     /** WBS eligibility requirements from the listing; null if absent. */
-    val text: String?
+    val text: String?,
 )
 
 data class Features(
@@ -52,7 +55,7 @@ data class Features(
     /** Whether the building has an elevator; null if unspecified. */
     val elevator: Boolean?,
     /** Whether the apartment has a built-in kitchen; null if unspecified. */
-    val builtInKitchen: Boolean?
+    val builtInKitchen: Boolean?,
 )
 
 data class Listing(
@@ -83,5 +86,5 @@ data class Listing(
     /** Information about the balcony, elevator, and built-in kitchen. */
     val features: Features,
     /** Housing company offering the apartment; null if unspecified. */
-    val provider: String?
+    val provider: String?,
 )

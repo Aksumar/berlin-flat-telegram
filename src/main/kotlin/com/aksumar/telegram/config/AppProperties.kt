@@ -8,10 +8,10 @@ class AppProperties {
     var topic: String = "berlin-flat-listings-v1"
     var groupId: String = "berlin-flat-telegram-v1"
     var geoapifyApiKey: String = ""
+    var telegramBaseUrl: String = "https://api.telegram.org"
     var botToken: String = ""
     var chatIds: List<String> = emptyList()
 
-    fun chats(): List<String> = chatIds.also {
-        require(it.isNotEmpty()) { "Telegram destination is required" }
-    }
+    fun chats(): List<String> =
+        chatIds.also { require(it.isNotEmpty()) { "Telegram destination is required" } }
 }

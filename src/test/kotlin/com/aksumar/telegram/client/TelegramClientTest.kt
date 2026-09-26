@@ -1,20 +1,20 @@
 package com.aksumar.telegram.client
 
-import com.aksumar.telegram.support.testMapper
-
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
-
+import com.aksumar.telegram.config.AppProperties
 import com.aksumar.telegram.maps.ListingMap
+import com.aksumar.telegram.support.testMapper
 import com.sun.net.httpserver.HttpServer
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletionException
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 class TelegramClientTest {
     private class PhotoServer(var photoStatus: Int = 200) : AutoCloseable {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val requests = mutableListOf<Pair<String, String>>()
+
         init {
             server.createContext("/bottest/") { exchange ->
                 val method = exchange.requestURI.path.substringAfterLast('/')
@@ -26,16 +26,35 @@ class TelegramClientTest {
             }
             server.start()
         }
-        fun client() = TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
-        override fun close() { server.stop(0) }
+
+        fun client() =
+            TelegramClient(
+                AppProperties().apply {
+                    botToken = "test"
+                    telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                },
+                testMapper,
+            )
+
+        override fun close() {
+            server.stop(0)
+        }
     }
 
-    private val map = ListingMap(byteArrayOf(1, 2, 3), "https://www.openstreetmap.org/?mlat=52.53&mlon=13.38", false)
+    private val map =
+        ListingMap(
+            byteArrayOf(1, 2, 3),
+            "https://www.openstreetmap.org/?mlat=52.53&mlon=13.38",
+            false,
+        )
 
     @Test
     fun `uploads photo with caption and both buttons`() {
         PhotoServer().use { server ->
-            server.client().sendListing("123", "🏠 Gewobag · Mitte", "https://example.com/123", map).join()
+            server
+                .client()
+                .sendListing("123", "🏠 Gewobag · Mitte", "https://example.com/123", map)
+                .join()
             val (method, body) = server.requests.single()
             assertEquals("sendPhoto", method)
             assertTrue(body.contains("name=\"photo\"; filename=\"map.png\""))
@@ -51,7 +70,10 @@ class TelegramClientTest {
     fun `long caption sends complete text quietly after photo`() {
         PhotoServer().use { server ->
             val text = "🏠 Gewobag\n" + "я".repeat(1100)
-            server.client().sendListing("123", text, "https://example.com/123", map.copy(approximate = true)).join()
+            server
+                .client()
+                .sendListing("123", text, "https://example.com/123", map.copy(approximate = true))
+                .join()
             assertEquals(listOf("sendPhoto", "sendMessage"), server.requests.map { it.first })
             assertTrue(server.requests[0].second.contains("Примерное расположение"))
             assertFalse(server.requests[0].second.contains("я".repeat(1100)))
@@ -64,7 +86,10 @@ class TelegramClientTest {
     @Test
     fun `caption at limit stays in photo and over limit uses text`() {
         for (size in listOf(1024, 1025)) PhotoServer().use { server ->
-            server.client().sendListing("123", "x".repeat(size), "https://example.com/123", map).join()
+            server
+                .client()
+                .sendListing("123", "x".repeat(size), "https://example.com/123", map)
+                .join()
             assertEquals(if (size == 1024) 1 else 2, server.requests.size)
         }
     }
@@ -76,9 +101,13 @@ class TelegramClientTest {
             assertEquals(listOf("sendPhoto", "sendMessage"), server.requests.map { it.first })
         }
         PhotoServer(500).use { server ->
-            val error = assertThrows(CompletionException::class.java) {
-                server.client().sendListing("123", "listing", "https://example.com/123", map).join()
-            }
+            val error =
+                assertThrows(CompletionException::class.java) {
+                    server
+                        .client()
+                        .sendListing("123", "listing", "https://example.com/123", map)
+                        .join()
+                }
             assertTrue((error.cause as TelegramDeliveryException).retryable)
             assertEquals(List(4) { "sendPhoto" }, server.requests.map { it.first })
         }
@@ -98,7 +127,14 @@ class TelegramClientTest {
         server.start()
 
         try {
-            val client = TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
+            val client =
+                TelegramClient(
+                    AppProperties().apply {
+                        botToken = "test"
+                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                    },
+                    testMapper,
+                )
             client.send("-123", "Привет").join()
 
             val json = testMapper.readTree(request)
@@ -126,7 +162,13 @@ class TelegramClientTest {
         server.start()
 
         try {
-            TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
+            TelegramClient(
+                    AppProperties().apply {
+                        botToken = "test"
+                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                    },
+                    testMapper,
+                )
                 .send("1", "test")
                 .join()
 
@@ -144,11 +186,12 @@ class TelegramClientTest {
         server.createContext("/bottest/sendMessage") { exchange ->
             requests++
             val success = requests > 1
-            val body = if (success) {
-                "{\"ok\":true}"
-            } else {
-                "{\"ok\":false,\"error_code\":429,\"parameters\":{\"retry_after\":1}}"
-            }
+            val body =
+                if (success) {
+                    "{\"ok\":true}"
+                } else {
+                    "{\"ok\":false,\"error_code\":429,\"parameters\":{\"retry_after\":1}}"
+                }
             val bytes = body.toByteArray()
             exchange.sendResponseHeaders(if (success) 200 else 429, bytes.size.toLong())
             exchange.responseBody.use { it.write(bytes) }
@@ -156,7 +199,13 @@ class TelegramClientTest {
         server.start()
 
         try {
-            TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
+            TelegramClient(
+                    AppProperties().apply {
+                        botToken = "test"
+                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                    },
+                    testMapper,
+                )
                 .send("1", "test")
                 .join()
 
@@ -180,10 +229,16 @@ class TelegramClientTest {
         server.start()
 
         try {
-            val client = TelegramClient("test", "http://127.0.0.1:${server.address.port}", testMapper)
-            val ex = assertThrows(CompletionException::class.java) {
-                client.send("1", "test").join()
-            }
+            val client =
+                TelegramClient(
+                    AppProperties().apply {
+                        botToken = "test"
+                        telegramBaseUrl = "http://127.0.0.1:${server.address.port}"
+                    },
+                    testMapper,
+                )
+            val ex =
+                assertThrows(CompletionException::class.java) { client.send("1", "test").join() }
 
             assertTrue(ex.cause is TelegramDeliveryException)
             assertFalse((ex.cause as TelegramDeliveryException).retryable)

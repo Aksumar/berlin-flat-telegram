@@ -10,8 +10,9 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class JacksonConfig {
     @Bean
-    fun objectMapper(): ObjectMapper = jacksonObjectMapper()
-        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+    fun objectMapper(): ObjectMapper =
+        jacksonObjectMapper()
+            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
 }
