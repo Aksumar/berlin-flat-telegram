@@ -66,7 +66,7 @@ class TelegramClient internal constructor(
             }
         }.thenCompose { decision ->
             when {
-                decision.success -> CompletableFuture.completedFuture(null)
+                decision.success -> CompletableFuture.completedFuture<Void>(null)
                 decision.retryDelay != null && attempt < MAX_ATTEMPTS ->
                     CompletableFuture
                         .runAsync(
