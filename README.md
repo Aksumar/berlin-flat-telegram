@@ -116,7 +116,26 @@ transient retries, permanent rejection handling, invalid-record skipping, and Ka
 preservation after exhausted transient delivery failures. Telegram itself is replaced with a
 test sender in Kafka integration tests.
 
-The build workflow runs both suites, builds/verifies the image, uploads reports and
-image/source archives, then publishes branch/SHA images to GHCR on pushes (`latest`
-only from the default branch). Production delivery is a long-running service; there is
-no scheduled GitHub Actions consumer.
+The build workflow runs on pull requests, pushes to `main`, `v*` tags, and manual
+runs. Feature-branch pushes do not start a second pipeline alongside the PR check.
+Both test suites and `bootJar` run once. CI packages that JAR using `Dockerfile.ci`
+and a minimal build context; the regular `Dockerfile` still builds from source locally.
+PRs, version tags, and manual runs (including manual runs on main) only test the
+application and verify the image build. They do not publish images or upload
+artifacts. This is a build check, not a container startup test.
+
+Only a push to `main` (normally after merging a PR) publishes images to GHCR after
+successful tests. Direct pushes to main follow the same path. The separate
+publication job is the only job with `packages: write`. Images receive
+`sha-<commit>`, `branch-main`, and `latest` tags. The tested JAR and image recipe
+are transferred between jobs as a one-day artifact.
+
+On pushes to main, image/source archives, image metadata, commit ID, and SHA256
+checksums are exported and retained for 14 days. Test/publication report uploads
+and Docker build-record uploads remain temporarily disabled because the artifact
+storage quota is exhausted. Logs remain available in the Actions run. The JAR
+handoff and archives still require artifact storage. When report uploads are
+restored, they will run only on pushes to main, with 14-day retention.
+
+Production delivery is a long-running service; there is no scheduled GitHub Actions
+consumer.
