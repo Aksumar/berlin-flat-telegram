@@ -46,13 +46,12 @@ jobs:
         if: github.event_name == 'pull_request'
       - name: Verify image build
         if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v6
-        with:
-          context: image-context
-          platforms: linux/amd64
-          tags: service-test:ci
-          cache-from: type=gha,scope=telegram-runtime
-          cache-to: type=gha,scope=telegram-runtime,mode=max
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --output type=cacheonly \
+            --progress plain \
+            image-context
       - name: Upload tested JAR and image recipe
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
