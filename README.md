@@ -30,8 +30,8 @@ container or deployment system. The application does not automatically load `.en
 ## Apartment maps
 
 Set `GEOAPIFY_API_KEY` to enable Geoapify Geocoding and Static Maps (Routing API is
-not used). Each listing gets a 640 × 400 map with a red marker and a Berlin overview
-inset. The heading shows the source website and district, e.g. `🏠 InBerlinWohnen · Mitte`.
+not used). Each listing gets a 640 × 400 map with labelled streets and stations, a red house marker and a Berlin overview
+inset with a small location dot. The heading shows the source website and district, e.g. `🏠 InBerlinWohnen · Mitte`.
 The housing company appears separately only when it differs from the source.
 Buttons open the map and the original listing. Images are uploaded to Telegram;
 the Geoapify key is never included in message URLs.

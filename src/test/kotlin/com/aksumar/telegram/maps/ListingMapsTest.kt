@@ -50,7 +50,7 @@ class ListingMapsTest {
         Provider().use { p ->
             val map = requireNotNull(p.maps().create(event()))
             assertFalse(map.approximate)
-            assertEquals("https://www.openstreetmap.org/?mlat=52.53&mlon=13.38#map=15/52.53/13.38", map.url)
+            assertEquals("https://www.openstreetmap.org/?mlat=52.53&mlon=13.38#map=14/52.53/13.38", map.url)
             assertFalse(map.url.contains("test-secret"))
             val image = ImageIO.read(map.png.inputStream())
             assertEquals(640, image.width)
@@ -59,6 +59,9 @@ class ListingMapsTest {
             assertEquals(Color.BLUE.rgb, image.getRGB(500, 250))
             assertEquals(Color.GREEN.rgb, image.getRGB(620, 390))
             assertEquals(3, p.requests.size)
+            assertEquals("osm-carto", p.requests[1].second["style"])
+            assertEquals("14", p.requests[1].second["zoom"])
+            assertTrue(p.requests[2].second.getValue("marker").contains("type:circle"))
             assertEquals(event().address.full, p.requests[0].second["text"])
             assertEquals("rect:13.08,52.33,13.77,52.68", p.requests[0].second["filter"])
             assertTrue(p.requests.drop(1).all { it.second["attribution"] == "default" })

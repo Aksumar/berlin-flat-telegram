@@ -61,13 +61,14 @@ class GeoapifyMaps(
                 type !in setOf("building", "street", "suburb", "district", "postcode")) return null
             val exact = type == "building" && rank.path("confidence_building_level").asDouble(0.0) >= 0.95 &&
                 rank.path("match_type").asText() == "full_match"
-            val zoom = when (type) { "building", "street" -> "15"; else -> "12" }
-            val common = mapOf("style" to "osm-bright", "format" to "png", "lang" to "de",
-                "marker" to "lonlat:$lon,$lat;color:#e53935;size:36;icon:home;icontype:material", "attribution" to "default")
+            val zoom = when (type) { "building", "street" -> "14"; else -> "12" }
+            val common = mapOf("style" to "osm-carto", "format" to "png", "lang" to "de",
+                "marker" to "lonlat:$lon,$lat;color:#e53935;size:48;icon:home;icontype:material;contentcolor:#ffffff;whitecircle:no", "attribution" to "default")
             val detail = readMap(get(staticMapUrl, common + mapOf("width" to "640", "height" to "400",
                 "center" to "lonlat:$lon,$lat", "zoom" to zoom)), 640, 400)
             val overview = readMap(get(staticMapUrl, common + mapOf("width" to "192", "height" to "160",
-                "area" to "rect:13.08,52.33,13.77,52.68")), 192, 160)
+                "area" to "rect:13.08,52.33,13.77,52.68",
+                "marker" to "lonlat:$lon,$lat;type:circle;color:#e53935;size:12")), 192, 160)
             ListingMap(compose(detail, overview, !exact),
                 "https://www.openstreetmap.org/?mlat=$lat&mlon=$lon#map=$zoom/$lat/$lon", !exact)
         } catch (_: Exception) {
@@ -106,7 +107,7 @@ class GeoapifyMaps(
             g.color = Color(65, 80, 90)
             g.drawRect(436, 182, 196, 186)
             g.font = Font(Font.SANS_SERIF, Font.BOLD, 13)
-            g.drawString("BERLIN", 445, 199)
+            g.drawString("БЕРЛИН", 445, 199)
             g.drawImage(overview, 438, 205, null)
             if (approximate) {
                 g.color = Color.WHITE
