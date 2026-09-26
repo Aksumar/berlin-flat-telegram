@@ -47,7 +47,7 @@ class KafkaConfig {
             consumerFactory = factory
             setConcurrency(1)
             containerProperties.isMissingTopicsFatal = true
-            containerProperties.setShutdownTimeout(60_000)
+            containerProperties.shutdownTimeout = 60_000
             setCommonErrorHandler(
                 object : CommonContainerStoppingErrorHandler() {
                     override fun handleRemaining(
