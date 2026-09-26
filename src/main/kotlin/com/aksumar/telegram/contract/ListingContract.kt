@@ -122,6 +122,7 @@ class ListingContract {
             "berlinhaus",
             "berlinovo",
             "gewobag",
+            "wbm",
             "inberlinwohnen"
         )
     }

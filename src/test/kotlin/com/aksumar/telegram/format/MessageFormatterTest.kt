@@ -9,6 +9,17 @@ class MessageFormatterTest {
     private val formatter = MessageFormatter()
 
     @Test
+    fun `renders WBM provider and source`() {
+        val item = event().copy(source = "wbm", provider = "WBM",
+            url = "https://www.wbm.de/wohnungen-berlin/angebote/details/example/")
+        val text = formatter.format(item)
+        assertTrue(text.contains("Компания: WBM"))
+        assertFalse(text.contains("Источник: WBM"))
+        assertTrue(text.endsWith(item.url))
+        assertTrue(formatter.format(item.copy(provider = null)).contains("Источник: WBM"))
+    }
+
+    @Test
     fun `renders expected message`() {
         val expected = javaClass.getResource("/message.txt")!!.readText()
         assertEquals(expected, formatter.format(event()))

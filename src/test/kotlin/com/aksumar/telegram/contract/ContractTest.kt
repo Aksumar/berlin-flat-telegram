@@ -11,6 +11,15 @@ class ContractTest {
     private val contract = ListingContract()
 
     @Test
+    fun `accepts WBM listing source`() {
+        val tree = jsonMapper().readTree(fixture()) as ObjectNode
+        tree.put("source", "wbm")
+        tree.put("provider", "WBM")
+        tree.put("id", "50-867500/10/144")
+        assertEquals("wbm", contract.decode(tree.toString()).source)
+    }
+
+    @Test
     fun `rejects unsupported versions and malformed known fields`() {
         val invalid = listOf(
             "null",

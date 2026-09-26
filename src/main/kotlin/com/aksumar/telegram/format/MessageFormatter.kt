@@ -137,6 +137,7 @@ class MessageFormatter {
         "berlinhaus" -> "Berlinhaus"
         "berlinovo" -> "Berlinovo"
         "gewobag" -> "Gewobag"
+        "wbm" -> "WBM"
         "inberlinwohnen" -> "InBerlinWohnen"
         else -> error("Unsupported source: $source")
     }
