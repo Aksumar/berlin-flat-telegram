@@ -4,11 +4,20 @@ import com.aksumar.telegram.support.fixture
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 
 class ContractTest {
     private val contract = ListingContract()
+
+    @Test
+    fun `accepts WBM listing source`() {
+        val tree = jsonMapper().readTree(fixture()) as ObjectNode
+        tree.put("source", "wbm")
+        tree.put("provider", "WBM")
+        tree.put("id", "50-867500/10/144")
+        assertEquals("wbm", contract.decode(tree.toString()).source)
+    }
 
     @Test
     fun `rejects unsupported versions and malformed known fields`() {

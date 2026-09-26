@@ -28,6 +28,12 @@ class NewFlatEventListener(
         topics = ["\${app.topic}"],
         groupId = "\${app.group-id}"
     )
+    fun onRecord(record: ConsumerRecord<String, String>) {
+        // Complete delivery before returning control to Kafka. Async listener
+        // return values use different acknowledgement/error handling semantics.
+        receive(record).join()
+    }
+
     fun receive(record: ConsumerRecord<String, String>): CompletableFuture<Void> {
         return try {
             val item = contract.decode(record.value())
