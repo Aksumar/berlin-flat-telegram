@@ -38,7 +38,7 @@ the Geoapify key is never included in message URLs.
 
 Street/district/postcode matches are labelled **Примерное расположение**. City-only,
 low-confidence and out-of-Berlin matches produce text only. Missing keys, provider
-errors and invalid images also fall back to text. Map requests have five-second
+errors and invalid images also fall back to text. Map requests have twenty-second
 individual timeouts (up to three requests per listing); one image is reused for all chats.
 A permanent Telegram photo rejection falls back to text; exhausted transient delivery
 failures retain the Kafka record for recovery.

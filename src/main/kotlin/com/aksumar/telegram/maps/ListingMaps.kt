@@ -35,7 +35,7 @@ class GeoapifyMaps(
 
     private val mapper = jsonMapper()
     private val logger = LoggerFactory.getLogger(GeoapifyMaps::class.java)
-    private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build()
+    private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
 
     override fun create(item: Listing): ListingMap? {
         if (apiKey.isBlank()) return null
@@ -82,7 +82,7 @@ class GeoapifyMaps(
             "${it.key}=${URLEncoder.encode(it.value, Charsets.UTF_8)}"
         }
         val request = HttpRequest.newBuilder(URI.create("$endpoint?$query"))
-            .timeout(Duration.ofSeconds(5)).GET().build()
+            .timeout(Duration.ofSeconds(20)).GET().build()
         val response = client.send(request, HttpResponse.BodyHandlers.ofByteArray())
         require(response.statusCode() == 200 && response.body().size <= 5_000_000)
         return response.body()
