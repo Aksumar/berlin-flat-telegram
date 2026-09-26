@@ -4,6 +4,7 @@ import com.aksumar.telegram.Application
 import com.aksumar.telegram.client.TelegramDeliveryException
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.contract.listingKey
+import com.aksumar.telegram.contract.jsonMapper
 import com.aksumar.telegram.support.fixture
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
@@ -102,7 +103,7 @@ class KafkaIntegrationTest {
             it.send(
                 ProducerRecord(
                     topic,
-                    listingKey("gewobag", "123"),
+                    listingKey(jsonMapper().readTree(payload)["source"].asText(), jsonMapper().readTree(payload)["id"].asText()),
                     payload
                 )
             ).get(30, TimeUnit.SECONDS)
@@ -124,6 +125,23 @@ class KafkaIntegrationTest {
                 fail<Unit>("Condition timed out")
             }
             Thread.sleep(100)
+        }
+    }
+
+    @Test
+    fun `Degewo Python event is delivered and acknowledged`() {
+        val topic = topic()
+        val group = "test-${UUID.randomUUID()}"
+        publish(topic, javaClass.getResource("/degewo-v2.json")!!.readText())
+        context(topic, group).use { context ->
+            val run = CompletableFuture.supplyAsync { context.getBean(DeliveryRuntime::class.java).run() }
+            try {
+                await { offset(group, topic) == 1L }
+                assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)
+            } finally {
+                context.getBean(RunControl::class.java).finish()
+            }
+            assertEquals(0, run.get(30, TimeUnit.SECONDS))
         }
     }
 

@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "source": "degewo",
+  "id": "W1300.42303.0131-0504",
+  "title": "1-Zimmerwohnung in Köpenick",
+  "url": "https://www.degewo.de/immosuche/details/1-zimmerwohnung-in-koepenick",
+  "address": {
+    "full": "Zur Nachtheide 4",
+    "street": null,
+    "house_number": null,
+    "postal_code": null,
+    "city": null,
+    "district": null
+  },
+  "area_m2": 45.52,
+  "rooms": 1.0,
+  "floor": null,
+  "rent": {
+    "currency": "EUR",
+    "cold": null,
+    "warm": 970.02,
+    "operating_costs": null,
+    "heating_costs": null,
+    "deposit": null,
+    "warm_from": false
+  },
+  "availability": {
+    "date": null,
+    "text": "sofort"
+  },
+  "wbs": {
+    "required": null,
+    "text": null
+  },
+  "features": {
+    "balcony": null,
+    "elevator": true,
+    "built_in_kitchen": null
+  },
+  "provider": "Degewo"
+}

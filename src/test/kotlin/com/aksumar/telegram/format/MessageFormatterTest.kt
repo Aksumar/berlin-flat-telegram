@@ -9,6 +9,13 @@ class MessageFormatterTest {
     private val formatter = MessageFormatter()
 
     @Test
+    fun `renders Degewo provider and source`() {
+        val item = event().copy(source = "degewo", provider = "Degewo")
+        assertTrue(formatter.format(item).contains("Компания: Degewo"))
+        assertTrue(formatter.format(item.copy(provider = null)).contains("Источник: Degewo"))
+    }
+
+    @Test
     fun `renders WBM provider and source`() {
         val item = event().copy(source = "wbm", provider = "WBM",
             url = "https://www.wbm.de/wohnungen-berlin/angebote/details/example/")
