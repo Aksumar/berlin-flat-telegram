@@ -5,11 +5,6 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
-    inputs:
-      export_archives:
-        description: Export Docker image and source archives
-        type: boolean
-        default: false
 env:
   # Temporary: artifact storage quota is exhausted.
   DOCKER_BUILD_RECORD_UPLOAD: "false"
@@ -43,9 +38,9 @@ jobs:
           cp build/libs/app.jar image-context/app.jar
           cp Dockerfile.ci image-context/Dockerfile
       - uses: docker/setup-buildx-action@v3
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
       - name: Verify image build
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
         run: |
           docker buildx build \
             --platform linux/amd64 \
@@ -53,7 +48,7 @@ jobs:
             --progress plain \
             image-context
       - name: Upload tested JAR and image recipe
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: telegram-image-context-${{ github.run_id }}
@@ -63,7 +58,7 @@ jobs:
           retention-days: 1
           if-no-files-found: error
       - name: Upload test reports
-        if: always() && env.UPLOAD_REPORTS == 'true'
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && env.UPLOAD_REPORTS == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: berlin-flat-telegram-reports-${{ github.sha }}
@@ -75,7 +70,7 @@ jobs:
 
   publish:
     needs: build
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -86,7 +81,6 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
-        if: github.ref_type == 'tag' || inputs.export_archives == true
       - uses: actions/download-artifact@v4
         with:
           name: telegram-image-context-${{ github.run_id }}
@@ -100,18 +94,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare image tags
         id: image
-        env:
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
-          tags=("sha-$GITHUB_SHA")
-          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
-            tags+=("$GITHUB_REF_NAME")
-          else
-            branch=$(printf '%s' "$GITHUB_REF_NAME" | sed 's/[^a-zA-Z0-9_.-]/-/g' | cut -c1-110)
-            tags+=("branch-$branch")
-            if [[ "$GITHUB_REF_NAME" == "$DEFAULT_BRANCH" ]]; then tags+=(latest); fi
-          fi
+          tags=("sha-$GITHUB_SHA" branch-main latest)
           mkdir -p reports
           for tag in "${tags[@]}"; do
             printf '%s\n' "$image:$tag" >> reports/image-tags.txt
@@ -127,7 +112,7 @@ jobs:
         with:
           context: image-context
           push: true
-          load: ${{ github.ref_type == 'tag' || inputs.export_archives == true }}
+          load: true
           platforms: linux/amd64
           tags: ${{ steps.image.outputs.tags }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
@@ -138,7 +123,6 @@ jobs:
           cp reports/image-tags.txt reports/published-images.txt
           cat reports/published-images.txt >> "$GITHUB_STEP_SUMMARY"
       - name: Package archives
-        if: github.ref_type == 'tag' || inputs.export_archives == true
         env:
           IMAGE_REFERENCE: ${{ steps.image.outputs.reference }}
         run: |
@@ -150,7 +134,6 @@ jobs:
           cd dist
           sha256sum image-linux-amd64.tar.gz source.tar.gz image-inspect.json commit.txt > SHA256SUMS
       - name: Upload archives
-        if: github.ref_type == 'tag' || inputs.export_archives == true
         uses: actions/upload-artifact@v4
         with:
           name: berlin-flat-telegram-${{ github.sha }}
@@ -159,7 +142,7 @@ jobs:
           retention-days: 14
           if-no-files-found: error
       - name: Upload publication reports
-        if: always() && env.UPLOAD_REPORTS == 'true'
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && env.UPLOAD_REPORTS == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: berlin-flat-telegram-publication-${{ github.sha }}

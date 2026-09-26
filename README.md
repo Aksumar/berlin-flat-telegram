@@ -120,24 +120,22 @@ The build workflow runs on pull requests, pushes to `main`, `v*` tags, and manua
 runs. Feature-branch pushes do not start a second pipeline alongside the PR check.
 Both test suites and `bootJar` run once. CI packages that JAR using `Dockerfile.ci`
 and a minimal build context; the regular `Dockerfile` still builds from source locally.
-PRs verify the image build without publishing. This is a build check, not a container
-startup test.
+PRs, version tags, and manual runs (including manual runs on main) only test the
+application and verify the image build. They do not publish images or upload
+artifacts. This is a build check, not a container startup test.
 
-After successful tests, a separate publication job publishes images to GHCR on
-`main`, tags, and manual runs (including manually selected feature branches).
-Only this job has `packages: write`. Images receive `sha-<commit>` and either
-`branch-<branch>` or the Git tag; `latest` is updated only from the default branch.
-The tested JAR and image recipe are transferred between jobs as a one-day artifact.
+Only a push to `main` (normally after merging a PR) publishes images to GHCR after
+successful tests. Direct pushes to main follow the same path. The separate
+publication job is the only job with `packages: write`. Images receive
+`sha-<commit>`, `branch-main`, and `latest` tags. The tested JAR and image recipe
+are transferred between jobs as a one-day artifact.
 
-Test/publication report uploads and Docker build-record uploads are temporarily
-disabled because the artifact storage quota is exhausted. Logs remain available in
-the Actions run. The JAR handoff and requested archives still require artifact
-storage. When report uploads are restored, their retention is 14 days. Image/source
-archives, image metadata, commit ID, and SHA256 checksums are exported only for tag
-runs or manual runs with **export_archives** enabled, and retained for 14 days.
-Use Actions → Build, test and publish → Run workflow to select a branch and enable
-that option. Manual runs also publish the image to GHCR. Ordinary runs use GHCR
-without exporting an image archive.
+On pushes to main, image/source archives, image metadata, commit ID, and SHA256
+checksums are exported and retained for 14 days. Test/publication report uploads
+and Docker build-record uploads remain temporarily disabled because the artifact
+storage quota is exhausted. Logs remain available in the Actions run. The JAR
+handoff and archives still require artifact storage. When report uploads are
+restored, they will run only on pushes to main, with 14-day retention.
 
 Production delivery is a long-running service; there is no scheduled GitHub Actions
 consumer.
