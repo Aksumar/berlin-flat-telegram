@@ -1,0 +1,82 @@
+package com.aksumar.telegram.maps
+
+import java.awt.Color
+import org.slf4j.LoggerFactory
+import org.springframework.core.io.ClassPathResource
+import org.springframework.stereotype.Component
+
+data class TransitLine(val name: String, val color: Color)
+
+/** Station-to-line/color lookup loaded once from the bundled VBB-derived CSV at startup. */
+@Component
+class VbbTransitCache {
+    private val logger = LoggerFactory.getLogger(VbbTransitCache::class.java)
+    private val linesByStation: Map<String, List<TransitLine>> = load()
+
+    fun linesFor(stationName: String): List<TransitLine> =
+        linesByStation[normalize(stationName)].orEmpty()
+
+    private fun load(): Map<String, List<TransitLine>> =
+        try {
+            val resource = ClassPathResource("berlin_u_s_stations_colors.csv")
+            resource.inputStream.bufferedReader(Charsets.UTF_8).use { reader ->
+                val header = parseCsv(reader.readLine().removePrefix("\uFEFF"))
+                val indices = header.withIndex().associate { it.value to it.index }
+                val stationIndex = indices.getValue("station")
+                val lineIndex = indices.getValue("line")
+                val colorIndex = indices.getValue("official_color_hex")
+                val collected = mutableMapOf<String, MutableMap<String, TransitLine>>()
+                reader.lineSequence().forEach { row ->
+                    val values = parseCsv(row)
+                    if (values.size <= maxOf(stationIndex, lineIndex, colorIndex)) return@forEach
+                    val station = normalize(values[stationIndex])
+                    val name = values[lineIndex].trim()
+                    val color = runCatching { Color.decode(values[colorIndex]) }.getOrNull()
+                    if (station.isNotBlank() && name.isNotBlank() && color != null) {
+                        collected.getOrPut(station) { linkedMapOf() }[name] = TransitLine(name, color)
+                    }
+                }
+                val result = collected.mapValues { (_, lines) -> lines.values.sortedBy { it.name } }
+                logger.info("Loaded VBB line colors for {} stations into transit cache", result.size)
+                result
+            }
+        } catch (_: Exception) {
+            logger.warn("VBB station color data unavailable; using generic transport markers")
+            emptyMap()
+        }
+
+    private fun normalize(value: String): String =
+        value.trim()
+            .replace(Regex("^(?:(?:S|U)(?:\\s*\\+\\s*(?:S|U))?\\s+)", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\b(?:bahnhof|bhf\\.?)\\b", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s+\\(Berlin\\)$", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .lowercase()
+
+    private fun parseCsv(line: String?): List<String> {
+        if (line == null) return emptyList()
+        val values = mutableListOf<String>()
+        val value = StringBuilder()
+        var quoted = false
+        var i = 0
+        while (i < line.length) {
+            val char = line[i]
+            when {
+                char == '"' && quoted && i + 1 < line.length && line[i + 1] == '"' -> {
+                    value.append('"')
+                    i++
+                }
+                char == '"' -> quoted = !quoted
+                char == ',' && !quoted -> {
+                    values += value.toString()
+                    value.setLength(0)
+                }
+                else -> value.append(char)
+            }
+            i++
+        }
+        values += value.toString()
+        return values
+    }
+}
