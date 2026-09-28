@@ -93,6 +93,29 @@ class DeliveryTest {
     }
 
     @Test
+    fun `interrupted map generation does not acknowledge the listing`() {
+        val listener =
+            NewFlatEventListener(
+                ListingContract(testMapper),
+                MessageFormatter(),
+                TelegramSender { _, _ ->
+                    fail<Unit>("Must not send")
+                    CompletableFuture.completedFuture(null)
+                },
+                properties(),
+                testMapper,
+                ListingMaps { throw InterruptedException("stopped") },
+            )
+
+        try {
+            assertThrows(CompletionException::class.java) { listener.receive(record()).join() }
+            assertTrue(Thread.currentThread().isInterrupted)
+        } finally {
+            Thread.interrupted()
+        }
+    }
+
+    @Test
     fun `successful send completes after every configured chat`() {
         val delivered = mutableListOf<String>()
         val future =

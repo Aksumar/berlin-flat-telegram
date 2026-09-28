@@ -40,7 +40,16 @@ class NewFlatEventListener(
             }
 
             val text = formatter.format(item)
-            val map = runCatching { maps.create(item) }.getOrNull()
+            val map =
+                try {
+                    maps.create(item)
+                } catch (error: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    throw error
+                } catch (_: Exception) {
+                    log.warn("Map unavailable; sending listing without image")
+                    null
+                }
             val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map) }
 
             CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->
@@ -75,6 +84,9 @@ class NewFlatEventListener(
                 )
                 null
             }
+        } catch (error: InterruptedException) {
+            Thread.currentThread().interrupt()
+            CompletableFuture.failedFuture(error)
         } catch (error: Exception) {
             log.error(
                 "Skipping invalid listing: topic={}, partition={}, offset={}, key={}",

@@ -7,6 +7,21 @@ import org.springframework.stereotype.Component
 
 data class TransitLine(val name: String, val color: Color)
 
+private val stationPrefix = Regex("^(?:[SU](?:\\s*[+/]\\s*[SU])?\\s+)", RegexOption.IGNORE_CASE)
+private val stationType = Regex("\\b(?:bahnhof|bhf)\\b\\.?", RegexOption.IGNORE_CASE)
+private val berlinSuffix = Regex("\\s+\\(Berlin\\)$", RegexOption.IGNORE_CASE)
+private val repeatedSpace = Regex("\\s+")
+
+internal fun stationDisplayName(value: String): String = value.trim().replace(stationPrefix, "")
+
+internal fun stationKey(value: String): String =
+    stationDisplayName(value)
+        .replace(stationType, "")
+        .replace(berlinSuffix, "")
+        .replace(repeatedSpace, " ")
+        .trim()
+        .lowercase()
+
 /** Station-to-line/color lookup loaded once from the bundled VBB-derived CSV at startup. */
 @Component
 class VbbTransitCache {
@@ -14,7 +29,7 @@ class VbbTransitCache {
     private val linesByStation: Map<String, List<TransitLine>> = load()
 
     fun linesFor(stationName: String): List<TransitLine> =
-        linesByStation[normalize(stationName)].orEmpty()
+        linesByStation[stationKey(stationName)].orEmpty()
 
     private fun load(): Map<String, List<TransitLine>> =
         try {
@@ -29,7 +44,7 @@ class VbbTransitCache {
                 reader.lineSequence().forEach { row ->
                     val values = parseCsv(row)
                     if (values.size <= maxOf(stationIndex, lineIndex, colorIndex)) return@forEach
-                    val station = normalize(values[stationIndex])
+                    val station = stationKey(values[stationIndex])
                     val name = values[lineIndex].trim()
                     val color = runCatching { Color.decode(values[colorIndex]) }.getOrNull()
                     if (station.isNotBlank() && name.isNotBlank() && color != null) {
@@ -44,15 +59,6 @@ class VbbTransitCache {
             logger.warn("VBB station color data unavailable; using generic transport markers")
             emptyMap()
         }
-
-    private fun normalize(value: String): String =
-        value.trim()
-            .replace(Regex("^(?:(?:S|U)(?:\\s*\\+\\s*(?:S|U))?\\s+)", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("\\b(?:bahnhof|bhf\\.?)\\b", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("\\s+\\(Berlin\\)$", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("\\s+"), " ")
-            .trim()
-            .lowercase()
 
     private fun parseCsv(line: String?): List<String> {
         if (line == null) return emptyList()

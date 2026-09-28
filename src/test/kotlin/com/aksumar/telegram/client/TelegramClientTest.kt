@@ -47,7 +47,7 @@ class TelegramClientTest {
     private val map =
         ListingMap(
             byteArrayOf(1, 2, 3),
-            "https://www.openstreetmap.org/?mlat=52.53&mlon=13.38",
+            "https://www.google.com/maps/search/?api=1&query=52.53%2C13.38",
             false,
         )
 
