@@ -2,10 +2,10 @@ package com.aksumar.telegram.kafka
 
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.config.AppProperties
-import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import org.springframework.stereotype.Component
 
 fun interface FatalErrorReporter {
     fun report(message: String)
@@ -14,7 +14,7 @@ fun interface FatalErrorReporter {
 @Component
 class TelegramFatalErrorReporter(
     private val sender: TelegramSender,
-    private val properties: AppProperties
+    private val properties: AppProperties,
 ) : FatalErrorReporter {
     private val alerted = AtomicBoolean(false)
 
@@ -25,10 +25,11 @@ class TelegramFatalErrorReporter(
 
         try {
             CompletableFuture.allOf(
-                *properties.chats()
-                    .map { sender.send(it, "⚠️ Berlin Flat Telegram: $message") }
-                    .toTypedArray()
-            )
+                    *properties
+                        .chats()
+                        .map { sender.send(it, "⚠️ Berlin Flat Telegram: $message") }
+                        .toTypedArray()
+                )
                 .orTimeout(10, TimeUnit.SECONDS)
                 .join()
         } catch (_: Exception) {

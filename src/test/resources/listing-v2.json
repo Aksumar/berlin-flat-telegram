@@ -21,8 +21,7 @@
     "warm": 890,
     "operating_costs": 160,
     "heating_costs": 80,
-    "deposit": 1950,
-    "warm_from": false
+    "deposit": 1950
   },
   "availability": {
     "date": "2026-11-01",

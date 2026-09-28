@@ -1,33 +1,31 @@
 package com.aksumar.telegram.kafka
 
-import com.aksumar.telegram.client.TelegramDeliveryException
 import com.aksumar.telegram.client.TelegramSender
+import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.config.AppProperties
-import com.aksumar.telegram.contract.DeliveryException
-import com.aksumar.telegram.contract.ListingContract
-import com.aksumar.telegram.contract.matchesListingKey
+import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.format.MessageFormatter
+import com.aksumar.telegram.maps.ListingMaps
+import com.fasterxml.jackson.databind.ObjectMapper
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 
 @Component
 class NewFlatEventListener(
     private val contract: ListingContract,
     private val formatter: MessageFormatter,
     private val sender: TelegramSender,
-    private val properties: AppProperties
+    private val properties: AppProperties,
+    private val mapper: ObjectMapper,
+    private val maps: ListingMaps = ListingMaps { null },
 ) {
     private val log = LoggerFactory.getLogger(NewFlatEventListener::class.java)
 
-    @KafkaListener(
-        id = "listings",
-        topics = ["\${app.topic}"],
-        groupId = "\${app.group-id}"
-    )
+    @KafkaListener(id = "listings", topics = ["\${app.topic}"], groupId = "\${app.group-id}")
     fun onRecord(record: ConsumerRecord<String, String>) {
         // Complete delivery before returning control to Kafka. Async listener
         // return values use different acknowledgement/error handling semantics.
@@ -37,47 +35,58 @@ class NewFlatEventListener(
     fun receive(record: ConsumerRecord<String, String>): CompletableFuture<Void> {
         return try {
             val item = contract.decode(record.value())
-            if (!matchesListingKey(record.key(), item.source, item.id)) {
+            if (!mapper.matchesListingKey(record.key(), item.source, item.id)) {
                 throw DeliveryException("Invalid Kafka event identity")
             }
 
             val text = formatter.format(item)
-            val deliveries = properties.chats().map { sender.send(it, text) }
+            val map =
+                try {
+                    maps.create(item)
+                } catch (error: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    throw error
+                } catch (_: Exception) {
+                    log.warn("Map unavailable; sending listing without image")
+                    null
+                }
+            val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map) }
 
-            CompletableFuture.allOf(*deliveries.toTypedArray())
-                .handle<Void> { _, _ ->
-                    val failures = deliveries.mapNotNull(::failure)
+            CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->
+                val failures = deliveries.mapNotNull(::failure)
 
-                    if (failures.isEmpty()) {
-                        return@handle null
-                    }
+                if (failures.isEmpty()) {
+                    return@handle null
+                }
 
-                    val transient = failures.firstOrNull {
-                        it !is TelegramDeliveryException || it.retryable
-                    }
+                val transient =
+                    failures.firstOrNull { it !is TelegramDeliveryException || it.retryable }
 
-                    if (transient != null) {
-                        log.error(
-                            "Telegram delivery failed after retries; leaving Kafka record uncommitted: topic={}, partition={}, offset={}, key={}",
-                            record.topic(),
-                            record.partition(),
-                            record.offset(),
-                            record.key(),
-                            transient
-                        )
-                        throw CompletionException(transient)
-                    }
-
+                if (transient != null) {
                     log.error(
-                        "Skipping listing after permanent Telegram rejection: topic={}, partition={}, offset={}, key={}",
+                        "Telegram delivery failed after retries; leaving Kafka record uncommitted: topic={}, partition={}, offset={}, key={}",
                         record.topic(),
                         record.partition(),
                         record.offset(),
                         record.key(),
-                        failures.first()
+                        transient,
                     )
-                    null
+                    throw CompletionException(transient)
                 }
+
+                log.error(
+                    "Skipping listing after permanent Telegram rejection: topic={}, partition={}, offset={}, key={}",
+                    record.topic(),
+                    record.partition(),
+                    record.offset(),
+                    record.key(),
+                    failures.first(),
+                )
+                null
+            }
+        } catch (error: InterruptedException) {
+            Thread.currentThread().interrupt()
+            CompletableFuture.failedFuture(error)
         } catch (error: Exception) {
             log.error(
                 "Skipping invalid listing: topic={}, partition={}, offset={}, key={}",
@@ -85,7 +94,7 @@ class NewFlatEventListener(
                 record.partition(),
                 record.offset(),
                 record.key(),
-                error
+                error,
             )
             CompletableFuture.completedFuture(null)
         }

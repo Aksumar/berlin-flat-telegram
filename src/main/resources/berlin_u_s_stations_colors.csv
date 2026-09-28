@@ -1,0 +1,544 @@
+transport,station,line,official_color_hex,official_color_name,official_color_ral,source_network,source_colors
+S-Bahn,Frohnau,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hermsdorf,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Waidmannslust,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wittenau,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wilhelmsruh,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schönholz,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wollankstraße,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bornholmer Straße,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gesundbrunnen,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Humboldthain,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nordbahnhof,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Oranienburger Straße,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Brandenburger Tor,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Potsdamer Platz,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Anhalter Bahnhof,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Yorckstraße (Großgörschenstraße),S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Julius-Leber-Brücke,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneberg,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedenau,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Feuerbachstraße,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Rathaus Steglitz,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Botanischer Garten,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichterfelde West,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Sundgauer Straße,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Zehlendorf,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Mexikoplatz,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schlachtensee,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nikolassee,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wannsee,S1,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hauptbahnhof,S15,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wedding,S15,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gesundbrunnen,S15,#DA6BA2,Erikaviolett,RAL 4003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Buch,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Karow,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Blankenburg,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pankow-Heinersdorf,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pankow,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bornholmer Straße,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gesundbrunnen,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Humboldthain,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nordbahnhof,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Oranienburger Straße,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Brandenburger Tor,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Potsdamer Platz,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Anhalter Bahnhof,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Yorckstraße,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südkreuz,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Priesterweg,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Attilastraße,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Marienfelde,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Buckower Chaussee,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schichauweg,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichtenrade,S2,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Heiligensee,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schulzendorf,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tegel,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Eichborndamm,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Karl-Bonhoeffer-Nervenklinik,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Alt-Reinickendorf,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schönholz,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wollankstraße,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bornholmer Straße,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gesundbrunnen,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Humboldthain,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nordbahnhof,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Oranienburger Straße,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Brandenburger Tor,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Potsdamer Platz,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Anhalter Bahnhof,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Yorckstraße,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südkreuz,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Priesterweg,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südende,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lankwitz,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichterfelde Ost,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Osdorfer Straße,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichterfelde Süd,S25,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Blankenburg,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pankow-Heinersdorf,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pankow,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bornholmer Straße,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gesundbrunnen,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Humboldthain,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nordbahnhof,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Oranienburger Straße,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Brandenburger Tor,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Potsdamer Platz,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Anhalter Bahnhof,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Yorckstraße,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südkreuz,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Priesterweg,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südende,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lankwitz,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichterfelde Ost,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Osdorfer Straße,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichterfelde Süd,S26,#007734,Smaragdgrün,RAL 6001,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Spandau,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Stresow,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pichelsberg,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Olympiastadion,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Heerstraße,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Messe Süd,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westkreuz,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Charlottenburg,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Savignyplatz,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Zoologischer Garten,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tiergarten,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bellevue,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hauptbahnhof,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hackescher Markt,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Alexanderplatz,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Jannowitzbrücke,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostbahnhof,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Warschauer Straße,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Rummelsburg,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Betriebsbahnhof Rummelsburg,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Karlshorst,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wuhlheide,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Köpenick,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hirschgarten,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichshagen,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Rahnsdorf,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wilhelmshagen,S3,#0066AD,Verkehrsblau,RAL 5017,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Beusselstraße,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westhafen,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wedding,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gesundbrunnen,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schönhauser Allee,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Prenzlauer Allee,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Greifswalder Straße,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Landsberger Allee,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Storkower Straße,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Frankfurter Allee,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Treptower Park,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Sonnenallee,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Neukölln,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hermannstraße,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tempelhof,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südkreuz,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneberg,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Innsbrucker Platz,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bundesplatz,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Heidelberger Platz,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hohenzollerndamm,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Halensee,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westkreuz,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Messe Nord/ZOB,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westend,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Jungfernheide,S41,#AD5937,Kupferbraun,RAL 8004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Beusselstraße,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westhafen,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wedding,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gesundbrunnen,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schönhauser Allee,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Prenzlauer Allee,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Greifswalder Straße,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Landsberger Allee,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Storkower Straße,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Frankfurter Allee,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Treptower Park,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Sonnenallee,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Neukölln,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hermannstraße,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tempelhof,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südkreuz,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneberg,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Innsbrucker Platz,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bundesplatz,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Heidelberger Platz,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hohenzollerndamm,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Halensee,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westkreuz,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Messe Nord/ZOB,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westend,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Jungfernheide,S42,#CB6418,Orangebraun,RAL 8023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westend,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Messe Nord/ZOB,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westkreuz,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Halensee,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hohenzollerndamm,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Heidelberger Platz,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bundesplatz,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Innsbrucker Platz,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneberg,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südkreuz,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tempelhof,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hermannstraße,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Neukölln,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Köllnische Heide,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Baumschulenweg,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneweide,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Johannisthal,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Adlershof,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Grünau,S46,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Südkreuz,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tempelhof,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hermannstraße,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Neukölln,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Köllnische Heide,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Baumschulenweg,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneweide,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Oberspree,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Spindlersfeld,S47,#CD9C53,Braunbeige,RAL 1011,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westkreuz,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Charlottenburg,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Savignyplatz,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Zoologischer Garten,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tiergarten,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bellevue,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hauptbahnhof,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hackescher Markt,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Alexanderplatz,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Jannowitzbrücke,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostbahnhof,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Warschauer Straße,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nöldnerplatz,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichtenberg,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichsfelde Ost,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Biesdorf,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wuhletal,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Kaulsdorf,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Mahlsdorf,S5,#EB7405,Hellrotorange,RAL 2008,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wannsee,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nikolassee,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Grunewald,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westkreuz,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Charlottenburg,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Savignyplatz,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Zoologischer Garten,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tiergarten,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bellevue,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hauptbahnhof,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hackescher Markt,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Alexanderplatz,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Jannowitzbrücke,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostbahnhof,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Warschauer Straße,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nöldnerplatz,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichtenberg,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichsfelde Ost,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Springpfuhl,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Poelchaustraße,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Marzahn,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Raoul-Wallenberg-Straße,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Mehrower Allee,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ahrensfelde,S7,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Warschauer Straße,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Nöldnerplatz,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Lichtenberg,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichsfelde Ost,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Springpfuhl,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Gehrenseestraße,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hohenschönhausen,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wartenberg,S75,#816DA6,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Blankenburg,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pankow-Heinersdorf,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pankow,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bornholmer Straße,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schönhauser Allee,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Prenzlauer Allee,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Greifswalder Straße,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Landsberger Allee,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Storkower Straße,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Frankfurter Allee,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Treptower Park,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Plänterwald,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Baumschulenweg,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneweide,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Johannisthal,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Adlershof,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Grünau,S8,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Frohnau,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hermsdorf,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Waidmannslust,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wittenau,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wilhelmsruh,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schönholz,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Wollankstraße,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pankow,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bornholmer Straße,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schönhauser Allee,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Prenzlauer Allee,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Greifswalder Straße,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Landsberger Allee,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Storkower Straße,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Frankfurter Allee,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostkreuz,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Treptower Park,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Plänterwald,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Baumschulenweg,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneweide,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Johannisthal,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Adlershof,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Altglienicke,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Grünbergallee,S85,#66AA22,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Spandau,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Stresow,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Pichelsberg,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Olympiastadion,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Heerstraße,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Messe Süd,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Westkreuz,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Charlottenburg,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Savignyplatz,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Zoologischer Garten,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Tiergarten,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Bellevue,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hauptbahnhof,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Friedrichstraße,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Hackescher Markt,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Alexanderplatz,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Jannowitzbrücke,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Ostbahnhof,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Warschauer Straße,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Treptower Park,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Plänterwald,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Baumschulenweg,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Schöneweide,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Johannisthal,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Adlershof,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Altglienicke,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+S-Bahn,Grünbergallee,S9,#992746,Purpurrot,RAL 3004,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Uhlandstraße,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kurfürstendamm,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wittenbergplatz,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Nollendorfplatz,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kurfürstenstraße,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Gleisdreieck,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Möckernbrücke,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hallesches Tor,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Prinzenstraße,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kottbusser Tor,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Görlitzer Bahnhof,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Schlesisches Tor,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Warschauer Straße,U1,#7DAD4C,Gelbgrün,RAL 6018,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Pankow,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Vinetastraße,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Schönhauser Allee,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Senefelderplatz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rosa-Luxemburg-Platz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Alexanderplatz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Klosterstraße,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Märkisches Museum,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Spittelmarkt,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hausvogteiplatz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Stadtmitte,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Mohrenstraße,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Potsdamer Platz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Mendelssohn-Bartholdy-Park,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Gleisdreieck,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bülowstraße,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Nollendorfplatz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wittenbergplatz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Zoologischer Garten,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Ernst-Reuter-Platz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Deutsche Oper,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bismarckstraße,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Sophie-Charlotte-Platz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kaiserdamm,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Theodor-Heuss-Platz,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Neu-Westend,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Olympia-Stadion,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Ruhleben,U2,#DA421E,Blutorange,RAL 2002,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Krumme Lanke,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Onkel Toms Hütte,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Oskar-Helene-Heim,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Freie Universität (Thielplatz),U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Dahlem-Dorf,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Podbielskiallee,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Breitenbachplatz,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rüdesheimer Platz,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Heidelberger Platz,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Fehrbelliner Platz,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hohenzollernplatz,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Spichernstraße,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Augsburger Straße,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wittenbergplatz,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Nollendorfplatz,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kurfürstenstraße,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Gleisdreieck,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Möckernbrücke,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hallesches Tor,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Prinzenstraße,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kottbusser Tor,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Görlitzer Bahnhof,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Schlesisches Tor,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Warschauer Straße,U3,#007A5B,Türkisgrün,RAL 6016,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Nollendorfplatz,U4,#F0D722,Verkehrsgelb,RAL 1023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Viktoria-Luise-Platz,U4,#F0D722,Verkehrsgelb,RAL 1023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bayerischer Platz,U4,#F0D722,Verkehrsgelb,RAL 1023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rathaus Schöneberg,U4,#F0D722,Verkehrsgelb,RAL 1023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Innsbrucker Platz,U4,#F0D722,Verkehrsgelb,RAL 1023,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hauptbahnhof,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bundestag,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Brandenburger Tor,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Unter den Linden,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Museumsinsel,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rotes Rathaus,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Alexanderplatz,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Schillingstraße,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Strausberger Platz,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Weberwiese,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Frankfurter Tor,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Samariterstraße,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Frankfurter Allee,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Magdalenenstraße,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Lichtenberg,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Friedrichsfelde,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Tierpark,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Biesdorf-Süd,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Elsterwerdaer Platz,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wuhletal,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kaulsdorf-Nord,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kienberg (Gärten der Welt),U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Cottbusser Platz,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hellersdorf,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Louis-Lewin-Straße,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hönow,U5,#7E5330,Rehbraun,RAL 8007,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Alt-Tegel,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Borsigwerke,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Holzhauser Straße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Otisstraße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Scharnweberstraße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kurt-Schumacher-Platz,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Afrikanische Straße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rehberge,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Seestraße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Leopoldplatz,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wedding,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Reinickendorfer Straße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Schwartzkopffstraße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Naturkundemuseum,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Oranienburger Tor,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Friedrichstraße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Unter den Linden,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Stadtmitte,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kochstraße/Checkpoint Charlie,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hallesches Tor,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Mehringdamm,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Platz der Luftbrücke,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Paradestraße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Tempelhof,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Alt-Tempelhof,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kaiserin-Augusta-Straße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Ullsteinstraße,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Westphalweg,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Alt-Mariendorf,U6,#8C6DAB,Blaulila,RAL 4005,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rathaus Spandau,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Altstadt Spandau,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Zitadelle,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Haselhorst,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Paulsternstraße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rohrdamm,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Siemensdamm,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Halemweg,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Jakob-Kaiser-Platz,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Jungfernheide,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Mierendorffplatz,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Richard-Wagner-Platz,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bismarckstraße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wilmersdorfer Straße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Adenauerplatz,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Konstanzer Straße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Fehrbelliner Platz,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Blissestraße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Berliner Straße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bayerischer Platz,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Eisenacher Straße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kleistpark,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Yorckstraße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Möckernbrücke,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Mehringdamm,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Gneisenaustraße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Südstern,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hermannplatz,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rathaus Neukölln,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Karl-Marx-Straße,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Neukölln,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Grenzallee,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Blaschkoallee,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Parchimer Allee,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Britz-Süd,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Johannisthaler Chaussee,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Lipschitzallee,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wutzkyallee,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Zwickauer Damm,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rudow,U7,#528DBA,Lichtblau,RAL 5012,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Wittenau,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rathaus Reinickendorf,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Karl-Bonhoeffer-Nervenklinik,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Lindauer Allee,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Paracelsus-Bad,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Residenzstraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Franz-Neumann-Platz (Am Schäfersee),U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Osloer Straße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Pankstraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Gesundbrunnen,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Voltastraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bernauer Straße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rosenthaler Platz,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Weinmeisterstraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Alexanderplatz,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Jannowitzbrücke,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Heinrich-Heine-Straße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Moritzplatz,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kottbusser Tor,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Schönleinstraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hermannplatz,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Boddinstraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Leinestraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hermannstraße,U8,#224F86,Enzianblau,RAL 5010,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Osloer Straße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Nauener Platz,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Leopoldplatz,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Amrumer Straße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Westhafen,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Birkenstraße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Turmstraße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Hansaplatz,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Zoologischer Garten,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Kurfürstendamm,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Spichernstraße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Güntzelstraße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Berliner Straße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Bundesplatz,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Friedrich-Wilhelm-Platz,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Walther-Schreiber-Platz,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Schloßstraße,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/
+U-Bahn,Rathaus Steglitz,U9,#F3791D,Pastellorange,RAL 2003,https://sbahn.berlin/fahren/liniennetze/,https://unternehmen.vbb.de/digitale-services/datensaetze/

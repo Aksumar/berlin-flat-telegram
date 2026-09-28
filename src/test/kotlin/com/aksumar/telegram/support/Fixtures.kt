@@ -1,10 +1,11 @@
 package com.aksumar.telegram.support
 
-import com.aksumar.telegram.contract.Listing
-import com.aksumar.telegram.contract.ListingContract
+import com.aksumar.telegram.config.JacksonConfig
+import com.aksumar.telegram.kafka.ListingContract
+import com.aksumar.telegram.model.Listing
 
-fun fixture(): String =
-    object {}.javaClass.getResource("/listing-v2.json")!!.readText()
+val testMapper = JacksonConfig().objectMapper()
 
-fun event(): Listing =
-    ListingContract().decode(fixture())
+fun fixture(): String = object {}.javaClass.getResource("/listing-v2.json")!!.readText()
+
+fun event(): Listing = ListingContract(testMapper).decode(fixture())

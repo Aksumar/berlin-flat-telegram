@@ -1,11 +1,15 @@
 package com.aksumar.telegram.kafka
 
 import com.aksumar.telegram.Application
-import com.aksumar.telegram.client.TelegramDeliveryException
 import com.aksumar.telegram.client.TelegramSender
-import com.aksumar.telegram.contract.listingKey
-import com.aksumar.telegram.contract.jsonMapper
+import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.support.fixture
+import com.aksumar.telegram.support.testMapper
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -23,13 +27,9 @@ import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry
 import org.testcontainers.kafka.KafkaContainer
 import org.testcontainers.utility.DockerImageName
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Tag("integration")
 class KafkaIntegrationTest {
@@ -67,9 +67,7 @@ class KafkaIntegrationTest {
 
     @TestConfiguration(proxyBeanMethods = false)
     class Overrides {
-        @Bean
-        @Primary
-        fun testSender() = TestSender()
+        @Bean @Primary fun testSender() = TestSender()
     }
 
     private fun context(topic: String, group: String) =
@@ -79,35 +77,38 @@ class KafkaIntegrationTest {
                 "--app.topic=$topic",
                 "--app.group-id=$group",
                 "--app.chat-ids=123,456",
-                "--app.bot-token=fake"
+                "--app.bot-token=fake",
             )
 
     private fun topic(): String {
         val name = "test-${UUID.randomUUID()}"
         AdminClient.create(mapOf("bootstrap.servers" to kafka.bootstrapServers)).use {
-            it.createTopics(listOf(NewTopic(name, 1, 1)))
-                .all()
-                .get(30, TimeUnit.SECONDS)
+            it.createTopics(listOf(NewTopic(name, 1, 1))).all().get(30, TimeUnit.SECONDS)
         }
         return name
     }
 
     private fun publish(topic: String, payload: String = fixture()) {
         KafkaProducer<String, String>(
-            mapOf(
-                "bootstrap.servers" to kafka.bootstrapServers,
-                "key.serializer" to StringSerializer::class.java,
-                "value.serializer" to StringSerializer::class.java
-            )
-        ).use {
-            it.send(
-                ProducerRecord(
-                    topic,
-                    listingKey(jsonMapper().readTree(payload)["source"].asText(), jsonMapper().readTree(payload)["id"].asText()),
-                    payload
+                mapOf(
+                    "bootstrap.servers" to kafka.bootstrapServers,
+                    "key.serializer" to StringSerializer::class.java,
+                    "value.serializer" to StringSerializer::class.java,
                 )
-            ).get(30, TimeUnit.SECONDS)
-        }
+            )
+            .use {
+                it.send(
+                        ProducerRecord(
+                            topic,
+                            testMapper.listingKey(
+                                testMapper.readTree(payload)["source"].asText(),
+                                testMapper.readTree(payload)["id"].asText(),
+                            ),
+                            payload,
+                        )
+                    )
+                    .get(30, TimeUnit.SECONDS)
+            }
     }
 
     private fun offset(group: String, topic: String): Long? =
@@ -134,14 +135,8 @@ class KafkaIntegrationTest {
         val group = "test-${UUID.randomUUID()}"
         publish(topic, javaClass.getResource("/degewo-v2.json")!!.readText())
         context(topic, group).use { context ->
-            val run = CompletableFuture.supplyAsync { context.getBean(DeliveryRuntime::class.java).run() }
-            try {
-                await { offset(group, topic) == 1L }
-                assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)
-            } finally {
-                context.getBean(RunControl::class.java).finish()
-            }
-            assertEquals(0, run.get(30, TimeUnit.SECONDS))
+            await { offset(group, topic) == 1L }
+            assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)
         }
     }
 
@@ -149,17 +144,14 @@ class KafkaIntegrationTest {
     fun `transient Telegram failure keeps offset for retry`() {
         val topic = topic()
         val group = "test-${UUID.randomUUID()}"
-        publish(topic)
-
         context(topic, group).use { context ->
             val sender = context.getBean(TestSender::class.java)
             sender.failSecond.set(true)
 
-            val run = CompletableFuture.supplyAsync {
-                context.getBean(DeliveryRuntime::class.java).run()
-            }
+            publish(topic)
+            val registry = context.getBean(KafkaListenerEndpointRegistry::class.java)
+            await { !registry.getListenerContainer("listings")!!.isRunning }
 
-            assertEquals(1, run.get(30, TimeUnit.SECONDS))
             assertNotEquals(1L, offset(group, topic))
         }
 
@@ -167,17 +159,7 @@ class KafkaIntegrationTest {
             val sender = context.getBean(TestSender::class.java)
             sender.failSecond.set(false)
 
-            val run = CompletableFuture.supplyAsync {
-                context.getBean(DeliveryRuntime::class.java).run()
-            }
-
-            try {
-                await { offset(group, topic) == 1L }
-            } finally {
-                context.getBean(RunControl::class.java).finish()
-            }
-
-            assertEquals(0, run.get(30, TimeUnit.SECONDS))
+            await { offset(group, topic) == 1L }
             assertEquals(listOf("123", "456"), sender.chats)
         }
     }

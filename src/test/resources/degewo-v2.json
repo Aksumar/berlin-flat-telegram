@@ -21,8 +21,7 @@
     "warm": 970.02,
     "operating_costs": null,
     "heating_costs": null,
-    "deposit": null,
-    "warm_from": false
+    "deposit": null
   },
   "availability": {
     "date": null,
