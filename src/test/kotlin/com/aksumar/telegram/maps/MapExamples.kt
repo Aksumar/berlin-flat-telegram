@@ -26,9 +26,9 @@ class MapExamples {
         val maps = GeoapifyStaticMaps(client, "https://maps.geoapify.com/v1/staticmap")
         val location = GeocodedLocation(13.388, 52.52, approximate = false, detailZoom = 15.5)
         val deadline = System.nanoTime() + Duration.ofMinutes(2).toNanos()
-        val detail = cachedImage("detail-exact.png") { maps.detail(location, deadline) }
-        val approximate = cachedImage("detail-approximate.png") { maps.detail(location.copy(approximate = true), deadline) }
-        val overview = cachedImage("overview-zoom10.png") { requireNotNull(maps.overviewOrNull(location, deadline)) }
+        val detail = cachedImage("detail-exact-local-names.png") { maps.detail(location, deadline) }
+        val approximate = cachedImage("detail-approximate-local-names.png") { maps.detail(location.copy(approximate = true), deadline) }
+        val overview = cachedImage("overview-districts.png") { requireNotNull(maps.overviewOrNull(location, deadline)) }
         val stations = cachedStations(client, location, deadline)
         val scenarios = listOf(
             Example("01-normal", "Обычная карта", "Реальные станции из Geoapify возле условной точки в центре Берлина.", stations),

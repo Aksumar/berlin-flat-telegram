@@ -26,7 +26,9 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
                     "style" to "positron",
                     "width" to MapLayout.OVERVIEW_WIDTH.toString(),
                     "height" to MapLayout.OVERVIEW_HEIGHT.toString(),
-                    "zoom" to "10",
+                    // At zoom 11 the provider includes nearby district names in the overview.
+                    "zoom" to "11",
+                    "styleCustomization" to "place_suburb:#4b5563;11|place_other:#4b5563;10",
                     // Circle markers are offset vertically by the provider; geometry is centred on the coordinates.
                     "geometry" to "circle:${location.longitude},${location.latitude},6;fillcolor:#e53935;fillopacity:1;linecolor:#ffffff;linewidth:1",
                 ),

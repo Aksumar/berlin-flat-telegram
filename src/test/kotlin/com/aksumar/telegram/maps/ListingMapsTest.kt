@@ -133,6 +133,7 @@ class ListingMapsTest {
             assertFalse(p.requests[1].second.getValue("styleCustomization").contains("poi-level-1"))
             assertFalse(p.requests[1].second.getValue("styleCustomization").contains("poi-railway"))
             assertFalse(p.requests[1].second.getValue("styleCustomization").contains("airport"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("place-other:none"))
             assertTrue(p.requests[1].second.getValue("marker").contains("size:36;icon:home"))
             assertFalse(p.requests[2].second.containsKey("marker"))
             assertEquals(
@@ -141,7 +142,8 @@ class ListingMapsTest {
             )
             assertEquals("288", p.requests[2].second["width"])
             assertEquals("240", p.requests[2].second["height"])
-            assertEquals("10", p.requests[2].second["zoom"])
+            assertEquals("11", p.requests[2].second["zoom"])
+            assertEquals("place_suburb:#4b5563;11|place_other:#4b5563;10", p.requests[2].second["styleCustomization"])
             assertEquals("lonlat:13.38,52.53", p.requests[2].second["center"])
             assertEquals(event().address.full, p.requests[0].second["text"])
             assertEquals("rect:13.08,52.33,13.77,52.68", p.requests[0].second["filter"])
