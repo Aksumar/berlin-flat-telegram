@@ -22,12 +22,13 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
     fun overviewOrNull(location: GeocodedLocation, deadlineNanos: Long): BufferedImage? =
         try {
             fetchImage(
-                commonParameters(location) + mapOf(
+                (commonParameters(location) - "marker") + mapOf(
                     "style" to "positron",
                     "width" to MapLayout.OVERVIEW_WIDTH.toString(),
                     "height" to MapLayout.OVERVIEW_HEIGHT.toString(),
-                    "zoom" to "9",
-                    "marker" to "lonlat:${location.longitude},${location.latitude};type:circle;color:#e53935;size:12",
+                    "zoom" to "10",
+                    // Circle markers are offset vertically by the provider; geometry is centred on the coordinates.
+                    "geometry" to "circle:${location.longitude},${location.latitude},6;fillcolor:#e53935;fillopacity:1;linecolor:#ffffff;linewidth:1",
                 ),
                 "overview map",
                 deadlineNanos,
@@ -47,7 +48,7 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
         return mapOf(
             "style" to "osm-bright",
             "format" to "png",
-            "lang" to "de",
+            // Keep local names: forcing lang=de suppresses street labels in Geoapify tiles.
             "center" to center,
             "marker" to marker,
             "attribution" to "default",

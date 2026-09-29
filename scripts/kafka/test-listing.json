@@ -5,12 +5,12 @@
   "title": "[ТЕСТ] Проверка уведомления с картой — не реальное объявление",
   "url": "https://example.com/manual-map-test-001",
   "address": {
-    "full": "Alexanderplatz 1, 10178 Berlin",
-    "street": "Alexanderplatz",
-    "house_number": "1",
-    "postal_code": "10178",
+    "full": "Spichernstrasse 9, 10777 Berlin",
+    "street": "Spichernstrasse",
+    "house_number": "9",
+    "postal_code": "10777",
     "city": "Berlin",
-    "district": "Mitte"
+    "district": "Wilmersdorf"
   },
   "area_m2": 64.5,
   "rooms": 2,

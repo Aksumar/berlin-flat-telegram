@@ -134,17 +134,21 @@ class ListingMapsTest {
             assertFalse(p.requests[1].second.getValue("styleCustomization").contains("poi-railway"))
             assertFalse(p.requests[1].second.getValue("styleCustomization").contains("airport"))
             assertTrue(p.requests[1].second.getValue("marker").contains("size:36;icon:home"))
-            assertTrue(p.requests[2].second.getValue("marker").contains("type:circle"))
+            assertFalse(p.requests[2].second.containsKey("marker"))
+            assertEquals(
+                "circle:13.38,52.53,6;fillcolor:#e53935;fillopacity:1;linecolor:#ffffff;linewidth:1",
+                p.requests[2].second["geometry"],
+            )
             assertEquals("288", p.requests[2].second["width"])
             assertEquals("240", p.requests[2].second["height"])
-            assertEquals("9", p.requests[2].second["zoom"])
+            assertEquals("10", p.requests[2].second["zoom"])
             assertEquals("lonlat:13.38,52.53", p.requests[2].second["center"])
             assertEquals(event().address.full, p.requests[0].second["text"])
             assertEquals("rect:13.08,52.33,13.77,52.68", p.requests[0].second["filter"])
             assertTrue(
                 p.requests
                     .filter { it.first == "/staticmap" }
-                    .all { it.second["attribution"] == "default" }
+                    .all { it.second["attribution"] == "default" && "lang" !in it.second }
             )
         }
     }
