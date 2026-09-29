@@ -27,7 +27,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.test { useJUnitPlatform { excludeTags("integration") } }
+tasks.test { useJUnitPlatform { excludeTags("integration", "map-examples") } }
 
 val integrationTest by
     tasks.registering(Test::class) {
@@ -44,3 +44,12 @@ tasks.check { dependsOn(integrationTest) }
 tasks.bootJar { archiveFileName.set("app.jar") }
 
 tasks.jar { enabled = false }
+
+val mapExamples by tasks.registering(Test::class) {
+    description = "Generate map preview gallery (uses Geoapify once, then local cache)"
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform { includeTags("map-examples") }
+    outputs.upToDateWhen { false }
+}

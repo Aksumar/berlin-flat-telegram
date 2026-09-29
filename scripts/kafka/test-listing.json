@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "source": "gewobag",
+  "id": "manual-map-test-001",
+  "title": "[ТЕСТ] Проверка уведомления с картой — не реальное объявление",
+  "url": "https://example.com/manual-map-test-001",
+  "address": {
+    "full": "Spichernstrasse 9, 10777 Berlin",
+    "street": "Spichernstrasse",
+    "house_number": "9",
+    "postal_code": "10777",
+    "city": "Berlin",
+    "district": "Wilmersdorf"
+  },
+  "area_m2": 64.5,
+  "rooms": 2,
+  "floor": "3",
+  "rent": {
+    "currency": "EUR",
+    "cold": 650,
+    "warm": 890,
+    "operating_costs": 160,
+    "heating_costs": 80,
+    "deposit": 1950
+  },
+  "availability": {
+    "date": null,
+    "text": "ТЕСТОВОЕ СООБЩЕНИЕ — не реальное объявление"
+  },
+  "wbs": {
+    "required": false,
+    "text": null
+  },
+  "features": {
+    "balcony": true,
+    "elevator": true,
+    "built_in_kitchen": null
+  },
+  "provider": "Gewobag"
+}

@@ -41,7 +41,6 @@ class ListingMapsTest {
         var placesPage: ((String) -> String)? = null
         var placesStatus = 200
         var stops = "{\"features\":[]}"
-        var points = "{\"features\":[]}"
 
         init {
             server.createContext("/") { exchange ->
@@ -60,7 +59,6 @@ class ListingMapsTest {
                             categories.startsWith("public_transport.subway") ->
                                 placesPage?.invoke(query.getValue("offset")) ?: places
                             categories.startsWith("public_transport.tram") -> stops
-                            categories.startsWith("healthcare.") -> points
                             else -> "{\"features\":[]}"
                         }.toByteArray()
                     }
@@ -128,23 +126,31 @@ class ListingMapsTest {
             assertEquals(Color.GREEN.rgb, image.getRGB(100, 100))
             assertEquals(Color.BLUE.rgb, image.getRGB(810, 450))
             assertEquals(Color.GREEN.rgb, image.getRGB(940, 590))
-            assertEquals(6, p.requests.size)
+            assertEquals(5, p.requests.size)
             assertEquals("osm-bright", p.requests[1].second["style"])
             assertEquals("15.5", p.requests[1].second["zoom"])
             assertFalse(p.requests[1].second.getValue("styleCustomization").contains("highway"))
-            assertTrue(p.requests[1].second.getValue("styleCustomization").contains("poi-level-1:none"))
-            assertTrue(p.requests[1].second.getValue("marker").contains("size:32;icon:home"))
-            assertTrue(p.requests[2].second.getValue("marker").contains("type:circle"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("poi-level-1"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("poi-railway"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("airport"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("place-other:none"))
+            assertTrue(p.requests[1].second.getValue("marker").contains("size:36;icon:home"))
+            assertFalse(p.requests[2].second.containsKey("marker"))
+            assertEquals(
+                "circle:13.38,52.53,6;fillcolor:#e53935;fillopacity:1;linecolor:#ffffff;linewidth:1",
+                p.requests[2].second["geometry"],
+            )
             assertEquals("288", p.requests[2].second["width"])
             assertEquals("240", p.requests[2].second["height"])
-            assertEquals("9", p.requests[2].second["zoom"])
+            assertEquals("11", p.requests[2].second["zoom"])
+            assertEquals("place_suburb:#4b5563;11|place_other:#4b5563;10", p.requests[2].second["styleCustomization"])
             assertEquals("lonlat:13.38,52.53", p.requests[2].second["center"])
             assertEquals(event().address.full, p.requests[0].second["text"])
             assertEquals("rect:13.08,52.33,13.77,52.68", p.requests[0].second["filter"])
             assertTrue(
                 p.requests
                     .filter { it.first == "/staticmap" }
-                    .all { it.second["attribution"] == "default" }
+                    .all { it.second["attribution"] == "default" && "lang" !in it.second }
             )
         }
     }
@@ -165,31 +171,76 @@ class ListingMapsTest {
     }
 
     @Test
-    fun `only selected amenities get small icons without text labels`() {
-        Provider().use { p ->
-            val baseline = requireNotNull(p.maps().create(event())).png
-            val categories =
-                p.requests.first { it.first == "/places" && it.second["categories"]?.startsWith("healthcare.") == true }
-                    .second.getValue("categories")
-            assertTrue(categories.contains("commercial.supermarket"))
-            assertTrue(categories.contains("commercial.convenience"))
-            assertFalse(categories.contains("commercial.food_and_drink"))
-            assertFalse(categories.contains("education."))
-            assertFalse(categories.contains("childcare."))
+    fun `places failure does not disable landmarks for subsequent listings`() {
+        Provider().use { provider ->
+            val maps = provider.maps()
+            provider.places =
+                """{"features":[{"properties":{"name":"U Test Station","lon":13.375,"lat":52.53,"categories":["public_transport.subway"],"datasource":{"raw":{"railway":"station"}}}}]}"""
+            provider.placesStatus = 503
+            val fallback = ImageIO.read(requireNotNull(maps.create(event())).png.inputStream())
+            assertEquals(Color.GREEN.rgb, fallback.getRGB(150, 300))
 
-            fun point(name: String, category: String) =
-                """{"features":[{"properties":{"name":"$name","lon":13.375,"lat":52.53,"categories":["$category"]}}]}"""
-            p.points = point("School", "education.school")
-            assertArrayEquals(baseline, requireNotNull(p.maps().create(event())).png)
-            p.points = point("Kindergarten", "childcare.kindergarten")
-            assertArrayEquals(baseline, requireNotNull(p.maps().create(event())).png)
-            p.points = point("Coffee shop", "commercial.food_and_drink.coffee_and_tea")
-            assertArrayEquals(baseline, requireNotNull(p.maps().create(event())).png)
-            p.points = point("Grocery", "commercial.supermarket")
-            val grocery = requireNotNull(p.maps().create(event())).png
-            assertFalse(baseline.contentEquals(grocery))
-            p.points = point("A different grocery name", "commercial.supermarket")
-            assertArrayEquals(grocery, requireNotNull(p.maps().create(event())).png)
+            provider.placesStatus = 200
+            val recovered = ImageIO.read(requireNotNull(maps.create(event())).png.inputStream())
+            assertEquals(Color(35, 107, 158).rgb, recovered.getRGB(150, 300))
+        }
+    }
+
+    @Test
+    fun `tram takes priority over bus when there are no visible rail stations`() {
+        Provider().use { provider ->
+            val tram = """{"properties":{"name":"Tram stop","lon":13.375,"lat":52.53,"categories":["public_transport.tram"]}}"""
+            val bus = """{"properties":{"name":"Bus stop","lon":13.3825,"lat":52.53,"categories":["public_transport.bus"]}}"""
+            provider.stops = """{"features":[$tram]}"""
+            val tramOnly = requireNotNull(provider.maps().create(event())).png
+
+            provider.stops = """{"features":[$tram,$bus]}"""
+            assertArrayEquals(tramOnly, requireNotNull(provider.maps().create(event())).png)
+        }
+    }
+
+    @Test
+    fun `address parts form geocoding query when full address is blank`() {
+        Provider().use { provider ->
+            val address = Address(" ", "Invalidenstraße", "42", "10115", "Berlin", "Mitte")
+            assertNotNull(provider.maps().create(event().copy(address = address)))
+            assertEquals(
+                "Invalidenstraße 42, 10115, Mitte, Berlin",
+                provider.requests.first().second["text"],
+            )
+        }
+    }
+
+    @Test
+    fun `non transport places are neither requested nor drawn`() {
+        Provider().use { provider ->
+            val maps = provider.maps()
+            val baseline = requireNotNull(maps.create(event())).png
+            val categories = listOf(
+                "commercial.supermarket",
+                "commercial.convenience",
+                "healthcare.pharmacy",
+                "commercial.health_and_beauty.pharmacy",
+                "healthcare.hospital",
+                "leisure.park",
+                "education.school",
+                "childcare.kindergarten",
+                "commercial.food_and_drink.coffee_and_tea",
+            )
+            val features = categories.joinToString(",") { category ->
+                """{"properties":{"name":"Test place","lon":13.375,"lat":52.53,"categories":["$category"]}}"""
+            }
+            provider.places = """{"features":[$features]}"""
+            provider.stops = provider.places
+
+            assertArrayEquals(baseline, requireNotNull(maps.create(event())).png)
+            val placeRequests = provider.requests.filter { it.first == "/places" }
+            assertTrue(placeRequests.isNotEmpty())
+            assertTrue(placeRequests.all { request ->
+                request.second.getValue("categories").split(',').all { it.startsWith("public_transport.") }
+            })
+            val style = provider.requests.first { it.first == "/staticmap" }.second.getValue("styleCustomization")
+            for (level in 2..3) assertTrue(style.contains("poi-level-$level:none"))
         }
     }
 
@@ -271,6 +322,25 @@ class ListingMapsTest {
             assertEquals("500", request["limit"])
             p.places = """{"features":[$first,$second,${station("First", 13.374)}]}"""
             assertArrayEquals(map.png, requireNotNull(p.maps().create(event())).png)
+        }
+    }
+
+    @Test
+    fun `crowded map includes the overflow legend in the returned PNG`() {
+        Provider().use { provider ->
+            val stations = (0 until 45).joinToString(",") { index ->
+                val longitude = 13.375 + (index % 9) * 0.0008
+                val latitude = 52.532 - (index / 9) * 0.0004
+                """{"properties":{"name":"U Station $index with a long name requiring several lines","lon":$longitude,"lat":$latitude,"categories":["public_transport.subway"],"datasource":{"raw":{"railway":"station"}}}}"""
+            }
+            provider.places = """{"features":[$stations]}"""
+
+            val result = requireNotNull(provider.maps().create(event()))
+            val image = ImageIO.read(result.png.inputStream())
+
+            assertEquals(960, image.width)
+            assertTrue(image.height > 600)
+            assertEquals(Color.GREEN.rgb, image.getRGB(940, 590))
         }
     }
 
