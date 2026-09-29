@@ -4,6 +4,41 @@ Kotlin/JVM 21 and Spring Boot consumer for apartment notifications. Accepts **on
 Kafka listing contract v2** and renders one Russian Telegram template with one house
 emoji. See [the event contract](docs/listing-v2.md) for fields and source semantics.
 
+## Отправить тестовое сообщение — запуск кнопкой Play
+
+Команды готовы для текущего проекта на этом Mac: ничего подставлять не нужно.
+Открой Docker Desktop, затем запускай блоки по порядку кнопкой Play.
+Запускай команды из корня репозитория `telegram` (папки с `gradlew`).
+
+**1. Запустить существующие Kafka и Telegram-consumer.** Если они уже работают,
+команда оставит их работающими. После запуска подожди около 10 секунд.
+
+```bash
+docker start berlin-flat-watcher-kafka-1 berlin-flat-telegram-main
+```
+
+**2. Отправить одно тестовое объявление в Telegram через Kafka.**
+Каждое нажатие Play отправляет новую запись во все настроенные чаты.
+
+```bash
+python3 scripts/kafka/send_test_listing.py --container berlin-flat-watcher-kafka-1 --bootstrap-server localhost:9092 --topic berlin-flat-listings-v1
+```
+
+Объявление можно изменить в [test-listing.json](scripts/kafka/test-listing.json).
+Генерация карты и доставка могут занять около 30 секунд.
+`Sent one listing` означает, что Kafka приняла запись.
+
+**3. Если сообщение не пришло — посмотреть логи Telegram-consumer.**
+
+```bash
+docker logs --tail 80 berlin-flat-telegram-main
+```
+
+Дополнительные готовые команды — в [инструкции к скрипту](scripts/kafka/README.md).
+Контейнер использует настройки `.env`, сохранённые при его создании:
+после изменения `.env` контейнер нужно пересоздать, обычный `docker start`
+новые значения не загрузит.
+
 ## Build and run
 
 Requires JDK 21; Gradle is provided by the checked-in wrapper.
@@ -81,7 +116,8 @@ For each listing it performs these steps:
    for approximate matches, and zoom `15.5` for buildings
    or streets, otherwise `12.5`. Street names use the native `osm-bright` labels, with
    their default size, color and placement; some streets may be unlabelled at this zoom.
-   Built-in POIs are hidden so only the selected amenity icons are overlaid.
+   Built-in POIs are hidden. Only transport stations and stops are overlaid;
+   shops, pharmacies, parks and other amenities are neither requested nor marked.
    The overview is `288 × 240`, centred on the address at zoom `9`,
    and marks the same coordinates with a small red dot. If the overview fails,
    the main map is still sent.
@@ -93,12 +129,9 @@ For each listing it performs these steps:
    S/U line and its supplied HEX color. Matching line numbers are drawn as colored
    chips beside station labels; unmatched names keep the generic transport badge.
    If no visible S/U station is found, query tram and bus stops separately and prefer
-   a tram. Skip the part of the main map covered by the overview. Additional Places
-   requests fetch pharmacies, hospitals, parks, supermarkets and small grocery stores.
-   Amenities appear as small pictograms without text. Transport stops keep name labels;
-   S/U stations also show their line numbers.
-   Schools and kindergartens are not marked. Transport requests use map-bounds
-   filtering and at most two pages of 500 results.
+   a tram. Skip the part of the main map covered by the overview. Transport stops
+   keep name labels; S/U stations also show their line numbers. Transport requests
+   use map-bounds filtering and at most two pages of 500 results.
 
 7. Compose a `960 × 600` PNG locally with Java `Graphics2D`: place the overview in
    a bordered inset at the lower right with the heading `БЕРЛИН`, preserving the
@@ -108,8 +141,8 @@ For each listing it performs these steps:
    The link for an approximate match opens a map view without a pin.
 
 The requests run sequentially, without Geoapify retries: one geocoding request
-and, if accepted, two static-map requests and Places requests for transport,
-selected amenities. The HTTP client has a 10-second connect timeout;
+and, if accepted, two static-map requests and Places requests for transport.
+The HTTP client has a 10-second connect timeout;
 each request is limited by its 20-second timeout and the remaining 30-second map
 budget. Each response must have HTTP status
 200 and a body no larger than 5,000,000 bytes; map images must decode successfully
@@ -175,6 +208,9 @@ The image builds with JDK 21 and runs on JRE 21. Its entrypoint is `java -jar /a
 continuously by default.
 
 ## Tests and CI
+
+For manual Kafka publishing, see [the script and sample listing](scripts/kafka/README.md).
+Run `python3 scripts/kafka/send_test_listing.py --dry-run` to preview a record.
 
 ```sh
 ./gradlew test                  # Unit tests; fake local HTTP server, no real Telegram
