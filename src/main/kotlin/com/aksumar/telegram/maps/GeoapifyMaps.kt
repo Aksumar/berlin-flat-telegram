@@ -43,8 +43,8 @@ class GeoapifyMaps(
             val layout = MapLayout(hasOverview = overview != null, approximate = location.approximate)
             val viewport = MapViewport(location.longitude, location.latitude, location.detailZoom)
             val landmarks = places.findVisible(viewport, layout, deadlineNanos)
-            landmarkRenderer.draw(detail, landmarks, layout)
-            ListingMap(composer.compose(detail, overview, layout), location.mapUrl, location.approximate)
+            val annotatedDetail = landmarkRenderer.draw(detail, landmarks, layout)
+            ListingMap(composer.compose(annotatedDetail, overview, layout), location.mapUrl, location.approximate)
         } catch (error: InterruptedException) {
             Thread.currentThread().interrupt()
             throw error

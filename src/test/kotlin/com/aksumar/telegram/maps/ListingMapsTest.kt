@@ -130,7 +130,9 @@ class ListingMapsTest {
             assertEquals("osm-bright", p.requests[1].second["style"])
             assertEquals("15.5", p.requests[1].second["zoom"])
             assertFalse(p.requests[1].second.getValue("styleCustomization").contains("highway"))
-            assertTrue(p.requests[1].second.getValue("styleCustomization").contains("poi-level-1:none"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("poi-level-1"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("poi-railway"))
+            assertFalse(p.requests[1].second.getValue("styleCustomization").contains("airport"))
             assertTrue(p.requests[1].second.getValue("marker").contains("size:36;icon:home"))
             assertTrue(p.requests[2].second.getValue("marker").contains("type:circle"))
             assertEquals("288", p.requests[2].second["width"])
@@ -232,7 +234,7 @@ class ListingMapsTest {
                 request.second.getValue("categories").split(',').all { it.startsWith("public_transport.") }
             })
             val style = provider.requests.first { it.first == "/staticmap" }.second.getValue("styleCustomization")
-            for (level in 1..3) assertTrue(style.contains("poi-level-$level:none"))
+            for (level in 2..3) assertTrue(style.contains("poi-level-$level:none"))
         }
     }
 
@@ -314,6 +316,25 @@ class ListingMapsTest {
             assertEquals("500", request["limit"])
             p.places = """{"features":[$first,$second,${station("First", 13.374)}]}"""
             assertArrayEquals(map.png, requireNotNull(p.maps().create(event())).png)
+        }
+    }
+
+    @Test
+    fun `crowded map includes the overflow legend in the returned PNG`() {
+        Provider().use { provider ->
+            val stations = (0 until 45).joinToString(",") { index ->
+                val longitude = 13.375 + (index % 9) * 0.0008
+                val latitude = 52.532 - (index / 9) * 0.0004
+                """{"properties":{"name":"U Station $index with a long name requiring several lines","lon":$longitude,"lat":$latitude,"categories":["public_transport.subway"],"datasource":{"raw":{"railway":"station"}}}}"""
+            }
+            provider.places = """{"features":[$stations]}"""
+
+            val result = requireNotNull(provider.maps().create(event()))
+            val image = ImageIO.read(result.png.inputStream())
+
+            assertEquals(960, image.width)
+            assertTrue(image.height > 600)
+            assertEquals(Color.GREEN.rgb, image.getRGB(940, 590))
         }
     }
 

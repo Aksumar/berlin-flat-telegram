@@ -67,7 +67,8 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
     }
 
     private companion object {
+        // Keep priority POIs, railway station and airport labels; hide lower-priority POIs.
         const val BASE_MAP_STYLE =
-            "poi-level-1:none|poi-level-2:none|poi-level-3:none|poi-railway:none"
+            "poi-level-2:none|poi-level-3:none"
     }
 }

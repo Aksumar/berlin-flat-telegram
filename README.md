@@ -35,6 +35,8 @@ docker logs --tail 80 berlin-flat-telegram-main
 ```
 
 Дополнительные готовые команды — в [инструкции к скрипту](scripts/kafka/README.md).
+После изменений в Kotlin-коде или ресурсах нужно пересобрать образ и пересоздать
+consumer — команды есть в разделе [«После изменений в коде»](scripts/kafka/README.md#после-изменений-в-коде).
 Контейнер использует настройки `.env`, сохранённые при его создании:
 после изменения `.env` контейнер нужно пересоздать, обычный `docker start`
 новые значения не загрузит.
@@ -64,6 +66,9 @@ container or deployment system. The application does not automatically load `.en
 
 ## Apartment maps
 
+[Map preview gallery](examples/maps/index.html) · [Scenarios and regeneration](examples/maps/README.md).
+The image gains a numbered station legend below the map when labels need extra space.
+
 Set `GEOAPIFY_API_KEY` to enable Geoapify Geocoding and Static Maps (Routing API is
 not used). Each listing gets a 960 × 600 map with the provider's street labels and labelled stations, a red location marker and a Berlin overview
 inset with a small location dot. The heading shows the source website and district, e.g. `🏠 InBerlinWohnen · Mitte`.
@@ -88,8 +93,8 @@ See [Geoapify Forward Geocoding](https://apidocs.geoapify.com/docs/geocoding/for
 
 ### How the Geoapify client works
 
-The client is implemented in
-[`ListingMaps.kt`](src/main/kotlin/com/aksumar/telegram/maps/ListingMaps.kt).
+Map generation is coordinated by
+[`GeoapifyMaps.kt`](src/main/kotlin/com/aksumar/telegram/maps/GeoapifyMaps.kt).
 For each listing it performs these steps:
 
 1. Use the nonblank `address.full`, or assemble a query from street, house number,
@@ -116,24 +121,37 @@ For each listing it performs these steps:
    for approximate matches, and zoom `15.5` for buildings
    or streets, otherwise `12.5`. Street names use the native `osm-bright` labels, with
    their default size, color and placement; some streets may be unlabelled at this zoom.
-   Built-in POIs are hidden. Only transport stations and stops are overlaid;
+   Lower-priority POI layers (`poi-level-2` and `poi-level-3`) are hidden;
+   priority POIs (`poi-level-1`), native railway station and airport labels remain
+   part of the Geoapify basemap, subject to its zoom and label placement rules.
+   The railway layer includes ordinary stations as well as major terminals, so native
+   station labels may coexist with our S/U labels. Only transport stations and stops are overlaid;
    shops, pharmacies, parks and other amenities are neither requested nor marked.
    The overview is `288 × 240`, centred on the address at zoom `9`,
    and marks the same coordinates with a small red dot. If the overview fails,
    the main map is still sent.
 6. Fetch nearby subway, train and light-rail stations from [Geoapify Places](https://apidocs.geoapify.com/docs/places/).
-   Overlay all returned U-Bahn and confirmed S-Bahn stations in the visible map,
-   deduplicating station names within each transport type. At application startup,
+   Label returned U-Bahn and confirmed S-Bahn stations in the visible map,
+   deduplicating station names and combining known S/U interchanges into one label. At application startup,
    [`berlin_u_s_stations_colors.csv`](src/main/resources/berlin_u_s_stations_colors.csv)
    is loaded into an in-memory lookup from normalized station name to every served
    S/U line and its supplied HEX color. Matching line numbers are drawn as colored
-   chips beside station labels; unmatched names keep the generic transport badge.
+   chips below the station name, with S-Bahn and U-Bahn on separate rows.
+   Long names wrap; all S-Bahn lines stay on one row and all U-Bahn lines on another.
+   Label widths and legend columns adapt to fit the complete transport rows. Unmatched names retain a transport
+   badge beside their full name. Labels are placed inside the map, avoiding other
+   labels, the apartment marker, the overview and the approximate-location notice.
+   If nearby positions are occupied, search the rest of the map and try a narrower
+   label. Every remaining station is kept in a numbered legend below the map, with
+   a matching numbered marker on the map. The image grows vertically to fit the
+   complete legend; no station name or line is dropped because space ran out.
    If no visible S/U station is found, query tram and bus stops separately and prefer
    a tram. Skip the part of the main map covered by the overview. Transport stops
    keep name labels; S/U stations also show their line numbers. Transport requests
    use map-bounds filtering and at most two pages of 500 results.
 
-7. Compose a `960 × 600` PNG locally with Java `Graphics2D`: place the overview in
+7. Compose a PNG locally with Java `Graphics2D`: the map area remains `960 × 600`,
+   with extra height for the station legend when needed. Place the overview in
    a bordered inset at the lower right with the heading `БЕРЛИН`, preserving the
    main map's attribution. Add `Примерное расположение` at the upper left for an
    approximate match. Return the PNG bytes, a Google Maps link and the
