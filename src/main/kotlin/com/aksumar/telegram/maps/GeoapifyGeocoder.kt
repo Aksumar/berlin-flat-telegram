@@ -8,15 +8,7 @@ internal data class GeocodedLocation(
     val latitude: Double,
     val approximate: Boolean,
     val detailZoom: Double,
-) {
-    val mapUrl: String
-        get() =
-            if (!approximate) "https://www.google.com/maps/search/?api=1&query=$latitude%2C$longitude"
-            else {
-                val viewZoom = detailZoom.toInt()
-                "https://www.google.com/maps/@?api=1&map_action=map&center=$latitude%2C$longitude&zoom=$viewZoom"
-            }
-}
+)
 
 internal class GeoapifyGeocoder(
     private val client: GeoapifyClient,

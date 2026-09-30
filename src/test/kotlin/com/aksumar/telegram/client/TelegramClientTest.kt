@@ -44,26 +44,22 @@ class TelegramClientTest {
         }
     }
 
-    private val map =
-        ListingMap(
-            byteArrayOf(1, 2, 3),
-            "https://www.google.com/maps/search/?api=1&query=52.53%2C13.38",
-            false,
-        )
+    private val map = ListingMap(byteArrayOf(1, 2, 3), false)
+    private val mapUrl = "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+Berlin"
 
     @Test
     fun `uploads photo with caption and both buttons`() {
         PhotoServer().use { server ->
             server
                 .client()
-                .sendListing("123", "🏠 Gewobag · Mitte", "https://example.com/123", map)
+                .sendListing("123", "🏠 Gewobag · Mitte", "https://example.com/123", map, mapUrl)
                 .join()
             val (method, body) = server.requests.single()
             assertEquals("sendPhoto", method)
             assertTrue(body.contains("name=\"photo\"; filename=\"map.png\""))
             assertTrue(body.contains("Content-Type: image/png"))
             assertTrue(body.contains("🏠 Gewobag · Mitte"))
-            assertTrue(body.contains(map.url))
+            assertTrue(body.contains(mapUrl))
             assertTrue(body.contains("https://example.com/123"))
             val keyboard = testMapper.readTree(
                 body.substringAfter("name=\"reply_markup\"\r\n\r\n").substringBefore("\r\n")
@@ -82,7 +78,7 @@ class TelegramClientTest {
             val text = "🏠 Gewobag\n" + "я".repeat(1100)
             server
                 .client()
-                .sendListing("123", text, "https://example.com/123", map.copy(approximate = true))
+                .sendListing("123", text, "https://example.com/123", map.copy(approximate = true), mapUrl)
                 .join()
             assertEquals(listOf("sendPhoto", "sendMessage"), server.requests.map { it.first })
             assertTrue(server.requests[0].second.contains("Примерное расположение"))
@@ -98,7 +94,7 @@ class TelegramClientTest {
         for (size in listOf(1024, 1025)) PhotoServer().use { server ->
             server
                 .client()
-                .sendListing("123", "x".repeat(size), "https://example.com/123", map)
+                .sendListing("123", "x".repeat(size), "https://example.com/123", map, mapUrl)
                 .join()
             assertEquals(if (size == 1024) 1 else 2, server.requests.size)
         }
@@ -107,7 +103,6 @@ class TelegramClientTest {
     @Test
     fun `missing map still sends text with listing and address buttons`() {
         PhotoServer().use { server ->
-            val mapUrl = "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+Berlin"
             server.client().sendListing("123", "listing", "https://example.com/123", null, mapUrl).join()
             val (method, body) = server.requests.single()
             assertEquals("sendMessage", method)
@@ -127,7 +122,7 @@ class TelegramClientTest {
     @Test
     fun `missing address retains listing button without inventing map location`() {
         PhotoServer().use { server ->
-            server.client().sendListing("123", "listing", "https://example.com/123", null).join()
+            server.client().sendListing("123", "listing", "https://example.com/123", null, null).join()
             val message = testMapper.readTree(server.requests.single().second)
             val buttons = message["reply_markup"]["inline_keyboard"]
             assertEquals(1, buttons.size())
@@ -138,7 +133,7 @@ class TelegramClientTest {
     @Test
     fun `rejected photo and exhausted photo retries fall back to text with buttons`() {
         for (status in listOf(400, 500)) PhotoServer(status).use { server ->
-            server.client().sendListing("123", "listing", "https://example.com/123", map).join()
+            server.client().sendListing("123", "listing", "https://example.com/123", map, mapUrl).join()
             assertEquals(
                 List(if (status == 400) 1 else 4) { "sendPhoto" } + "sendMessage",
                 server.requests.map { it.first },
@@ -149,7 +144,7 @@ class TelegramClientTest {
             assertEquals(1, buttons.size())
             assertEquals(2, buttons[0].size())
             assertEquals("https://example.com/123", buttons[0][0]["url"].asText())
-            assertEquals(map.url, buttons[0][1]["url"].asText())
+            assertEquals(mapUrl, buttons[0][1]["url"].asText())
         }
     }
 
@@ -160,7 +155,7 @@ class TelegramClientTest {
                 assertThrows(CompletionException::class.java) {
                     server
                         .client()
-                        .sendListing("123", "listing", "https://example.com/123", map)
+                        .sendListing("123", "listing", "https://example.com/123", map, mapUrl)
                         .join()
                 }
             assertTrue((error.cause as TelegramDeliveryException).retryable)

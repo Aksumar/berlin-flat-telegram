@@ -1,12 +1,31 @@
 package com.aksumar.telegram.format
 
 import com.aksumar.telegram.exception.DeliveryException
+import com.aksumar.telegram.model.Address
 import com.aksumar.telegram.support.event
+import java.net.URLDecoder
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class MessageFormatterTest {
     private val formatter = MessageFormatter()
+
+    @Test
+    fun `map link uses the listing address without map generation`() {
+        val item = event()
+        val url = requireNotNull(formatter.mapUrl(item))
+        assertEquals(
+            item.address.full,
+            URLDecoder.decode(url.substringAfter("&query="), Charsets.UTF_8),
+        )
+        val address = Address(null, "Straße & Platz", "12", "10115", "Berlin", "Mitte")
+        val partialUrl = requireNotNull(formatter.mapUrl(item.copy(address = address)))
+        assertEquals(
+            "Straße & Platz 12, 10115, Mitte, Berlin",
+            URLDecoder.decode(partialUrl.substringAfter("&query="), Charsets.UTF_8),
+        )
+        assertNull(formatter.mapUrl(item.copy(address = Address(null, " ", null, null, "", null))))
+    }
 
     @Test
     fun `renders Degewo provider and source`() {

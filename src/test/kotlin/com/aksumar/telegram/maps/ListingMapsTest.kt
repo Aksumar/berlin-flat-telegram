@@ -15,17 +15,6 @@ import org.junit.jupiter.api.Test
 
 class ListingMapsTest {
     @Test
-    fun `map link uses available address fields and is absent without an address`() {
-        val address = Address(null, "Straße & Platz", "12", "10115", "Berlin", "Mitte")
-        val url = requireNotNull(address.mapSearchUrl())
-        assertEquals(
-            "Straße & Platz 12, 10115, Mitte, Berlin",
-            URLDecoder.decode(url.substringAfter("&query="), Charsets.UTF_8),
-        )
-        assertNull(Address(null, " ", null, null, "", null).mapSearchUrl())
-    }
-
-    @Test
     fun `vbb station cache returns every line with its supplied official color`() {
         val cache = VbbTransitCache()
 
@@ -126,11 +115,6 @@ class ListingMapsTest {
         Provider().use { p ->
             val map = requireNotNull(p.maps().create(event()))
             assertFalse(map.approximate)
-            assertEquals(
-                "https://www.google.com/maps/search/?api=1&query=52.53%2C13.38",
-                map.url,
-            )
-            assertFalse(map.url.contains("test-secret"))
             val image = ImageIO.read(map.png.inputStream())
             assertEquals(960, image.width)
             assertEquals(600, image.height)
@@ -362,10 +346,6 @@ class ListingMapsTest {
             p.geocode = exact.replace("building", "district")
             val districtMap = requireNotNull(p.maps().create(event()))
             assertTrue(districtMap.approximate)
-            assertEquals(
-                "https://www.google.com/maps/@?api=1&map_action=map&center=52.53%2C13.38&zoom=12",
-                districtMap.url,
-            )
             assertTrue(p.requests[1].second.getValue("marker").contains("type:circle"))
             assertEquals("12.5", p.requests[1].second["zoom"])
             p.geocode =

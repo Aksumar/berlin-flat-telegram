@@ -40,14 +40,14 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
         map: ListingMap?,
         mapUrl: String?,
     ): CompletableFuture<Void> {
-        val keyboard = createListingKeyboard(map?.url ?: mapUrl, listingUrl)
+        val keyboard = createListingKeyboard(mapUrl, listingUrl)
         if (map == null) return sendText(chat, text, keyboard = keyboard)
 
         val locationNote = if (map.approximate) "\n📍 Примерное расположение" else ""
         val fullTextFitsCaption = text.length + locationNote.length <= 1024
         val caption = createMapCaption(text, locationNote, fullTextFitsCaption)
 
-        return sendMapPhoto(chat, caption, listingUrl, map)
+        return sendMapPhoto(chat, caption, keyboard, map)
             .handle { _, failure ->
                 if (failure != null) handlePhotoDeliveryFailure(chat, text, keyboard, failure)
                 else if (fullTextFitsCaption) CompletableFuture.completedFuture<Void>(null)
@@ -70,12 +70,11 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
     private fun sendMapPhoto(
         chat: String,
         caption: String,
-        listingUrl: String,
+        keyboard: Map<String, Any>,
         map: ListingMap,
     ): CompletableFuture<Void> {
         val boundary = "map-${UUID.randomUUID()}"
-        val keyboard = mapper.writeValueAsString(createListingKeyboard(map.url, listingUrl))
-        val body = buildMapPhotoBody(chat, caption, keyboard, map.png, boundary)
+        val body = buildMapPhotoBody(chat, caption, mapper.writeValueAsString(keyboard), map.png, boundary)
         return transport.deliver("sendPhoto", "multipart/form-data; boundary=$boundary", body)
     }
 

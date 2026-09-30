@@ -85,8 +85,9 @@ Telegram's 4096 UTF-16-unit limit while retaining the URL. With `GEOAPIFY_API_KE
 a map with a Berlin overview accompanies the listing; approximate matches are labelled.
 Captions exceeding 1024 units use a heading on the photo and a separate quiet text message.
 Missing or failed map enrichment does not suppress delivery or the listing button.
-The map button falls back to an address search when no image is available; it is omitted
-only when no address is available. Photo delivery failure, including exhausted retries,
+Both buttons share one row and their links are built from the listing independently of image generation.
+The map button always opens an address search; it is omitted only when no address is available.
+Photo delivery failure, including exhausted retries,
 falls back to text with both buttons. Transient text delivery failures remain uncommitted.
 
 ## Source coverage

@@ -32,7 +32,7 @@ class DeliveryTest {
     @Test
     fun `creates map once and waits for photo delivery to all chats`() {
         var mapCalls = 0
-        val expectedMap = ListingMap(byteArrayOf(1), "https://example.com/map", false)
+        val expectedMap = ListingMap(byteArrayOf(1), false)
         val completions = mutableListOf<CompletableFuture<Void>>()
         val sender =
             object : TelegramSender {
@@ -47,6 +47,10 @@ class DeliveryTest {
                     mapUrl: String?,
                 ): CompletableFuture<Void> {
                     assertSame(expectedMap, map)
+                    assertEquals(
+                        "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin",
+                        mapUrl,
+                    )
                     assertTrue(text.startsWith("🏠 Gewobag"))
                     return CompletableFuture<Void>().also { completions += it }
                 }
