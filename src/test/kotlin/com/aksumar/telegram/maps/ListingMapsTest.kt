@@ -15,6 +15,17 @@ import org.junit.jupiter.api.Test
 
 class ListingMapsTest {
     @Test
+    fun `map link uses available address fields and is absent without an address`() {
+        val address = Address(null, "Straße & Platz", "12", "10115", "Berlin", "Mitte")
+        val url = requireNotNull(address.mapSearchUrl())
+        assertEquals(
+            "Straße & Platz 12, 10115, Mitte, Berlin",
+            URLDecoder.decode(url.substringAfter("&query="), Charsets.UTF_8),
+        )
+        assertNull(Address(null, " ", null, null, "", null).mapSearchUrl())
+    }
+
+    @Test
     fun `vbb station cache returns every line with its supplied official color`() {
         val cache = VbbTransitCache()
 

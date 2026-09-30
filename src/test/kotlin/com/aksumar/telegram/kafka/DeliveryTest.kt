@@ -44,6 +44,7 @@ class DeliveryTest {
                     text: String,
                     listingUrl: String,
                     map: ListingMap?,
+                    mapUrl: String?,
                 ): CompletableFuture<Void> {
                     assertSame(expectedMap, map)
                     assertTrue(text.startsWith("🏠 Gewobag"))
@@ -75,9 +76,26 @@ class DeliveryTest {
     @Test
     fun `map failure still delivers text to every chat`() {
         val delivered = mutableListOf<String>()
-        val sender = TelegramSender { chat, _ ->
-            delivered += chat
-            CompletableFuture.completedFuture(null)
+        val sender = object : TelegramSender {
+            override fun send(chat: String, text: String): CompletableFuture<Void> =
+                error("Expected listing with independent map link")
+
+            override fun sendListing(
+                chat: String,
+                text: String,
+                listingUrl: String,
+                map: ListingMap?,
+                mapUrl: String?,
+            ): CompletableFuture<Void> {
+                assertNull(map)
+                assertEquals("https://example.com/123", listingUrl)
+                assertEquals(
+                    "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin",
+                    mapUrl,
+                )
+                delivered += chat
+                return CompletableFuture.completedFuture(null)
+            }
         }
         NewFlatEventListener(
                 ListingContract(testMapper),

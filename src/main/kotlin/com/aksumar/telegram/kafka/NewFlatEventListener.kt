@@ -6,6 +6,7 @@ import com.aksumar.telegram.config.AppProperties
 import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.format.MessageFormatter
 import com.aksumar.telegram.maps.ListingMaps
+import com.aksumar.telegram.maps.mapSearchUrl
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -50,7 +51,8 @@ class NewFlatEventListener(
                     log.warn("Map unavailable; sending listing without image")
                     null
                 }
-            val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map) }
+            val mapUrl = map?.url ?: item.address.mapSearchUrl()
+            val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map, mapUrl) }
 
             CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->
                 val failures = deliveries.mapNotNull(::failure)

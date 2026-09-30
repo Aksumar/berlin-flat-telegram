@@ -24,7 +24,7 @@ internal class GeoapifyGeocoder(
     private val endpoint: String,
 ) {
     fun locate(address: Address, deadlineNanos: Long): GeocodedLocation? {
-        val query = addressQuery(address)
+        val query = address.searchQuery()
         if (query.isBlank()) return null
         val response = client.get(
             endpoint,
@@ -55,18 +55,6 @@ internal class GeoapifyGeocoder(
         val detailZoom = if (resultType == "building" || resultType == "street") 15.5 else 12.5
         return GeocodedLocation(longitude, latitude, approximate = !exact, detailZoom = detailZoom)
     }
-
-    private fun addressQuery(address: Address): String =
-        address.full?.takeIf { it.isNotBlank() }
-            ?: listOfNotNull(
-                listOfNotNull(address.street, address.houseNumber)
-                    .filter { it.isNotBlank() }
-                    .joinToString(" ")
-                    .ifBlank { null },
-                address.postalCode,
-                address.district,
-                address.city,
-            ).filter { it.isNotBlank() }.joinToString(", ")
 
     private companion object {
         const val MIN_LOCATION_CONFIDENCE = 0.8
