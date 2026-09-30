@@ -1,247 +1,342 @@
 # Berlin Flat Telegram
 
-Kotlin/JVM 21 and Spring Boot consumer for apartment notifications. Accepts **only
-Kafka listing contract v2** and renders one Russian Telegram template with one house
-emoji. See [the event contract](docs/listing-v2.md) for fields and source semantics.
+Сервис на Kotlin, JVM 21 и Spring Boot получает объявления о квартирах из Kafka
+и отправляет их в Telegram на русском языке. Работает постоянно, пока его не остановят.
+Поддерживает только [контракт объявления v2](docs/listing-v2.md).
 
-## Отправить тестовое сообщение — запуск кнопкой Play
+Путь объявления: **Kafka → Telegram-consumer → карта Geoapify → Telegram**.
+При недоступности карты объявление отправляется текстом.
 
-Команды готовы для текущего проекта на этом Mac: ничего подставлять не нужно.
-Открой Docker Desktop, затем запускай блоки по порядку кнопкой Play.
-Запускай команды из корня репозитория `telegram` (папки с `gradlew`).
+## Содержание
 
-**1. Запустить существующие Kafka и Telegram-consumer.** Если они уже работают,
-команда оставит их работающими. После запуска подожди около 10 секунд.
+1. [Подготовка](#подготовка)
+2. [Запуск существующей версии](#запуск-существующей-версии)
+3. [После изменений в коде](#после-изменений-в-коде)
+4. [Проверка и тестовая отправка](#проверка-и-тестовая-отправка)
+5. [Диагностика и остановка](#диагностика-и-остановка)
+6. [Запуск без Docker](#запуск-без-docker)
+7. [Карты и примеры](#карты-и-примеры)
+8. [Тесты](#тесты)
+9. [Доставка и восстановление](#доставка-и-восстановление)
+10. [CI и публикация образа](#ci-и-публикация-образа)
+11. [Файлы проекта и AGENTS.md](#файлы-проекта-и-agentsmd)
+
+## Подготовка
+
+Команды Docker ниже предназначены для **текущего окружения на этом Mac**:
+Kafka `berlin-flat-watcher-kafka-1`, consumer `berlin-flat-telegram-main`
+и сеть `berlin-flat-watcher_default` уже созданы.
+Открой Docker Desktop. Выполняй команды из корня `telegram`, где лежит `gradlew`;
+блоки можно запускать кнопкой Play.
+
+Для тестового скрипта нужен Python 3 без дополнительных пакетов.
+Для сборки и тестов через Gradle на Mac нужен JDK 21; Docker-образ собирает JAR сам.
+
+Настройки приложения хранятся в локальном `.env`. Если файла ещё нет, создай его
+по образцу [.env.example](.env.example) и заполни значения. Существующий `.env`
+сохрани; ключи и токены не добавляй в Git.
+
+| Переменная | Назначение |
+| --- | --- |
+| `KAFKA_BOOTSTRAP_SERVERS` | Адрес Kafka: `localhost:9092` для запуска на Mac, `kafka:19092` внутри текущей Docker-сети |
+| `KAFKA_TOPIC` | Топик, по умолчанию `berlin-flat-listings-v1`; имя топика не определяет версию JSON |
+| `KAFKA_GROUP_ID` | Группа consumer, по умолчанию `berlin-flat-telegram-v1`; по ней Kafka хранит позицию чтения |
+| `TELEGRAM_BOT_TOKEN` | Обязательный токен бота |
+| `TELEGRAM_CHAT_IDS` | Обязательные ID чатов через запятую |
+| `GEOAPIFY_API_KEY` | Необязательный ключ для карт; без него приходит текст |
+
+`docker run --env-file .env` передаёт настройки контейнеру при его создании.
+Приложение и скрипт отправки сами `.env` не загружают.
+
+На новом компьютере существующих контейнеров не будет. Для отдельной тестовой Kafka
+есть [compose.test.yaml](compose.test.yaml): он поднимает брокер и создаёт топик,
+но не запускает Telegram-consumer. Не запускай его одновременно с текущей Kafka:
+обе используют порт `9092`.
+
+## Запуск существующей версии
+
+Этот раздел подходит, если код и настройки контейнера не менялись.
+После изменений переходи к следующему разделу.
 
 ```bash
 docker start berlin-flat-watcher-kafka-1 berlin-flat-telegram-main
 ```
 
-**2. Отправить одно тестовое объявление в Telegram через Kafka.**
-Каждое нажатие Play отправляет новую запись во все настроенные чаты.
+Если контейнеры уже работают, они останутся работающими. Подожди около 10 секунд,
+затем переходи к [проверке запуска](#проверка-и-тестовая-отправка).
+
+`docker start` и `docker restart` используют уже созданный контейнер:
+они не пересобирают код и не перечитывают `.env`.
+
+## После изменений в коде
+
+| Что изменилось | Что выполнить |
+| --- | --- |
+| Kotlin-код, зависимости, Dockerfile или ресурсы, включая CSV станций | Собрать образ, затем пересоздать consumer |
+| Только `.env` | Пересоздать consumer с имеющимся образом |
+| `scripts/kafka/test-listing.json` или `send_test_listing.py` | Повторно запустить Python-скрипт |
+| README или `AGENTS.md` | Пересборка приложения не нужна |
+
+### 1. Собрать новый образ
+
+Команда использует текущие локальные файлы. Коммит и push не нужны.
+Docker сам запускает `bootJar`; отдельно собирать JAR не требуется.
 
 ```bash
-python3 scripts/kafka/send_test_listing.py --container berlin-flat-watcher-kafka-1 --bootstrap-server localhost:9092 --topic berlin-flat-listings-v1
+docker build -t berlin-flat-telegram:local .
 ```
 
-Объявление можно изменить в [test-listing.json](scripts/kafka/test-listing.json).
-Генерация карты и доставка могут занять около 30 секунд.
-`Sent one listing` означает, что Kafka приняла запись.
+Продолжай только после успешной сборки. Ошибка сборки не останавливает старый consumer.
+Если менялся только `.env`, этот шаг можно пропустить при наличии образа
+`berlin-flat-telegram:local`, собранного ранее.
 
-**3. Если сообщение не пришло — посмотреть логи Telegram-consumer.**
+### 2. Пересоздать consumer
+
+Блок останавливает старый consumer, удаляет его контейнер и запускает новый.
+Настройки читаются из текущего `.env`. Адрес Kafka, топик и группа явно заданы
+для существующего окружения.
+
+```bash
+docker start berlin-flat-watcher-kafka-1 &&
+docker stop --time 60 berlin-flat-telegram-main &&
+docker rm berlin-flat-telegram-main &&
+docker run -d --name berlin-flat-telegram-main \
+  --restart unless-stopped \
+  --stop-timeout 60 \
+  --network berlin-flat-watcher_default \
+  --env-file .env \
+  -e KAFKA_BOOTSTRAP_SERVERS=kafka:19092 \
+  -e KAFKA_TOPIC=berlin-flat-listings-v1 \
+  -e KAFKA_GROUP_ID=berlin-flat-telegram-v1 \
+  berlin-flat-telegram:local
+```
+
+Kafka и её данные сохраняются. Благодаря прежней группе consumer продолжит чтение
+с сохранённой позиции и сразу начнёт обрабатывать накопившиеся объявления.
+После запуска подожди около 10 секунд и проверь логи.
+
+## Проверка и тестовая отправка
+
+### 1. Проверить запуск
 
 ```bash
 docker logs --tail 80 berlin-flat-telegram-main
 ```
 
-Дополнительные готовые команды — в [инструкции к скрипту](scripts/kafka/README.md).
-Контейнер использует настройки `.env`, сохранённые при его создании:
-после изменения `.env` контейнер нужно пересоздать, обычный `docker start`
-новые значения не загрузит.
+Если есть ошибки подключения или настроек, сначала исправь их по разделу диагностики.
 
-## Build and run
+### 2. Подготовить объявление
 
-Requires JDK 21; Gradle is provided by the checked-in wrapper.
+Отредактируй [scripts/kafka/test-listing.json](scripts/kafka/test-listing.json).
+В образце вымышленное объявление с реальным адресом для проверки карты.
+Посмотреть ключ и JSON без отправки:
 
-```sh
+```bash
+python3 scripts/kafka/send_test_listing.py --dry-run
+```
+
+### 3. Отправить объявление
+
+**Каждый запуск публикует новую запись и приводит к отправке во все настроенные чаты**,
+даже если `id` объявления остался прежним.
+
+```bash
+python3 scripts/kafka/send_test_listing.py --container berlin-flat-watcher-kafka-1 --bootstrap-server localhost:9092 --topic berlin-flat-listings-v1
+```
+
+`Sent one listing` означает, что Kafka приняла запись, а не что Telegram её доставил.
+Генерация карты и доставка могут занять около 30 секунд.
+Скрипт запускает Kafka CLI внутри контейнера, поэтому `localhost:9092` в этой команде
+означает адрес из контейнера Kafka.
+
+Подробности и параметры — в [README скрипта](scripts/kafka/README.md).
+
+## Диагностика и остановка
+
+Состояние контейнеров:
+
+```bash
+docker ps -a --filter name=berlin-flat --format 'table {{.Names}}\t{{.Status}}'
+```
+
+Последние сообщения consumer:
+
+```bash
+docker logs --tail 80 berlin-flat-telegram-main
+```
+
+Позиция чтения и оставшиеся записи в Kafka:
+
+```bash
+docker exec berlin-flat-watcher-kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group berlin-flat-telegram-v1 --describe
+```
+
+`LAG = 0` означает отсутствие отставания по сохранённым offsets. Это не подтверждение
+доставки каждого объявления: некорректные записи могли быть пропущены — проверь логи.
+
+| Симптом | Что проверить |
+| --- | --- |
+| Приходит старая версия карты или текста | После изменения кода собери образ и пересоздай consumer |
+| Изменения `.env` не применились | Пересоздай контейнер; простой перезапуск сохраняет старое окружение |
+| Приходит текст без карты | Ключ `GEOAPIFY_API_KEY`, адрес объявления и сообщения о недоступности карты в логах |
+| Скрипт отправил запись, уведомления нет | Логи consumer, настройки Telegram и `LAG` |
+| Consumer перестал читать Kafka после ошибки | Устрани причину в логах и перезапусти consumer |
+
+Перезапуск текущей сборки после устранения ошибки:
+
+```bash
+docker restart --time 60 berlin-flat-telegram-main
+```
+
+Остановка только Telegram-consumer:
+
+```bash
+docker stop --time 60 berlin-flat-telegram-main
+```
+
+Старый `berlin-flat-watcher-telegram-1` содержит Python-consumer и оставлен остановленным.
+Для текущего Kotlin-приложения используется `berlin-flat-telegram-main`.
+
+## Запуск без Docker
+
+Это альтернативный способ запуска consumer на Mac. Нужны JDK 21, доступная Kafka
+и заранее созданный топик. Не запускай его параллельно с Docker-consumer при проверке
+нового кода: экземпляры одной группы делят сообщения между собой.
+
+Передай переменные из таблицы настроек в окружение терминала или конфигурацию запуска IDE.
+Само приложение `.env` не читает. Для текущей Kafka с Mac используй `localhost:9092`.
+
+```bash
 ./gradlew test bootJar
+```
+
+После успешной сборки:
+
+```bash
 java -jar build/libs/app.jar
 ```
 
-The application runs continuously until it is stopped.
+Остановка — `Ctrl+C`. Жизненным циклом Kafka управляет Spring.
+В Docker точка входа — `java -jar /app/app.jar`; старые команды
+вроде `python -m notifier.main` к этому приложению не относятся.
+При использовании собственного Compose передавай переменные через `environment`
+или `env_file`: Compose-файл `.env` сам по себе служит для подстановок.
 
-Copy `.env.example` for reference and export the variables through your shell,
-container or deployment system. The application does not automatically load `.env`.
+## Карты и примеры
 
-| Variable | Default / meaning |
+При наличии `GEOAPIFY_API_KEY` объявление получает карту с меткой квартиры,
+обзором Берлина и карточками станций. Область карты — `960 × 600` пикселей;
+если карточки не помещаются, изображение увеличивается вниз для нумерованной легенды.
+
+На подложке Geoapify остаются приоритетные объекты `poi-level-1`, вокзалы и аэропорты.
+Районы подписывает сама Geoapify: обзор приближен до масштаба `11`, чтобы показывать
+соседние районы. Конкретные названия зависят от данных провайдера и попадания в кадр.
+Уровни `poi-level-2` и `poi-level-3` скрыты. Карточки S/U с цветными линиями рисуются
+приложением; каждая группа линий S и U занимает свою строку.
+Неточный адрес помечается как «Примерное расположение».
+
+- [Галерея примеров](examples/maps/index.html).
+- [Описание сценариев](examples/maps/README.md).
+- [Устройство карт, критерии точности и ограничения](docs/maps.md).
+
+Пересоздать примеры без отправки в Telegram:
+
+```bash
+./gradlew mapExamples --no-daemon
+```
+
+Задача читает ключ из окружения или `.env` и использует настоящую Geoapify.
+Подложки и станции кэшируются в `build/map-examples-cache`.
+После изменения стиля карты переименуй эту папку кэша перед запуском,
+чтобы получить свежие изображения. Готовая галерея записывается в `examples/maps`.
+
+## Тесты
+
+Обычные тесты, без настоящих запросов в Telegram и Geoapify:
+
+```bash
+./gradlew test
+```
+
+Интеграционные тесты с отдельной Kafka через Testcontainers; нужен Docker:
+
+```bash
+./gradlew integrationTest
+```
+
+Обе группы тестов и сборка JAR:
+
+```bash
+./gradlew check bootJar
+```
+
+Тесты проверяют контракт v2, форматирование, ограничения длины сообщений,
+карты, обработку ошибок Telegram, повторные попытки и сохранение Kafka offsets.
+`test` не запускает генерацию примеров; для неё служит отдельная задача `mapExamples`.
+
+## Доставка и восстановление
+
+Spring Kafka использует один поток consumer, по одной записи за вызов,
+с отключённым auto-commit. Offset подтверждается после обработки доставки во все чаты.
+Некорректные записи и постоянные отказы Telegram логируются и пропускаются.
+
+При сетевых ошибках и ответах `5xx` клиент Telegram повторяет попытки с увеличивающейся
+задержкой. Для `429` учитывает `retry_after` в пределах установленного лимита.
+Если попытки исчерпаны, offset остаётся неподтверждённым, listener останавливается;
+после перезапуска запись можно обработать снова. Постоянные `4xx` не повторяются.
+
+Kafka offsets — единственное состояние доставки. Если Telegram уже принял сообщение,
+а приложение завершилось до фиксации offset, повторная доставка может дать дубликат.
+
+Spring управляет запуском и остановкой listener. Отсутствие топика препятствует запуску.
+Ошибки consumer или брокера вызывают попытку отправки предупреждения в настроенные чаты
+и остановку listener. Перезапусти сервис после устранения причины.
+Для корректного завершения оставляй время на текущий HTTP-запрос; в командах выше
+на остановку отведено 60 секунд.
+
+Kafka сейчас использует `PLAINTEXT`; переход на SASL_SSL отмечен в [TODO.md](TODO.md).
+
+## CI и публикация образа
+
+Настройки находятся в [.github/workflows/ci.yml](.github/workflows/ci.yml).
+
+| Событие | Результат |
 | --- | --- |
-| `KAFKA_BOOTSTRAP_SERVERS` | Required broker addresses |
-| `KAFKA_TOPIC` | `berlin-flat-listings-v1` (name is independent of payload version) |
-| `KAFKA_GROUP_ID` | `berlin-flat-telegram-v1` |
-| `TELEGRAM_BOT_TOKEN` | Required |
-| `TELEGRAM_CHAT_IDS` | Required comma-separated chat IDs; Spring binds them to a list |
-| `GEOAPIFY_API_KEY` | Optional; enables apartment map images |
+| Pull request, тег `v*`, ручной запуск workflow | Обычные и интеграционные тесты |
+| Push в `main`, включая merge PR | Тесты, затем сборка и публикация образа в GHCR |
+| Push в другую ветку | Отдельный push workflow не запускается; PR проверяется своим workflow |
 
-## Apartment maps
+Образ собирается из того же коммита и [Dockerfile](Dockerfile), что используется локально,
+для `linux/amd64`. Теги: `sha-<commit>`, `branch-main` и `latest`.
+Право `packages: write` есть только у отдельной задачи публикации.
 
-Set `GEOAPIFY_API_KEY` to enable Geoapify Geocoding and Static Maps (Routing API is
-not used). Each listing gets a 960 × 600 map with the provider's street labels and labelled stations, a red location marker and a Berlin overview
-inset with a small location dot. The heading shows the source website and district, e.g. `🏠 InBerlinWohnen · Mitte`.
-The housing company appears separately only when it differs from the source.
-Buttons open the location in Google Maps and the original listing. Images are uploaded to Telegram;
-the Geoapify key is never included in message URLs.
+После push в `main` workflow также готовит архив образа, исходники, метаданные,
+ID коммита и SHA256; срок хранения артефактов — 14 дней. Загрузка отчётов тестов
+и Docker build records временно отключена из-за квоты хранилища. Загрузка архивов
+остаётся включённой и тоже зависит от доступной квоты. Логи доступны в Actions.
+Публикация образа не обновляет уже запущенные контейнеры автоматически.
+Сервис работает постоянно; планового запуска consumer через GitHub Actions нет.
 
-Matches that do not meet the exact-building criteria below are labelled
-**Примерное расположение**. City-only, low-confidence and out-of-bounds matches
-produce text only. Missing keys, provider
-errors and invalid main-map images also fall back to text. Individual requests have a
-twenty-second timeout within a thirty-second map budget; one image is reused for all chats.
-A permanent Telegram photo rejection falls back to text; exhausted transient delivery
-failures retain the Kafka record for recovery.
+## Файлы проекта и AGENTS.md
 
-Captions up to 1024 UTF-16 units stay with the photo. Longer formatted listings follow
-as a quiet text message, so only the photo triggers a notification. The existing 4096-unit
-text limit still applies. Map-provider attribution remains visible on the image.
-See [Geoapify Forward Geocoding](https://apidocs.geoapify.com/docs/geocoding/forward-geocoding/),
-[Geoapify Static Maps](https://apidocs.geoapify.com/docs/maps/static/) and
-[Telegram sendPhoto](https://core.telegram.org/bots/api#sendphoto).
+| Файл | Назначение |
+| --- | --- |
+| [scripts/kafka/send_test_listing.py](scripts/kafka/send_test_listing.py) | Исполняемый Python-скрипт: публикует одно тестовое объявление в Kafka |
+| [scripts/kafka/test-listing.json](scripts/kafka/test-listing.json) | Содержимое тестового объявления |
+| [docs/listing-v2.md](docs/listing-v2.md) | Контракт входящего сообщения |
+| [docs/maps.md](docs/maps.md) | Как создаются карты |
+| [AGENTS.md](AGENTS.md) | Инструкции для помощника при работе над кодом |
 
-### How the Geoapify client works
+**`AGENTS.md` — Markdown-документ с правилами проекта. Запускать его не нужно.**
+Codex читает такие инструкции при начале работы с проектом; механизм описан в
+[официальной документации OpenAI](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
 
-The client is implemented in
-[`ListingMaps.kt`](src/main/kotlin/com/aksumar/telegram/maps/ListingMaps.kt).
-For each listing it performs these steps:
+В нашем файле закреплены договорённости: отвечать по-русски, выбирать простые решения,
+использовать жизненный цикл Spring и держать Kafka-настройки вместе в `KafkaConfig.kt`,
+отдельно от `AppProperties`. Прямые просьбы об изменениях нужно выполнять в коде
+с обновлением связанных вызовов и тестов.
 
-1. Use the nonblank `address.full`, or assemble a query from street, house number,
-   postcode, district and city. Without an API key or a nonblank address, return no map.
-2. Call `GET https://api.geoapify.com/v1/geocode/search` with `text`, `format=json`,
-   `lang=de`, `limit=1` and `filter=rect:13.08,52.33,13.77,52.68`.
-   Only the first result is examined; if it fails validation, the client does not
-   search for another candidate.
-3. Require `rank.confidence >= 0.8`, longitude within `13.08–13.77`, latitude within
-   `52.33–52.68`, and `result_type` equal to `building`, `street`, `suburb`, `district`
-   or `postcode`. A `city` result identifies only a city, not a street or building,
-   so it is rejected even with high confidence. The rectangle is a fixed search
-   area around Berlin, **not its administrative boundary**; the client does not
-   check whether a point belongs to Berlin. The same rectangle filters the API
-   search and validates returned coordinates.
-4. Treat a match as exact only when `result_type=building`,
-   `rank.confidence_building_level >= 0.95` and `rank.match_type=full_match`.
-   All other accepted matches are approximate. These thresholds and geographic
-   bounds are hardcoded application choices, not Geoapify requirements.
-5. Fetch two PNGs from `GET https://maps.geoapify.com/v1/staticmap`, using `osm-bright`
-   style for the main map and `positron` for the overview, with German labels and
-   provider attribution. The main map is `960 × 600`,
-   centred on the coordinates, with a red house marker for exact buildings or a circle
-   for approximate matches, and zoom `15.5` for buildings
-   or streets, otherwise `12.5`. Street names use the native `osm-bright` labels, with
-   their default size, color and placement; some streets may be unlabelled at this zoom.
-   Built-in POIs are hidden. Only transport stations and stops are overlaid;
-   shops, pharmacies, parks and other amenities are neither requested nor marked.
-   The overview is `288 × 240`, centred on the address at zoom `9`,
-   and marks the same coordinates with a small red dot. If the overview fails,
-   the main map is still sent.
-6. Fetch nearby subway, train and light-rail stations from [Geoapify Places](https://apidocs.geoapify.com/docs/places/).
-   Overlay all returned U-Bahn and confirmed S-Bahn stations in the visible map,
-   deduplicating station names within each transport type. At application startup,
-   [`berlin_u_s_stations_colors.csv`](src/main/resources/berlin_u_s_stations_colors.csv)
-   is loaded into an in-memory lookup from normalized station name to every served
-   S/U line and its supplied HEX color. Matching line numbers are drawn as colored
-   chips beside station labels; unmatched names keep the generic transport badge.
-   If no visible S/U station is found, query tram and bus stops separately and prefer
-   a tram. Skip the part of the main map covered by the overview. Transport stops
-   keep name labels; S/U stations also show their line numbers. Transport requests
-   use map-bounds filtering and at most two pages of 500 results.
-
-7. Compose a `960 × 600` PNG locally with Java `Graphics2D`: place the overview in
-   a bordered inset at the lower right with the heading `БЕРЛИН`, preserving the
-   main map's attribution. Add `Примерное расположение` at the upper left for an
-   approximate match. Return the PNG bytes, a Google Maps link and the
-   approximate-location flag. The same generated image is reused for all chats.
-   The link for an approximate match opens a map view without a pin.
-
-The requests run sequentially, without Geoapify retries: one geocoding request
-and, if accepted, two static-map requests and Places requests for transport.
-The HTTP client has a 10-second connect timeout;
-each request is limited by its 20-second timeout and the remaining 30-second map
-budget. Each response must have HTTP status
-200 and a body no larger than 5,000,000 bytes; map images must decode successfully
-and have the expected dimensions. Geocoding and main-map failures return no map,
-so the listing can still be sent as text. Error logs omit request URLs and response bodies to
-avoid exposing the API key.
-
-### Enable maps in Docker
-
-To enable in an existing Docker deployment, add `GEOAPIFY_API_KEY=...` to the `.env`
-passed via `docker run --env-file .env`, rebuild/pull the updated image and recreate the
-container. For Docker Compose, explicitly pass the variable to your existing service:
-
-```yaml
-services:
-  telegram:
-    environment:
-      GEOAPIFY_API_KEY: ${GEOAPIFY_API_KEY:-}
-```
-
-A Compose `.env` supplies interpolation values; it does not automatically pass every
-variable into the container. Recreate the service after updating the image/environment
-(`docker compose up -d --build --force-recreate telegram` for a locally built image).
-Keep the key out of Git. Without it the bot continues sending text notifications.
-
-## Delivery and recovery
-
-Kafka connections currently use `PLAINTEXT`; see `TODO.md` for the planned SASL_SSL hardening.
-Spring Kafka uses a single-record listener with one consumer thread and auto-commit disabled.
-The listener waits for delivery to all chats before returning, so the Kafka offset is
-acknowledged only after Telegram delivery handling completes.
-
-Malformed Kafka records and permanent Telegram rejections are logged and skipped so they do
-not block later listings. Transient Telegram failures are retried inside `TelegramClient`:
-network failures and `5xx` responses use bounded exponential backoff, while Telegram `429`
-responses respect `retry_after` up to the configured bound. Permanent `4xx` responses are
-not retried.
-
-If all transient delivery attempts are exhausted, the listener completes exceptionally and
-the Kafka record remains uncommitted. The container stops through the fatal error handler, so
-a service restart can retry that record instead of silently losing the listing.
-
-Kafka offsets are the only delivery state. A crash after Telegram accepts a message but before
-the Kafka offset is committed can still cause a duplicate because Telegram does not provide an
-idempotency key.
-
-Spring manages Kafka listener startup and shutdown. Missing topics prevent listener startup.
-Kafka/broker-level consumer failures send a Telegram alert to all configured chats and stop
-the listener; restart the service to resume consumption.
-
-SIGTERM stops the listener through Spring's shutdown lifecycle; allow time for an in-flight
-HTTP request (30-second timeout) before force-killing.
-
-## Docker
-
-```sh
-docker build -t berlin-flat-telegram .
-docker run --rm --env-file .env berlin-flat-telegram
-```
-
-The image builds with JDK 21 and runs on JRE 21. Its entrypoint is `java -jar /app/app.jar`.
-**Remove old Compose commands such as `python -m notifier.main`.** The container runs
-continuously by default.
-
-## Tests and CI
-
-For manual Kafka publishing, see [the script and sample listing](scripts/kafka/README.md).
-Run `python3 scripts/kafka/send_test_listing.py --dry-run` to preview a record.
-
-```sh
-./gradlew test                  # Unit tests; fake local HTTP server, no real Telegram
-./gradlew integrationTest       # Docker required: isolated Kafka via Testcontainers
-./gradlew check bootJar         # Both suites plus executable JAR
-```
-
-Tests cover message formatting, strict v2 validation, UTF-16 limits, Telegram HTTP success,
-transient retries, permanent rejection handling, invalid-record skipping, and Kafka offset
-preservation after exhausted transient delivery failures. Telegram itself is replaced with a
-test sender in Kafka integration tests.
-
-The build workflow runs on pull requests, pushes to `main`, `v*` tags, and manual
-runs. Feature-branch pushes do not start a second pipeline alongside the PR check.
-Both test suites run on the runner. PRs, version tags, and manual runs only run
-the tests; Docker images are built only by the publication job on pushes to `main`.
-The same `Dockerfile` is used locally and in GitHub Actions.
-
-Only a push to `main` (normally after merging a PR) publishes images to GHCR after
-successful tests. Direct pushes to main follow the same path. The separate
-publication job is the only job with `packages: write`. Images receive
-`sha-<commit>`, `branch-main`, and `latest` tags. The publication job checks out
-the same commit and builds directly from source; no artifact transfer is needed.
-The image build runs on `main` after the PR tests have passed.
-
-On pushes to main, image/source archives, image metadata, commit ID, and SHA256
-checksums are exported and retained for 14 days. Test/publication report uploads
-and Docker build-record uploads remain temporarily disabled because the artifact
-storage quota is exhausted. Logs remain available in the Actions run. Archive
-uploads still require artifact storage. When report uploads are
-restored, they will run only on pushes to main, with 14-day retention.
-
-Production delivery is a long-running service; there is no scheduled GitHub Actions
-consumer.
+Файл помогает сохранять принятые решения между задачами. Он не запускает бота,
+не настраивает Kafka и не участвует в исполнении приложения. Новые договорённости
+можно записывать туда обычным текстом; согласно самому файлу новые явные указания
+пользователя имеют приоритет над прежними рекомендациями.

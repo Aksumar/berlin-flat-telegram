@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ContractTest {
@@ -27,6 +28,24 @@ class ContractTest {
         tree.put("provider", "WBM")
         tree.put("id", "50-867500/10/144")
         assertEquals("wbm", contract.decode(tree.toString()).source)
+    }
+
+    @Test
+    fun `accepts Deutsche Wohnen and HOWOGE listings`() {
+        for ((source, displayName) in listOf(
+            "deutschewohnen" to "Deutsche Wohnen",
+            "howoge" to "HOWOGE",
+        )) {
+            val tree = testMapper.readTree(fixture()) as ObjectNode
+            tree.put("source", source)
+            tree.put("provider", displayName)
+
+            val item = contract.decode(tree.toString())
+            val message = com.aksumar.telegram.format.MessageFormatter().format(item)
+
+            assertEquals(source, item.source)
+            assertTrue(message.startsWith("🏠 $displayName"))
+        }
     }
 
     @Test

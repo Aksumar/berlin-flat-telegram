@@ -109,6 +109,8 @@ class ListingContract(private val mapper: ObjectMapper) {
                 "wbm",
                 "degewo",
                 "inberlinwohnen",
+                "deutschewohnen",
+                "howoge",
             )
     }
 }

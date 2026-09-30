@@ -10,7 +10,7 @@ import javax.imageio.ImageIO
 
 internal class MapComposer {
     fun compose(detail: BufferedImage, overview: BufferedImage?, layout: MapLayout): ByteArray {
-        val image = BufferedImage(MapLayout.DETAIL_WIDTH, MapLayout.DETAIL_HEIGHT, BufferedImage.TYPE_INT_RGB)
+        val image = BufferedImage(detail.width, detail.height, BufferedImage.TYPE_INT_RGB)
         val graphics = image.createGraphics()
         try {
             graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
