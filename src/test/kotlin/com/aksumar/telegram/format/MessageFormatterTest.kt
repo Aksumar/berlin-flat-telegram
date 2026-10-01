@@ -13,6 +13,16 @@ class MessageFormatterTest {
     private val formatter = MessageFormatter()
 
     @Test
+    fun `map failure reason survives truncation within Telegram limit`() {
+        val item = event().copy(provider = "🏠".repeat(3000))
+        val text = formatter.format(item, "Geoapify вернул HTTP 429")
+
+        assertTrue(text.length <= 4096)
+        assertTrue(text.endsWith("…\n\n⚠️ Карта не сгенерирована, потому что Geoapify вернул HTTP 429."))
+        assertFalse(text.substringBeforeLast("…").last().isHighSurrogate())
+    }
+
+    @Test
     fun `map link uses the listing address without map generation`() {
         val item = event()
         val url = requireNotNull(formatter.mapUrl(item))

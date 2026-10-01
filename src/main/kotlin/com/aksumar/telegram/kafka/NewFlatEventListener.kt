@@ -6,6 +6,8 @@ import com.aksumar.telegram.config.AppProperties
 import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.format.MessageFormatter
 import com.aksumar.telegram.maps.ListingMaps
+import com.aksumar.telegram.maps.MapGenerationException
+import com.aksumar.telegram.maps.mapFailureDetails
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -39,18 +41,32 @@ class NewFlatEventListener(
                 throw DeliveryException("Invalid Kafka event identity")
             }
 
-            val text = formatter.format(item)
             val mapUrl = formatter.mapUrl(item)
+            var mapFailureReason: String? = null
+            var mapFailureDetails = "result=null"
+            val mapStartedNanos = System.nanoTime()
             val map =
                 try {
                     maps.create(item)
                 } catch (error: InterruptedException) {
                     Thread.currentThread().interrupt()
                     throw error
-                } catch (_: Exception) {
-                    log.warn("Map unavailable; sending listing without image")
+                } catch (error: Exception) {
+                    mapFailureDetails = error.mapFailureDetails()
+                    mapFailureReason = (error as? MapGenerationException)?.reason
+                        ?: "произошла непредвиденная ошибка генерации карты"
                     null
                 }
+            if (map == null) {
+                mapFailureReason = mapFailureReason ?: "сервис генерации карты не вернул изображение"
+                log.warn(
+                    "Карта не сгенерирована, потому что {}; source={}, id={}, address={}, topic={}, partition={}, offset={}, elapsedMs={}, {}",
+                    mapFailureReason, item.source, item.id, item.address.searchQuery(),
+                    record.topic(), record.partition(), record.offset(),
+                    (System.nanoTime() - mapStartedNanos) / 1_000_000, mapFailureDetails,
+                )
+            }
+            val text = formatter.format(item, mapFailureReason)
             val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map, mapUrl) }
 
             CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->

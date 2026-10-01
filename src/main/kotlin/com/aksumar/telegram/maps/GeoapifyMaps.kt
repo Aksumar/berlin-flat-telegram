@@ -2,9 +2,9 @@ package com.aksumar.telegram.maps
 
 import com.aksumar.telegram.config.AppProperties
 import com.aksumar.telegram.model.Listing
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Duration
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -25,7 +25,6 @@ class GeoapifyMaps(
         transitCache: VbbTransitCache,
     ) : this(properties.geoapifyApiKey, mapper, transitCache = transitCache)
 
-    private val logger = LoggerFactory.getLogger(GeoapifyMaps::class.java)
     private val client = GeoapifyClient(apiKey)
     private val geocoder = GeoapifyGeocoder(client, mapper, geocodeUrl)
     private val staticMaps = GeoapifyStaticMaps(client, staticMapUrl)
@@ -33,25 +32,38 @@ class GeoapifyMaps(
     private val landmarkRenderer = LandmarkRenderer(transitCache)
     private val composer = MapComposer()
 
-    override fun create(item: Listing): ListingMap? {
-        if (apiKey.isBlank()) return null
-        val deadlineNanos = System.nanoTime() + MAP_TIMEOUT.toNanos()
+    override fun create(item: Listing): ListingMap {
+        val startedNanos = System.nanoTime()
+        val deadlineNanos = startedNanos + MAP_TIMEOUT.toNanos()
+        var stage = "configuration"
         return try {
-            val location = geocoder.locate(item.address, deadlineNanos) ?: return null
+            if (apiKey.isBlank()) throw MapGenerationException("не настроен API-ключ Geoapify")
+            stage = "geocoding"
+            val location = geocoder.locate(item.address, deadlineNanos)
+            stage = "detail map"
             val detail = staticMaps.detail(location, deadlineNanos)
+            stage = "overview map"
             val overview = staticMaps.overviewOrNull(location, deadlineNanos)
             val layout = MapLayout(hasOverview = overview != null, approximate = location.approximate)
             val viewport = MapViewport(location.longitude, location.latitude, location.detailZoom)
+            stage = "places"
             val landmarks = places.findVisible(viewport, layout, deadlineNanos)
+            stage = "rendering"
             val annotatedDetail = landmarkRenderer.draw(detail, landmarks, layout)
+            stage = "composition"
             ListingMap(composer.compose(annotatedDetail, overview, layout), location.approximate)
         } catch (error: InterruptedException) {
             Thread.currentThread().interrupt()
             throw error
-        } catch (_: Exception) {
-            // Provider URLs contain the API key; never log original exceptions or response bodies.
-            logger.warn("Map unavailable; sending listing without image")
-            null
+        } catch (error: Exception) {
+            val reason = when (error) {
+                is MapGenerationException -> error.reason
+                is JsonProcessingException -> "Geoapify вернул некорректный ответ с координатами"
+                else -> "произошла ошибка обработки изображения карты"
+            }
+            throw MapGenerationException(reason,
+                "stage=$stage, generationElapsedMs=${Duration.ofNanos(System.nanoTime() - startedNanos).toMillis()}, " +
+                    "generationBudgetMs=${MAP_TIMEOUT.toMillis()}, ${error.mapFailureDetails()}")
         }
     }
 

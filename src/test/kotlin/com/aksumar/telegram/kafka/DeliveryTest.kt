@@ -6,6 +6,7 @@ import com.aksumar.telegram.config.AppProperties
 import com.aksumar.telegram.format.MessageFormatter
 import com.aksumar.telegram.maps.ListingMap
 import com.aksumar.telegram.maps.ListingMaps
+import com.aksumar.telegram.maps.MapGenerationException
 import com.aksumar.telegram.support.fixture
 import com.aksumar.telegram.support.testMapper
 import java.util.concurrent.CompletableFuture
@@ -13,7 +14,11 @@ import java.util.concurrent.CompletionException
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 
+@ExtendWith(OutputCaptureExtension::class)
 class DeliveryTest {
     private fun properties() = AppProperties().apply { chatIds = listOf("123", "456") }
 
@@ -52,6 +57,7 @@ class DeliveryTest {
                         mapUrl,
                     )
                     assertTrue(text.startsWith("🏠 Gewobag"))
+                    assertFalse(text.contains("Карта не сгенерирована"))
                     return CompletableFuture<Void>().also { completions += it }
                 }
             }
@@ -78,8 +84,9 @@ class DeliveryTest {
     }
 
     @Test
-    fun `map failure still delivers text to every chat`() {
+    fun `map failure still delivers text with reason to every chat and logs warning`(output: CapturedOutput) {
         val delivered = mutableListOf<String>()
+        var expectedReason = ""
         val sender = object : TelegramSender {
             override fun send(chat: String, text: String): CompletableFuture<Void> =
                 error("Expected listing with independent map link")
@@ -92,6 +99,8 @@ class DeliveryTest {
                 mapUrl: String?,
             ): CompletableFuture<Void> {
                 assertNull(map)
+                assertTrue(text.endsWith("⚠️ Карта не сгенерирована, потому что $expectedReason."))
+                assertFalse(text.contains("test-secret"))
                 assertEquals("https://example.com/123", listingUrl)
                 assertEquals(
                     "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin%2C+Mitte",
@@ -101,17 +110,35 @@ class DeliveryTest {
                 return CompletableFuture.completedFuture(null)
             }
         }
-        NewFlatEventListener(
+        val failures = listOf(
+            ListingMaps { throw MapGenerationException("Geoapify вернул HTTP 429", "operation=detail map, httpStatus=429, timeoutMs=20000") } to "Geoapify вернул HTTP 429",
+            ListingMaps { error("https://provider.invalid/?apiKey=test-secret") } to "произошла непредвиденная ошибка генерации карты",
+            ListingMaps { null } to "сервис генерации карты не вернул изображение",
+        )
+        for ((maps, reason) in failures) {
+            delivered.clear()
+            expectedReason = reason
+            NewFlatEventListener(
                 ListingContract(testMapper),
                 MessageFormatter(),
                 sender,
                 properties(),
                 testMapper,
-                ListingMaps { error("provider unavailable") },
+                maps,
             )
             .receive(record())
             .join()
-        assertEquals(listOf("123", "456"), delivered)
+            assertEquals(listOf("123", "456"), delivered)
+            assertTrue(output.out.lineSequence().any {
+                it.contains("WARN") && it.contains("Карта не сгенерирована, потому что $reason") &&
+                    it.contains("source=gewobag, id=123") && it.contains("address=Musterstraße 12") &&
+                    it.contains("topic=test, partition=0, offset=0") && it.contains("elapsedMs=")
+            })
+        }
+        assertTrue(output.all.contains("operation=detail map, httpStatus=429, timeoutMs=20000"))
+        assertTrue(output.all.contains("exception=java.lang.IllegalStateException"))
+        assertTrue(output.all.contains("at=com.aksumar.telegram.kafka.DeliveryTest"))
+        assertFalse(output.all.contains("test-secret"))
     }
 
     @Test

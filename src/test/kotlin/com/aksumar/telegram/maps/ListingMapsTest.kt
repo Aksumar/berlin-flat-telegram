@@ -12,8 +12,27 @@ import java.net.URLDecoder
 import javax.imageio.ImageIO
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 
+@ExtendWith(OutputCaptureExtension::class)
 class ListingMapsTest {
+    @Test
+    fun `exhausted budget reports operation and timing without making a request`() {
+        val error = assertThrows(MapGenerationException::class.java) {
+            GeoapifyClient("test-secret").get("https://api.geoapify.com/v1/geocode/search",
+                emptyMap(), "geocoding", System.nanoTime() - 1_000_000)
+        }
+        assertEquals("истекло время генерации карты", error.reason)
+        assertTrue(error.details.contains("operation=geocoding"))
+        assertTrue(error.details.contains("endpoint=api.geoapify.com/v1/geocode/search"))
+        assertTrue(error.details.contains("timeoutMs=0"))
+        assertTrue(error.details.contains("remainingBudgetMs=-"))
+        assertTrue(error.details.contains("requestElapsedMs="))
+        assertFalse(error.details.contains("test-secret"))
+    }
+
     @Test
     fun `vbb station cache returns every line with its supplied official color`() {
         val cache = VbbTransitCache()
@@ -290,7 +309,7 @@ class ListingMapsTest {
     }
 
     @Test
-    fun `overview failure keeps the main map`() {
+    fun `overview failure keeps the main map`(output: CapturedOutput) {
         Provider().use { p ->
             p.overviewStatus = 503
 
@@ -298,6 +317,11 @@ class ListingMapsTest {
             val image = ImageIO.read(map.png.inputStream())
 
             assertEquals(Color.GREEN.rgb, image.getRGB(810, 450))
+            assertTrue(output.all.contains("Overview unavailable; keeping main map"))
+            assertTrue(output.all.contains("operation=overview map"))
+            assertTrue(output.all.contains("httpStatus=503"))
+            assertTrue(output.all.contains("longitude=13.38, latitude=52.53"))
+            assertFalse(output.all.contains("test-secret"))
         }
     }
 
@@ -358,10 +382,9 @@ class ListingMapsTest {
     @Test
     fun `missing key and missing address never call provider`() {
         Provider().use { p ->
-            assertNull(p.maps("").create(event()))
-            assertNull(
-                p.maps().create(event().copy(address = Address(null, null, null, null, null, null)))
-            )
+            assertEquals("не настроен API-ключ Geoapify",
+                assertThrows(MapGenerationException::class.java) { p.maps("").create(event()) }.reason)
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = Address(null, null, null, null, null, null))) }
             assertTrue(p.requests.isEmpty())
         }
     }
@@ -380,7 +403,7 @@ class ListingMapsTest {
                 )) {
                 p.requests.clear()
                 p.geocode = body
-                assertNull(p.maps().create(event()))
+                assertThrows(MapGenerationException::class.java) { p.maps().create(event()) }
                 assertEquals(1, p.requests.size)
             }
         }
@@ -400,7 +423,7 @@ class ListingMapsTest {
             )) {
                 p.requests.clear()
                 p.geocode = body
-                assertNull(p.maps().create(event()))
+                assertThrows(MapGenerationException::class.java) { p.maps().create(event()) }
                 assertEquals(listOf("/geocode"), p.requests.map { it.first })
             }
         }
@@ -420,7 +443,7 @@ class ListingMapsTest {
             assertEquals("lonlat:13.3236068,52.5214705", p.requests[2].second["center"])
             p.requests.clear()
             p.geocode = """{"results":[$wrong]}"""
-            assertNull(p.maps().create(event().copy(address = address)))
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = address)) }
             assertEquals(1, p.requests.size)
         }
     }
@@ -432,7 +455,7 @@ class ListingMapsTest {
             val address = Address("Musterstraße 12, 10115 Berlin", null, null, null, null, null)
             assertFalse(requireNotNull(p.maps().create(event().copy(address = address))).approximate)
             p.geocode = p.geocode.replace("10115", "12459")
-            assertNull(p.maps().create(event().copy(address = address)))
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = address)) }
         }
     }
 
@@ -445,11 +468,11 @@ class ListingMapsTest {
             assertNotNull(p.maps().create(event().copy(address = address)))
             val candidate = testMapper.readTree(p.geocode).path("results")[0].toString()
             p.geocode = """{"results":[$candidate,${candidate.replace("13.38", "13.50")}]}"""
-            assertNull(p.maps().create(event().copy(address = address)))
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = address)) }
             p.geocode = """{"results":[$candidate]}""".replace("Mitte", "Spandau")
-            assertNull(p.maps().create(event().copy(address = address)))
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = address)) }
             p.requests.clear()
-            assertNull(p.maps().create(event().copy(address = address.copy(district = null))))
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = address.copy(district = null))) }
             assertTrue(p.requests.isEmpty())
         }
     }
@@ -461,7 +484,7 @@ class ListingMapsTest {
             p.geocode = p.geocode.replace("housenumber\":\"12", "housenumber\":\"12A")
             assertFalse(requireNotNull(p.maps().create(event().copy(address = address))).approximate)
             p.geocode = p.geocode.replace("12A", "13")
-            assertNull(p.maps().create(event().copy(address = address.copy(houseNumber = "1-3"))))
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = address.copy(houseNumber = "1-3"))) }
         }
     }
 
@@ -469,7 +492,7 @@ class ListingMapsTest {
     fun `postcode only address can show area but never a house`() {
         Provider().use { p ->
             val address = Address("10115, Berlin", null, null, "10115", "Berlin", null)
-            assertNull(p.maps().create(event().copy(address = address)))
+            assertThrows(MapGenerationException::class.java) { p.maps().create(event().copy(address = address)) }
             p.requests.clear()
             p.geocode = p.geocode.replace("building", "postcode")
             assertTrue(requireNotNull(p.maps().create(event().copy(address = address))).approximate)
@@ -482,12 +505,23 @@ class ListingMapsTest {
     fun `provider quota errors malformed responses and invalid images degrade to text`() {
         Provider().use { p ->
             p.mapStatus = 429
-            assertNull(p.maps().create(event()))
+            val quotaError = assertThrows(MapGenerationException::class.java) { p.maps().create(event()) }
+            assertEquals("Geoapify вернул HTTP 429", quotaError.reason)
+            for (field in listOf("stage=detail map", "generationElapsedMs=", "generationBudgetMs=30000",
+                "operation=detail map", "httpStatus=429", "requestElapsedMs=", "timeoutMs=", "remainingBudgetMs=", "responseBytes=")) {
+                assertTrue(quotaError.details.contains(field), quotaError.details)
+            }
+            assertFalse(quotaError.details.contains("test-secret"))
             p.mapStatus = 200
             p.invalidImage = true
-            assertNull(p.maps().create(event()))
-            p.geocode = "invalid JSON"
-            assertNull(p.maps().create(event()))
+            assertEquals("Geoapify вернул некорректное изображение карты",
+                assertThrows(MapGenerationException::class.java) { p.maps().create(event()) }.reason)
+            p.geocode = "invalid JSON apiKey=test-secret"
+            val jsonError = assertThrows(MapGenerationException::class.java) { p.maps().create(event()) }
+            assertEquals("Geoapify вернул некорректный ответ с координатами", jsonError.reason)
+            assertTrue(jsonError.details.contains("stage=geocoding"))
+            assertTrue(jsonError.details.contains("exception=com.fasterxml.jackson.core.JsonParseException"))
+            assertFalse(jsonError.details.contains("test-secret"))
         }
     }
 }

@@ -17,12 +17,14 @@ internal class GeoapifyGeocoder(
     private val mapper: ObjectMapper,
     private val endpoint: String,
 ) {
-    fun locate(address: Address, deadlineNanos: Long): GeocodedLocation? {
+    fun locate(address: Address, deadlineNanos: Long): GeocodedLocation {
         val query = address.searchQuery()
-        if (query.isBlank()) return null
+        if (query.isBlank()) throw MapGenerationException("в объявлении не указан адрес")
         val expected = address.withFullAddressParts()
         // Berlin contains duplicate street names. A city-wide match is not enough.
-        if (expected.postalCode.isNullOrBlank() && expected.district.isNullOrBlank()) return null
+        if (expected.postalCode.isNullOrBlank() && expected.district.isNullOrBlank()) {
+            throw MapGenerationException("в адресе не указан почтовый индекс или район")
+        }
         val response = client.get(
             endpoint,
             mapOf(
@@ -37,12 +39,13 @@ internal class GeoapifyGeocoder(
         )
         val candidates = mapper.readTree(response).path("results")
             .filter { matches(it, expected) }
-        val result = candidates.firstOrNull() ?: return null
+        val result = candidates.firstOrNull()
+            ?: throw MapGenerationException("не удалось достоверно определить координаты адреса в Берлине")
         // Do not silently choose between different locations for an incomplete address.
         if (candidates.any {
                 abs(it.path("lon").asDouble() - result.path("lon").asDouble()) > 0.001 ||
                     abs(it.path("lat").asDouble() - result.path("lat").asDouble()) > 0.001
-            }) return null
+            }) throw MapGenerationException("адрес соответствует нескольким разным местам")
         val longitude = result.path("lon").asDouble(Double.NaN)
         val latitude = result.path("lat").asDouble(Double.NaN)
         val rank = result.path("rank")
