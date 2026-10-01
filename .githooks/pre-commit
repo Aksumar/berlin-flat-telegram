@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+# Check the same source snapshot that Git will commit. Never stage files implicitly.
+if ! git diff --quiet -- ':(glob)src/**/*.kt' ':(glob)*.gradle.kts'; then
+    echo 'Spotless: есть изменения Kotlin/Gradle вне индекса. Добавьте нужные изменения через git add, а остальные временно уберите через git stash --keep-index.' >&2
+    exit 1
+fi
+
+if ./gradlew spotlessCheck --console=plain; then
+    exit 0
+fi
+
+./gradlew spotlessApply --console=plain
+echo 'Spotless: форматирование исправлено. Проверьте diff, добавьте изменения через git add и повторите коммит.' >&2
+exit 1
