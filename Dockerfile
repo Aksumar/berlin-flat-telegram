@@ -9,4 +9,5 @@ RUN --mount=type=cache,target=/root/.gradle ./gradlew bootJar --no-daemon
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /build/build/libs/app.jar /app/app.jar
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

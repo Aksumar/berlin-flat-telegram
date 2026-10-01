@@ -5,6 +5,8 @@ import com.aksumar.telegram.model.Listing
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Duration
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Metrics
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -17,22 +19,30 @@ class GeoapifyMaps(
     staticMapUrl: String = "https://maps.geoapify.com/v1/staticmap",
     placesUrl: String = "https://api.geoapify.com/v2/places",
     transitCache: VbbTransitCache = VbbTransitCache(),
+    registry: MeterRegistry = Metrics.globalRegistry,
 ) : ListingMaps {
     @Autowired
     constructor(
         properties: AppProperties,
         mapper: ObjectMapper,
         transitCache: VbbTransitCache,
-    ) : this(properties.geoapifyApiKey, mapper, transitCache = transitCache)
+        registry: MeterRegistry,
+    ) : this(properties.geoapifyApiKey, mapper, transitCache = transitCache, registry = registry)
 
-    private val client = GeoapifyClient(apiKey)
+    private val metrics = MapMetrics(registry)
+    private val client = GeoapifyClient(apiKey, metrics)
     private val geocoder = GeoapifyGeocoder(client, mapper, geocodeUrl)
     private val staticMaps = GeoapifyStaticMaps(client, staticMapUrl)
     private val places = GeoapifyPlaces(client, mapper, placesUrl)
     private val landmarkRenderer = LandmarkRenderer(transitCache)
     private val composer = MapComposer()
 
-    override fun create(item: Listing): ListingMap {
+    override fun create(item: Listing): ListingMap = create(item) {}
+
+    override fun create(item: Listing, onDistrictResolved: (String) -> Unit): ListingMap =
+        metrics.measure("telegram.maps.generation", "generation") { generate(item, onDistrictResolved) }
+
+    private fun generate(item: Listing, onDistrictResolved: (String) -> Unit): ListingMap {
         val startedNanos = System.nanoTime()
         val deadlineNanos = startedNanos + MAP_TIMEOUT.toNanos()
         var stage = "configuration"
@@ -40,6 +50,7 @@ class GeoapifyMaps(
             if (apiKey.isBlank()) throw MapGenerationException("не настроен API-ключ Geoapify")
             stage = "geocoding"
             val location = geocoder.locate(item.address, deadlineNanos)
+            location.district?.let(onDistrictResolved)
             stage = "detail map"
             val detail = staticMaps.detail(location, deadlineNanos)
             stage = "overview map"
@@ -63,7 +74,8 @@ class GeoapifyMaps(
             }
             throw MapGenerationException(reason,
                 "stage=$stage, generationElapsedMs=${Duration.ofNanos(System.nanoTime() - startedNanos).toMillis()}, " +
-                    "generationBudgetMs=${MAP_TIMEOUT.toMillis()}, ${error.mapFailureDetails()}")
+                    "generationBudgetMs=${MAP_TIMEOUT.toMillis()}, ${error.mapFailureDetails()}",
+                (error as? MapGenerationException)?.outcome ?: "error")
         }
     }
 

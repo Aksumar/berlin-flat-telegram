@@ -35,6 +35,56 @@ class DeliveryTest {
         )
 
     @Test
+    fun `unresolved district is logged but omitted from message`(output: CapturedOutput) {
+        val delivered = mutableListOf<String>()
+        val sender = TelegramSender { _, text ->
+            delivered += text
+            CompletableFuture.completedFuture(null)
+        }
+        val payload = testMapper.readTree(fixture()) as com.fasterxml.jackson.databind.node.ObjectNode
+        (payload.path("address") as com.fasterxml.jackson.databind.node.ObjectNode).put("district", " ")
+        listener(sender).receive(record(testMapper.writeValueAsString(payload))).join()
+        assertEquals(2, delivered.size)
+        delivered.forEach {
+            assertEquals("🏠 Gewobag", it.lineSequence().first())
+            assertFalse(it.contains("район не определён"))
+        }
+        assertTrue(output.out.contains("Не удалось определить район; source=gewobag, id=123"))
+    }
+
+    @Test
+    fun `all sources use resolved district even when map fails and preserve supplied district`() {
+        val sources = listOf("allod", "rbb", "berlinhaus", "berlinovo", "gewobag", "wbm",
+            "degewo", "inberlinwohnen", "deutschewohnen", "howoge")
+        for (source in sources) {
+            for (supplied in listOf(null, " ", "Wedding")) {
+                val payload = testMapper.readTree(fixture()) as com.fasterxml.jackson.databind.node.ObjectNode
+                payload.put("source", source)
+                (payload.path("address") as com.fasterxml.jackson.databind.node.ObjectNode).put("district", supplied)
+                val delivered = mutableListOf<String>()
+                val sender = object : TelegramSender {
+                    override fun send(chat: String, text: String): CompletableFuture<Void> {
+                        delivered += text
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+                val maps = object : ListingMaps {
+                    override fun create(item: com.aksumar.telegram.model.Listing): ListingMap? = error("Expected enrichment")
+                    override fun create(item: com.aksumar.telegram.model.Listing, onDistrictResolved: (String) -> Unit): ListingMap? {
+                        onDistrictResolved("Mitte")
+                        throw MapGenerationException("тестовая ошибка карты")
+                    }
+                }
+                val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(), sender,
+                    properties(), testMapper, maps)
+                listener.receive(record(testMapper.writeValueAsString(payload), "[\"$source\",\"123\"]")).join()
+                assertEquals(2, delivered.size, source)
+                delivered.forEach { assertTrue(it.lineSequence().first().endsWith(" · ${supplied?.takeIf { it.isNotBlank() } ?: "Mitte"}"), it) }
+            }
+        }
+    }
+
+    @Test
     fun `creates map once and waits for photo delivery to all chats`() {
         var mapCalls = 0
         val expectedMap = ListingMap(byteArrayOf(1), false)

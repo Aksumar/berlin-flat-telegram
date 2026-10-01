@@ -42,12 +42,17 @@ class NewFlatEventListener(
             }
 
             val mapUrl = formatter.mapUrl(item)
+            var resolvedItem = item
             var mapFailureReason: String? = null
             var mapFailureDetails = "result=null"
             val mapStartedNanos = System.nanoTime()
             val map =
                 try {
-                    maps.create(item)
+                    maps.create(item) { district ->
+                        if (item.address.district.isNullOrBlank()) {
+                            resolvedItem = item.copy(address = item.address.copy(district = district))
+                        }
+                    }
                 } catch (error: InterruptedException) {
                     Thread.currentThread().interrupt()
                     throw error
@@ -66,7 +71,13 @@ class NewFlatEventListener(
                     (System.nanoTime() - mapStartedNanos) / 1_000_000, mapFailureDetails,
                 )
             }
-            val text = formatter.format(item, mapFailureReason)
+            if (resolvedItem.address.district.isNullOrBlank()) {
+                log.warn(
+                    "Не удалось определить район; source={}, id={}, address={}, topic={}, partition={}, offset={}",
+                    item.source, item.id, item.address.searchQuery(), record.topic(), record.partition(), record.offset(),
+                )
+            }
+            val text = formatter.format(resolvedItem, mapFailureReason)
             val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map, mapUrl) }
 
             CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->

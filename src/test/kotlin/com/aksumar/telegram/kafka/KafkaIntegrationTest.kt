@@ -78,6 +78,7 @@ class KafkaIntegrationTest {
                 "--app.group-id=$group",
                 "--app.chat-ids=123,456",
                 "--app.bot-token=fake",
+                "--server.port=0",
             )
 
     private fun topic(): String {

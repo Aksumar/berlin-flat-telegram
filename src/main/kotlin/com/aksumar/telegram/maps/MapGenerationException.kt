@@ -1,7 +1,11 @@
 package com.aksumar.telegram.maps
 
-/** Contains only a safe, user-facing reason, never provider URLs or response bodies. */
-class MapGenerationException(val reason: String, val details: String = "") : RuntimeException(reason)
+/** User-facing reason is separate from diagnostics, whose request URLs exclude API keys. */
+class MapGenerationException(
+    val reason: String,
+    val details: String = "",
+    val outcome: String = "error",
+) : RuntimeException(reason)
 
 /** Exception messages and causes may contain API keys, request URLs or provider response bodies. */
 internal fun Exception.mapFailureDetails(): String =

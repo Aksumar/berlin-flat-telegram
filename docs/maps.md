@@ -137,6 +137,11 @@ Routing API не вызывается. Одна готовая картинка 
 Область карты остаётся `960 × 600`; легенда добавляет высоту снизу.
 
 Заголовок Telegram содержит источник и район, например `🏠 InBerlinWohnen · Mitte`.
+Для всех источников отсутствующий или пустой район дополняется из проверенного
+результата геокодирования адреса (district, затем suburb, quarter или neighbourhood).
+Полученный район сохраняется и при последующей ошибке генерации карты.
+Если район определить не удалось, заголовок содержит только источник,
+а в лог записывается warning с идентификатором объявления и адресом.
 Жилищная компания указывается отдельно, когда отличается от источника.
 Кнопки «Объявление» и «📍 Карта» находятся в одной строке. Их ссылки формируются
 из объявления независимо от генерации изображения. Google Maps всегда открывает
@@ -161,9 +166,92 @@ Routing API не вызывается. Одна готовая картинка 
 Ответ должен иметь HTTP-статус `200` и размер не более 5 000 000 байт.
 Изображение должно декодироваться и иметь ожидаемые размеры.
 Ошибки геокодирования или основной карты приводят к отправке объявления текстом.
-В логи не записываются URL запросов и тела ответов, чтобы не раскрыть API-ключ.
+В INFO-логи записываются URL запросов с параметрами без `apiKey`.
+При неудачной генерации WARN содержит адрес объявления, причину, этап,
+длительность и детали запроса (включая URL без ключа при ошибке HTTP).
+Тела ответов и исходные сообщения исключений не записываются: они могут содержать ключ.
 
 Документация провайдера: [Geocoding](https://apidocs.geoapify.com/docs/geocoding/forward-geocoding/),
 [Static Maps](https://apidocs.geoapify.com/docs/maps/static/),
 [Places](https://apidocs.geoapify.com/docs/places/).
 Описание отправки фотографий: [Telegram sendPhoto](https://core.telegram.org/bots/api#sendphoto).
+
+
+## Метрики Prometheus и Grafana
+
+Приложение отдаёт метрики на `GET :8080/actuator/prometheus` через Spring Boot
+Actuator и Micrometer. Порт меняется переменной `METRICS_PORT` (или `SERVER_PORT`).
+Для Docker Prometheus должен видеть порт контейнера в общей сети; `EXPOSE 8080`
+сам по себе не публикует порт на хосте.
+
+Пример секции в конфигурации Prometheus (`telegram` — имя сервиса в сети Docker):
+
+```yaml
+scrape_configs:
+  - job_name: berlin-flat-telegram
+    scrape_interval: 15s
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['telegram:8080']
+```
+
+В Grafana используется источник данных Prometheus. Таймеры экспортируют
+`_seconds_count`, `_seconds_sum`, `_seconds_max` и `_seconds_bucket`:
+
+| Метрика | Что измеряет |
+| --- | --- |
+| `telegram_maps_generation_seconds` | Полная генерация: от проверки конфигурации до готового PNG, включая неудачные попытки; без отправки в Telegram |
+| `telegram_maps_request_seconds` | Каждый вызов Geoapify, включая чтение ответа и неудачные попытки |
+
+Метка `operation`: `generation` у генерации; `geocoding`, `detail_map`,
+`overview_map`, `places` у запросов. Метка `outcome`: `success`, `error`,
+`http_error`, `connect_timeout`, `timeout`, `budget_exhausted`, `interrupted`.
+`budget_exhausted` означает, что запрос не отправлен из-за исчерпания бюджета.
+Ошибки необязательных обзора/мест учитываются в запросах, даже если генерация
+в целом успешна. HTTP 200 с некорректным содержимым считается успешным HTTP-запросом;
+ошибка обработки основной карты отражается в результате генерации.
+Время установки соединения отдельно не измеряется: оно входит во время запроса;
+его таймаут выделен как `connect_timeout`. Локальная отрисовка может закончиться
+позже 30 секунд: общий бюджет ограничивает сетевые запросы, а не прерывает отрисовку.
+
+Гистограммы имеют границы 0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 20, 25, 30, 45, 60 секунд
+и `+Inf`. Метки не содержат адресов, идентификаторов объявлений или API-ключей.
+Серии появляются после первого соответствующего события.
+
+Среднее время генерации (секунды):
+
+```promql
+sum(rate(telegram_maps_generation_seconds_sum[$__rate_interval]))
+/
+sum(rate(telegram_maps_generation_seconds_count[$__rate_interval]))
+```
+
+p95 полного времени генерации:
+
+```promql
+histogram_quantile(0.95,
+  sum by (le) (rate(telegram_maps_generation_seconds_bucket[$__rate_interval]))
+)
+```
+
+p95 запросов по операциям:
+
+```promql
+histogram_quantile(0.95,
+  sum by (le, operation) (rate(telegram_maps_request_seconds_bucket[$__rate_interval]))
+)
+```
+
+Ошибки и таймауты запросов в секунду:
+
+```promql
+sum by (operation, outcome) (
+  rate(telegram_maps_request_seconds_count{outcome!="success"}[$__rate_interval])
+)
+```
+
+При редких объявлениях увеличивайте интервал графика: для `rate` нужны как минимум
+две точки сбора. Счётчики суммируются по экземплярам; `_max` — максимум скользящего
+окна Micrometer, а не максимум за всё время работы.
+
+Документация: [Spring Boot Prometheus endpoint](https://docs.spring.io/spring-boot/3.5/api/rest/actuator/prometheus.html).
