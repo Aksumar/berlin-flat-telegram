@@ -81,7 +81,8 @@ internal class GeoapifyPlaces(
                 place.path("lat").asDouble(Double.NaN),
             ) ?: return null
             if (!layout.isVisible(position.x, position.y)) return null
-            return Landmark(place.path("name").asText().trim(), kind, position.x, position.y)
+            return Landmark(place.path("name").asText().trim(), kind, position.x, position.y,
+                place.path("lon").asDouble(), place.path("lat").asDouble())
         }
     }
 

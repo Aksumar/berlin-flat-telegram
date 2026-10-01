@@ -10,4 +10,11 @@ internal enum class LandmarkKind(val badge: String) {
         get() = this == SUBWAY || this == SUBURBAN_RAIL
 }
 
-internal data class Landmark(val name: String, val kind: LandmarkKind, val x: Int, val y: Int)
+internal data class Landmark(
+    val name: String,
+    val kind: LandmarkKind,
+    val x: Int,
+    val y: Int,
+    val longitude: Double? = null,
+    val latitude: Double? = null,
+)

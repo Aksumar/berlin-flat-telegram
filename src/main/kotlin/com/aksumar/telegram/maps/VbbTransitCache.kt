@@ -22,9 +22,14 @@ internal fun stationKey(value: String): String =
         .trim()
         .lowercase()
 
-/** Station-to-line/color lookup loaded once from the bundled VBB-derived CSV at startup. */
+/** Rail lines/colors and bus routes loaded once from bundled VBB-derived resources at startup. */
 @Component
-class VbbTransitCache {
+class VbbTransitCache internal constructor(private val busCatalog: BusRouteCatalog) {
+    constructor() : this(BusRouteCatalog.load())
+
+    internal fun busStopFor(station: Landmark): BusStop? =
+        if (station.kind == LandmarkKind.BUS) busCatalog.find(station.name, station.longitude, station.latitude) else null
+
     private val logger = LoggerFactory.getLogger(VbbTransitCache::class.java)
     private val linesByStation: Map<String, List<TransitLine>> = load()
 
