@@ -1,6 +1,5 @@
 package com.aksumar.telegram.format
 
-import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.model.Listing
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -8,6 +7,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import org.springframework.stereotype.Component
 
@@ -26,7 +27,7 @@ class MessageFormatter {
         addDetails(lines, item)
         addProviderAndSource(lines, item)
 
-        return appendUrlWithinTelegramLimit(lines.joinToString("\n"), item.url)
+        return truncateWithinTelegramLimit(lines.joinToString("\n"))
     }
 
     private fun addHeader(lines: MutableList<String>, item: Listing) {
@@ -35,7 +36,7 @@ class MessageFormatter {
         lines += "Адрес: ${text(location(item))}"
         lines += "Площадь: ${number(item.areaM2)}${if (item.areaM2 != null) " м²" else ""}"
         lines += "Комнат: ${number(item.rooms)}"
-        item.floor?.let { lines += "Этаж: ${text(it)}" }
+        lines += "Этаж: ${floor(item.floor)}"
     }
 
     private fun addRent(lines: MutableList<String>, item: Listing) {
@@ -43,30 +44,24 @@ class MessageFormatter {
         lines += "Warmmiete: ${price(item.rent.warm)}${if (item.rent.warm != null) "/мес." else ""}"
         lines += "Kaltmiete: ${price(item.rent.cold)}${if (item.rent.cold != null) "/мес." else ""}"
 
-        addOptionalPrice(lines, "Коммунальные", item.rent.operatingCosts)
-        addOptionalPrice(lines, "Отопление", item.rent.heatingCosts)
-        addOptionalPrice(lines, "Залог", item.rent.deposit)
+        lines += "Коммунальные: ${price(item.rent.operatingCosts)}"
+        lines += "Отопление: ${price(item.rent.heatingCosts)}"
+        lines += "Залог: ${price(item.rent.deposit)}"
     }
 
     private fun addDetails(lines: MutableList<String>, item: Listing) {
-        val details = mutableListOf<String>()
-
-        val availability =
-            item.availability.text?.takeIf { it.isNotEmpty() } ?: item.availability.date
-        availability?.let { details += "Доступна: ${text(it)}" }
-
-        if (item.wbs.required != null || !item.wbs.text.isNullOrEmpty()) {
-            details += wbs(item)
+        lines += ""
+        val availability = item.availability.date?.let {
+            LocalDate.parse(it).format(DateTimeFormatter.ofPattern("dd.MM.uuuu"))
+        } ?: when (item.availability.text?.trim()?.lowercase(Locale.ROOT)) {
+            "sofort" -> "сразу"
+            else -> text(item.availability.text)
         }
-
-        addFeature(details, "Балкон", item.features.balcony)
-        addFeature(details, "Лифт", item.features.elevator)
-        addFeature(details, "Встроенная кухня", item.features.builtInKitchen)
-
-        if (details.isNotEmpty()) {
-            lines += ""
-            lines += details
-        }
+        lines += "Доступна: $availability"
+        lines += wbs(item)
+        lines += "Балкон: ${feature(item.features.balcony)}"
+        lines += "Лифт: ${feature(item.features.elevator)}"
+        lines += "Встроенная кухня: ${feature(item.features.builtInKitchen)}"
     }
 
     private fun addProviderAndSource(lines: MutableList<String>, item: Listing) {
@@ -114,17 +109,24 @@ class MessageFormatter {
                 null -> "не указано"
             }
 
-        val note = item.wbs.text?.takeIf { it.isNotEmpty() }?.let { " (${text(it)})" } ?: ""
+        val note = item.wbs.text
+            ?.takeIf { item.wbs.required == true && it.isNotBlank() }
+            ?.let { " (${text(it)})" } ?: ""
 
         return "WBS: $status$note"
     }
 
-    private fun addOptionalPrice(lines: MutableList<String>, label: String, value: BigDecimal?) {
-        value?.let { lines += "$label: ${price(it)}" }
+    private fun feature(value: Boolean?): String = when (value) {
+        true -> "есть"
+        false -> "нет"
+        null -> "не указано"
     }
 
-    private fun addFeature(lines: MutableList<String>, label: String, value: Boolean?) {
-        value?.let { lines += "$label: ${if (it) "есть" else "нет"}" }
+    private fun floor(value: String?): String = when (value?.trim()?.uppercase(Locale.ROOT)) {
+        "EG" -> "0"
+        "DG" -> "мансарда"
+        "UG" -> "подвальный"
+        else -> text(value)
     }
 
     private fun sourceName(source: String): String =
@@ -143,7 +145,7 @@ class MessageFormatter {
         }
 
     private fun text(value: String?): String =
-        value?.replace(Regex("(?U)\\s+"), " ")?.trim() ?: "не указано"
+        value?.replace(Regex("(?U)\\s+"), " ")?.trim()?.takeIf { it.isNotEmpty() } ?: "не указано"
 
     private fun number(value: BigDecimal?): String =
         value?.stripTrailingZeros()?.toPlainString()?.replace('.', ',') ?: "не указано"
@@ -165,22 +167,17 @@ class MessageFormatter {
         return "$prefix${format.format(value)} €"
     }
 
-    private fun appendUrlWithinTelegramLimit(body: String, url: String): String {
-        val budget = TELEGRAM_MESSAGE_LIMIT - url.length - 1
-        if (budget < 1) {
-            throw DeliveryException("Listing URL exceeds Telegram limit")
+    private fun truncateWithinTelegramLimit(body: String): String {
+        if (body.length <= TELEGRAM_MESSAGE_LIMIT) {
+            return body
         }
 
-        if (body.length <= budget) {
-            return "$body\n$url"
-        }
-
-        var end = budget - 1
+        var end = TELEGRAM_MESSAGE_LIMIT - 1
         if (end > 0 && body[end - 1].isHighSurrogate()) {
             end--
         }
 
-        return "${body.take(end)}…\n$url"
+        return "${body.take(end)}…"
     }
 
     companion object {

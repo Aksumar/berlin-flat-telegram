@@ -23,10 +23,13 @@ are not inferred by subtraction. Allod's displayed total
 is BasePrice + OperatingCost, exactly as in its frontend. InBerlinWohnen uses the
 labelled Gesamtmiete, **not rentGross**, which can exclude heating.
 
-`floor` is text (e.g. `0`, `EG`, `DG`, `1 von (insg. 4)`). Availability contains an
-ISO date when parseable, and source text (e.g. `sofort`) otherwise. WBS and features
+`floor` is normalized text: numbered floors use `0`, `1`, etc.; ground floor is `0`,
+attic is `DG`, basement is `UG`. Ambiguous descriptions such as `1 von (insg. 4)`
+are preserved. Availability contains an ISO date when parseable; immediate availability
+uses the canonical text `sofort`. Other source descriptions are preserved. WBS and features
 use nullable booleans: absent mention does not imply false. `wbs.text` preserves
-published eligibility restrictions. Only explicit positive feature labels are extracted;
+published eligibility restrictions; bare status labels such as `WBS erforderlich`
+are omitted from this text because `wbs.required` already carries the status. Only explicit positive feature labels are extracted;
 free prose is not treated as proof that a feature exists.
 
 The contract does not include an unstructured `details` field. Consumers may ignore additional
@@ -79,9 +82,16 @@ future fields but must reject invalid known field types before acknowledging Kaf
 
 ## Telegram layout
 
-One house emoji, source website and optional district in the heading; no “Новая квартира” label. Address, area, rooms, Warmmiete and Kaltmiete always
-appear (`не указано` for unknown values). Other unknown fields are omitted. The company appears only when it differs from the source. The full listing URL ends the message. Long messages are truncated within
-Telegram's 4096 UTF-16-unit limit while retaining the URL. With `GEOAPIFY_API_KEY`,
+One house emoji, source website and optional district in the heading; no “Новая квартира” label.
+Fields always appear in this order: address, area, rooms, floor; Warmmiete, Kaltmiete,
+operating costs, heating, deposit; availability, WBS, balcony, elevator, built-in kitchen.
+Unknown values use `не указано`; features use `есть` / `нет` / `не указано`.
+Dates are displayed as `DD.MM.YYYY`, `sofort` as `сразу`. WBS always uses
+`требуется` / `не требуется` / `не указано`; nonblank eligibility restrictions appear
+in parentheses only when WBS is required. Missing data never implies a negative status.
+The company appears only when it differs from the source. The listing URL is available
+in the listing button, not in the message body. Long messages are truncated within
+Telegram's 4096 UTF-16-unit limit without splitting surrogate pairs. With `GEOAPIFY_API_KEY`,
 a map with a Berlin overview accompanies the listing; approximate matches are labelled.
 Captions exceeding 1024 units use a heading on the photo and a separate quiet text message.
 Missing or failed map enrichment does not suppress delivery or the listing button.

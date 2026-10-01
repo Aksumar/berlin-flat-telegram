@@ -22,6 +22,16 @@ class ContractTest {
     }
 
     @Test
+    fun `accepts enriched Degewo address from Python without changing v2 contract`() {
+        val item = contract.decode(javaClass.getResource("/degewo-charlottenburg-v2.json")!!.readText())
+        assertEquals("W1150.01393.0030-0701", item.id)
+        assertEquals("10587", item.address.postalCode)
+        assertEquals("Helmholtzstraße", item.address.street)
+        assertEquals("34", item.address.houseNumber)
+        assertEquals("Helmholtzstraße 34, 10587 Berlin, Charlottenburg", item.address.searchQuery())
+    }
+
+    @Test
     fun `accepts WBM listing source`() {
         val tree = testMapper.readTree(fixture()) as ObjectNode
         tree.put("source", "wbm")

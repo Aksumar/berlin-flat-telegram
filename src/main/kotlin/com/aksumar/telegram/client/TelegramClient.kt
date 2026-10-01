@@ -3,11 +3,11 @@ package com.aksumar.telegram.client
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.maps.ListingMap
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
-import org.springframework.stereotype.Component
 
 @Component
 class TelegramClient(private val transport: TelegramTransport, private val mapper: ObjectMapper) :
@@ -81,12 +81,12 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
     private fun createListingKeyboard(mapUrl: String?, listingUrl: String): Map<String, Any> =
         mapOf(
             "inline_keyboard" to
-                listOf(
-                    listOfNotNull(
-                        mapOf("text" to "Объявление ↗", "url" to listingUrl),
-                        mapUrl?.let { mapOf("text" to "📍 Карта", "url" to it) },
+                    listOf(
+                        listOfNotNull(
+                            mapOf("text" to "Объявление ↗", "url" to listingUrl),
+                            mapUrl?.let { mapOf("text" to "📍 Карта", "url" to it) },
+                        )
                     )
-                )
         )
 
     private fun buildMapPhotoBody(
@@ -101,7 +101,7 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
                 out.write(value.toByteArray(Charsets.UTF_8))
             }
             for ((name, value) in
-                mapOf("chat_id" to chat, "caption" to caption, "reply_markup" to keyboard)) {
+            mapOf("chat_id" to chat, "caption" to caption, "reply_markup" to keyboard)) {
                 write(
                     "--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n"
                 )
