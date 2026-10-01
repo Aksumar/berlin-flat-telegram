@@ -10,6 +10,7 @@ internal data class GeocodedLocation(
     val latitude: Double,
     val approximate: Boolean,
     val detailZoom: Double,
+    val district: String? = null,
 )
 
 internal class GeoapifyGeocoder(
@@ -54,7 +55,10 @@ internal class GeoapifyGeocoder(
             rank.path("confidence_building_level").asDouble(0.0) >= MIN_BUILDING_CONFIDENCE &&
             rank.path("match_type").asText() == "full_match"
         val detailZoom = if (resultType == "building" || resultType == "street") 15.5 else 12.5
-        return GeocodedLocation(longitude, latitude, approximate = !exact, detailZoom = detailZoom)
+        val district = expected.district?.trim()?.takeIf { it.isNotBlank() }
+            ?: listOf("district", "suburb", "quarter", "neighbourhood")
+                .firstNotNullOfOrNull { result.path(it).asText("").trim().takeIf(String::isNotBlank) }
+        return GeocodedLocation(longitude, latitude, approximate = !exact, detailZoom = detailZoom, district = district)
     }
 
     private fun matches(result: JsonNode, address: Address): Boolean {

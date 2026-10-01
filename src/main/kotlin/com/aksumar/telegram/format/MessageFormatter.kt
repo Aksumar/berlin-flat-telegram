@@ -75,7 +75,7 @@ class MessageFormatter {
 
     private fun heading(item: Listing): String {
         val district =
-            item.address.district?.takeIf { it.isNotEmpty() }?.let { " · ${text(it)}" } ?: ""
+            item.address.district?.takeIf { it.isNotBlank() }?.let { " · ${text(it)}" } ?: ""
 
         return "🏠 ${sourceName(item.source)}$district"
     }

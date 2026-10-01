@@ -4,6 +4,10 @@ import com.aksumar.telegram.model.Address
 import com.aksumar.telegram.support.event
 import com.aksumar.telegram.support.testMapper
 import com.sun.net.httpserver.HttpServer
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Metrics
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import java.util.concurrent.TimeUnit
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -18,6 +22,61 @@ import org.springframework.boot.test.system.OutputCaptureExtension
 
 @ExtendWith(OutputCaptureExtension::class)
 class ListingMapsTest {
+    @Test
+    fun `metrics include successful generation and optional request failure`(output: CapturedOutput) {
+        Provider().use { p ->
+            SimpleMeterRegistry().let { registry ->
+                p.overviewStatus = 503
+                p.maps(registry = registry).create(event())
+                val generation = registry.get("telegram.maps.generation").tag("outcome", "success").timer()
+                assertEquals(1, generation.count())
+                assertTrue(generation.totalTime(TimeUnit.SECONDS) > 0)
+                assertEquals(1, registry.get("telegram.maps.request").tags("operation", "overview_map", "outcome", "http_error").timer().count())
+                assertEquals(1, registry.get("telegram.maps.request").tags("operation", "geocoding", "outcome", "success").timer().count())
+                assertTrue(output.out.contains("request=http://127.0.0.1:"))
+                assertTrue(output.out.contains("text=Musterstra"))
+                assertFalse(output.out.contains("test-secret"))
+                assertFalse(output.out.contains("apiKey="))
+            }
+        }
+    }
+
+    @Test
+    fun `failed generation and exhausted request budget are measured`() {
+        Provider().use { p ->
+            SimpleMeterRegistry().let { registry ->
+                p.mapStatus = 503
+                assertThrows(MapGenerationException::class.java) { p.maps(registry = registry).create(event()) }
+                assertEquals(1, registry.get("telegram.maps.generation").tag("outcome", "http_error").timer().count())
+                assertThrows(MapGenerationException::class.java) {
+                    GeoapifyClient("test-secret", MapMetrics(registry)).get("http://localhost/geocode", emptyMap(), "geocoding", System.nanoTime() - 1)
+                }
+                assertEquals(1, registry.get("telegram.maps.request").tag("outcome", "budget_exhausted").timer().count())
+                assertTrue(registry.meters.filterIsInstance<io.micrometer.core.instrument.Timer>().all { meter ->
+                    meter.id.tags.all { it.key in setOf("operation", "outcome") }
+                })
+            }
+        }
+    }
+
+    @Test
+    fun `district is resolved before map failure with neighbourhood fallback`() {
+        for (field in listOf("district", "suburb", "quarter", "neighbourhood")) {
+            Provider().use { p ->
+                p.geocode = p.geocode.replace("\"district\"", "\"$field\"")
+                p.mapStatus = 503
+                var district: String? = null
+                assertThrows(MapGenerationException::class.java) {
+                    p.maps().create(event().copy(address = event().address.copy(district = " "))) {
+                        district = it
+                    }
+                }
+                assertEquals("Mitte", district)
+                assertEquals(1, p.requests.count { it.first == "/geocode" })
+            }
+        }
+    }
+
     @Test
     fun `exhausted budget reports operation and timing without making a request`() {
         val error = assertThrows(MapGenerationException::class.java) {
@@ -109,13 +168,14 @@ class ListingMapsTest {
             server.start()
         }
 
-        fun maps(key: String = "test-secret") =
+        fun maps(key: String = "test-secret", registry: MeterRegistry = Metrics.globalRegistry) =
             GeoapifyMaps(
                 key,
                 testMapper,
                 "http://127.0.0.1:${server.address.port}/geocode",
                 "http://127.0.0.1:${server.address.port}/staticmap",
                 "http://127.0.0.1:${server.address.port}/places",
+                registry = registry,
             )
 
         fun transportRequests() =
