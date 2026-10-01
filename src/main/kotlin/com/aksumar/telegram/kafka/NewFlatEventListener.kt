@@ -40,6 +40,7 @@ class NewFlatEventListener(
             }
 
             val text = formatter.format(item)
+            val mapUrl = formatter.mapUrl(item)
             val map =
                 try {
                     maps.create(item)
@@ -50,7 +51,7 @@ class NewFlatEventListener(
                     log.warn("Map unavailable; sending listing without image")
                     null
                 }
-            val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map) }
+            val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map, mapUrl) }
 
             CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->
                 val failures = deliveries.mapNotNull(::failure)

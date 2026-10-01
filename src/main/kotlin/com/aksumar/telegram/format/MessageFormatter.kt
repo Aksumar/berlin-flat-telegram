@@ -4,6 +4,8 @@ import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.model.Listing
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -11,6 +13,11 @@ import org.springframework.stereotype.Component
 
 @Component
 class MessageFormatter {
+    fun mapUrl(item: Listing): String? =
+        item.address.searchQuery().takeIf { it.isNotBlank() }?.let {
+            "https://www.google.com/maps/search/?api=1&query=${URLEncoder.encode(it, StandardCharsets.UTF_8)}"
+        }
+
     fun format(item: Listing): String {
         val lines = mutableListOf<String>()
 

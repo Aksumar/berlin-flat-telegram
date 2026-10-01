@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class TelegramClientTest {
-    private class PhotoServer(var photoStatus: Int = 200) : AutoCloseable {
+    private class PhotoServer(var photoStatus: Int = 200, var textStatus: Int = 200) : AutoCloseable {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val requests = mutableListOf<Pair<String, String>>()
 
@@ -19,7 +19,7 @@ class TelegramClientTest {
             server.createContext("/bottest/") { exchange ->
                 val method = exchange.requestURI.path.substringAfterLast('/')
                 requests += method to exchange.requestBody.readAllBytes().toString(Charsets.UTF_8)
-                val status = if (method == "sendPhoto") photoStatus else 200
+                val status = if (method == "sendPhoto") photoStatus else textStatus
                 val bytes = "{\"ok\":${status == 200}}".toByteArray()
                 exchange.sendResponseHeaders(status, bytes.size.toLong())
                 exchange.responseBody.use { it.write(bytes) }
@@ -44,27 +44,30 @@ class TelegramClientTest {
         }
     }
 
-    private val map =
-        ListingMap(
-            byteArrayOf(1, 2, 3),
-            "https://www.google.com/maps/search/?api=1&query=52.53%2C13.38",
-            false,
-        )
+    private val map = ListingMap(byteArrayOf(1, 2, 3), false)
+    private val mapUrl = "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+Berlin"
 
     @Test
     fun `uploads photo with caption and both buttons`() {
         PhotoServer().use { server ->
             server
                 .client()
-                .sendListing("123", "🏠 Gewobag · Mitte", "https://example.com/123", map)
+                .sendListing("123", "🏠 Gewobag · Mitte", "https://example.com/123", map, mapUrl)
                 .join()
             val (method, body) = server.requests.single()
             assertEquals("sendPhoto", method)
             assertTrue(body.contains("name=\"photo\"; filename=\"map.png\""))
             assertTrue(body.contains("Content-Type: image/png"))
             assertTrue(body.contains("🏠 Gewobag · Mitte"))
-            assertTrue(body.contains(map.url))
+            assertTrue(body.contains(mapUrl))
             assertTrue(body.contains("https://example.com/123"))
+            val keyboard = testMapper.readTree(
+                body.substringAfter("name=\"reply_markup\"\r\n\r\n").substringBefore("\r\n")
+            )["inline_keyboard"]
+            assertEquals(1, keyboard.size())
+            assertEquals(2, keyboard[0].size())
+            assertEquals("Объявление ↗", keyboard[0][0]["text"].asText())
+            assertEquals("📍 Карта", keyboard[0][1]["text"].asText())
             assertFalse(body.contains("disable_notification"))
         }
     }
@@ -75,7 +78,7 @@ class TelegramClientTest {
             val text = "🏠 Gewobag\n" + "я".repeat(1100)
             server
                 .client()
-                .sendListing("123", text, "https://example.com/123", map.copy(approximate = true))
+                .sendListing("123", text, "https://example.com/123", map.copy(approximate = true), mapUrl)
                 .join()
             assertEquals(listOf("sendPhoto", "sendMessage"), server.requests.map { it.first })
             assertTrue(server.requests[0].second.contains("Примерное расположение"))
@@ -91,28 +94,72 @@ class TelegramClientTest {
         for (size in listOf(1024, 1025)) PhotoServer().use { server ->
             server
                 .client()
-                .sendListing("123", "x".repeat(size), "https://example.com/123", map)
+                .sendListing("123", "x".repeat(size), "https://example.com/123", map, mapUrl)
                 .join()
             assertEquals(if (size == 1024) 1 else 2, server.requests.size)
         }
     }
 
     @Test
-    fun `rejected photo falls back to text while exhausted transient failure propagates`() {
-        PhotoServer(400).use { server ->
-            server.client().sendListing("123", "listing", "https://example.com/123", map).join()
-            assertEquals(listOf("sendPhoto", "sendMessage"), server.requests.map { it.first })
+    fun `missing map still sends text with listing and address buttons`() {
+        PhotoServer().use { server ->
+            server.client().sendListing("123", "listing", "https://example.com/123", null, mapUrl).join()
+            val (method, body) = server.requests.single()
+            assertEquals("sendMessage", method)
+            val message = testMapper.readTree(body)
+            assertEquals("listing", message["text"].asText())
+            val buttons = message["reply_markup"]["inline_keyboard"]
+            assertEquals(1, buttons.size())
+            assertEquals(2, buttons[0].size())
+            assertEquals("Объявление ↗", buttons[0][0]["text"].asText())
+            assertEquals("📍 Карта", buttons[0][1]["text"].asText())
+            assertEquals("https://example.com/123", buttons[0][0]["url"].asText())
+            assertEquals(mapUrl, buttons[0][1]["url"].asText())
+            assertFalse(message["disable_notification"].asBoolean())
         }
-        PhotoServer(500).use { server ->
+    }
+
+    @Test
+    fun `missing address retains listing button without inventing map location`() {
+        PhotoServer().use { server ->
+            server.client().sendListing("123", "listing", "https://example.com/123", null, null).join()
+            val message = testMapper.readTree(server.requests.single().second)
+            val buttons = message["reply_markup"]["inline_keyboard"]
+            assertEquals(1, buttons.size())
+            assertEquals("https://example.com/123", buttons[0][0]["url"].asText())
+        }
+    }
+
+    @Test
+    fun `rejected photo and exhausted photo retries fall back to text with buttons`() {
+        for (status in listOf(400, 500)) PhotoServer(status).use { server ->
+            server.client().sendListing("123", "listing", "https://example.com/123", map, mapUrl).join()
+            assertEquals(
+                List(if (status == 400) 1 else 4) { "sendPhoto" } + "sendMessage",
+                server.requests.map { it.first },
+            )
+            val message = testMapper.readTree(server.requests.last().second)
+            assertEquals("listing", message["text"].asText())
+            val buttons = message["reply_markup"]["inline_keyboard"]
+            assertEquals(1, buttons.size())
+            assertEquals(2, buttons[0].size())
+            assertEquals("https://example.com/123", buttons[0][0]["url"].asText())
+            assertEquals(mapUrl, buttons[0][1]["url"].asText())
+        }
+    }
+
+    @Test
+    fun `transient text fallback failure still propagates for Kafka recovery`() {
+        PhotoServer(400, 500).use { server ->
             val error =
                 assertThrows(CompletionException::class.java) {
                     server
                         .client()
-                        .sendListing("123", "listing", "https://example.com/123", map)
+                        .sendListing("123", "listing", "https://example.com/123", map, mapUrl)
                         .join()
                 }
             assertTrue((error.cause as TelegramDeliveryException).retryable)
-            assertEquals(List(4) { "sendPhoto" }, server.requests.map { it.first })
+            assertEquals(listOf("sendPhoto") + List(4) { "sendMessage" }, server.requests.map { it.first })
         }
     }
 

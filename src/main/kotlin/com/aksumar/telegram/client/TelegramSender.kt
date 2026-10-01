@@ -9,6 +9,7 @@ fun interface TelegramSender {
         text: String,
         listingUrl: String,
         map: ListingMap?,
+        mapUrl: String?,
     ): CompletableFuture<Void> = send(chat, text)
 
     fun send(chat: String, text: String): CompletableFuture<Void>

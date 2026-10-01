@@ -15,7 +15,17 @@ data class Address(
     val city: String?,
     /** City district; null if unspecified. */
     val district: String?,
-)
+) {
+    fun searchQuery(): String =
+        full?.takeIf { it.isNotBlank() }
+            ?: listOfNotNull(
+                listOfNotNull(street, houseNumber).filter { it.isNotBlank() }
+                    .joinToString(" ").ifBlank { null },
+                postalCode,
+                district,
+                city,
+            ).filter { it.isNotBlank() }.joinToString(", ")
+}
 
 data class Rent(
     /** Currency used for monetary amounts; the current contract supports EUR. */
