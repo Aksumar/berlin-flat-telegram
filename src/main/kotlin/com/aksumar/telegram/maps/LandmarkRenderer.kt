@@ -43,6 +43,14 @@ internal class LandmarkRenderer(transitCache: VbbTransitCache) {
                     ))
                 }
             }
+            if (arranged.labels.any { it.label.lineRows.any { row -> row.kind == LandmarkKind.BUS } }) {
+                graphics.font = Font(Font.SANS_SERIF, Font.PLAIN, 10)
+                val credit = "Маршруты: VBB · CC BY 4.0"
+                graphics.color = Color(255, 255, 255, 230)
+                graphics.fillRect(0, 580, graphics.fontMetrics.stringWidth(credit) + 12, 20)
+                graphics.color = Color(45, 55, 60)
+                graphics.drawString(credit, 6, 594)
+            }
         } finally {
             graphics.dispose()
         }
