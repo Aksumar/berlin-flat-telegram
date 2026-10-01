@@ -83,7 +83,7 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
             "inline_keyboard" to
                     listOf(
                         listOfNotNull(
-                            mapOf("text" to "Объявление ↗", "url" to listingUrl),
+                            mapOf("text" to "Объявление", "url" to listingUrl),
                             mapUrl?.let { mapOf("text" to "📍 Карта", "url" to it) },
                         )
                     )

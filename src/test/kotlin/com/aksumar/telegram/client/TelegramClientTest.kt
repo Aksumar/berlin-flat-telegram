@@ -66,7 +66,7 @@ class TelegramClientTest {
             )["inline_keyboard"]
             assertEquals(1, keyboard.size())
             assertEquals(2, keyboard[0].size())
-            assertEquals("Объявление ↗", keyboard[0][0]["text"].asText())
+            assertEquals("Объявление", keyboard[0][0]["text"].asText())
             assertEquals("📍 Карта", keyboard[0][1]["text"].asText())
             assertFalse(body.contains("disable_notification"))
         }
@@ -111,7 +111,7 @@ class TelegramClientTest {
             val buttons = message["reply_markup"]["inline_keyboard"]
             assertEquals(1, buttons.size())
             assertEquals(2, buttons[0].size())
-            assertEquals("Объявление ↗", buttons[0][0]["text"].asText())
+            assertEquals("Объявление", buttons[0][0]["text"].asText())
             assertEquals("📍 Карта", buttons[0][1]["text"].asText())
             assertEquals("https://example.com/123", buttons[0][0]["url"].asText())
             assertEquals(mapUrl, buttons[0][1]["url"].asText())
