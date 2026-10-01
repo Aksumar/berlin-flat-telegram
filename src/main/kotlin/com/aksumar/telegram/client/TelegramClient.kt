@@ -19,6 +19,7 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
         text: String,
         silent: Boolean = false,
         keyboard: Map<String, Any>? = null,
+        boldHeading: Boolean = false,
     ): CompletableFuture<Void> =
         transport.deliver(
             "sendMessage",
@@ -29,7 +30,8 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
                     "text" to text,
                     "disable_notification" to silent,
                     "link_preview_options" to mapOf("is_disabled" to true),
-                ) + if (keyboard == null) emptyMap() else mapOf("reply_markup" to keyboard)
+                ) + (if (keyboard == null) emptyMap() else mapOf("reply_markup" to keyboard)) +
+                    (if (boldHeading) mapOf("entities" to headingEntities(text)) else emptyMap())
             ),
         )
 
@@ -41,7 +43,7 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
         mapUrl: String?,
     ): CompletableFuture<Void> {
         val keyboard = createListingKeyboard(mapUrl, listingUrl)
-        if (map == null) return sendText(chat, text, keyboard = keyboard)
+        if (map == null) return sendText(chat, text, keyboard = keyboard, boldHeading = true)
 
         val locationNote = if (map.approximate) "\n📍 Примерное расположение" else ""
         val fullTextFitsCaption = text.length + locationNote.length <= 1024
@@ -51,7 +53,7 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
             .handle { _, failure ->
                 if (failure != null) handlePhotoDeliveryFailure(chat, text, keyboard, failure)
                 else if (fullTextFitsCaption) CompletableFuture.completedFuture<Void>(null)
-                else sendText(chat, text, silent = true)
+                else sendText(chat, text, silent = true, boldHeading = true)
             }
             .thenCompose { it }
     }
@@ -101,7 +103,12 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
                 out.write(value.toByteArray(Charsets.UTF_8))
             }
             for ((name, value) in
-            mapOf("chat_id" to chat, "caption" to caption, "reply_markup" to keyboard)) {
+            mapOf(
+                "chat_id" to chat,
+                "caption" to caption,
+                "caption_entities" to mapper.writeValueAsString(headingEntities(caption)),
+                "reply_markup" to keyboard,
+            )) {
                 write(
                     "--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n"
                 )
@@ -122,10 +129,16 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
     ): CompletableFuture<Void> {
         val cause = unwrap(failure)
         // After photo delivery fails (including exhausted retries), try text with the same buttons.
-        return if (cause is TelegramDeliveryException) sendText(chat, text, keyboard = keyboard)
+        return if (cause is TelegramDeliveryException) sendText(chat, text, keyboard = keyboard, boldHeading = true)
         else CompletableFuture.failedFuture(cause)
     }
 
     private fun unwrap(error: Throwable): Throwable =
         if (error is CompletionException && error.cause != null) error.cause!! else error
+
+    private fun headingEntities(text: String): List<Map<String, Any>> {
+        val length = text.substringBefore('\n').length
+        return if (length == 0) emptyList()
+        else listOf(mapOf("type" to "bold", "offset" to 0, "length" to length))
+    }
 }

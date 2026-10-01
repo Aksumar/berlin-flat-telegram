@@ -52,13 +52,19 @@ class TelegramClientTest {
         PhotoServer().use { server ->
             server
                 .client()
-                .sendListing("123", "🏠 Gewobag · Mitte", "https://example.com/123", map, mapUrl)
+                .sendListing("123", "Straße & <Platz> 🏠 12, Berlin · Mitte\nПлощадь: 39,1 м²", "https://example.com/123", map, mapUrl)
                 .join()
             val (method, body) = server.requests.single()
             assertEquals("sendPhoto", method)
             assertTrue(body.contains("name=\"photo\"; filename=\"map.png\""))
             assertTrue(body.contains("Content-Type: image/png"))
-            assertTrue(body.contains("🏠 Gewobag · Mitte"))
+            assertTrue(body.contains("Straße & <Platz> 🏠 12, Berlin · Mitte\nПлощадь: 39,1 м²"))
+            val entities = testMapper.readTree(
+                body.substringAfter("name=\"caption_entities\"\r\n\r\n").substringBefore("\r\n")
+            )
+            assertEquals(testMapper.valueToTree<com.fasterxml.jackson.databind.JsonNode>(
+                listOf(mapOf("type" to "bold", "offset" to 0, "length" to "Straße & <Platz> 🏠 12, Berlin · Mitte".length))
+            ), entities)
             assertTrue(body.contains(mapUrl))
             assertTrue(body.contains("https://example.com/123"))
             val keyboard = testMapper.readTree(
@@ -75,7 +81,7 @@ class TelegramClientTest {
     @Test
     fun `long caption sends complete text quietly after photo`() {
         PhotoServer().use { server ->
-            val text = "🏠 Gewobag\n" + "я".repeat(1100)
+            val text = "Musterstraße 12, 10115 Berlin · Mitte\n" + "я".repeat(1100)
             server
                 .client()
                 .sendListing("123", text, "https://example.com/123", map.copy(approximate = true), mapUrl)
@@ -86,6 +92,9 @@ class TelegramClientTest {
             val message = testMapper.readTree(server.requests[1].second)
             assertEquals(text, message["text"].asText())
             assertTrue(message["disable_notification"].asBoolean())
+            assertEquals("bold", message["entities"][0]["type"].asText())
+            assertEquals(0, message["entities"][0]["offset"].asInt())
+            assertEquals(text.substringBefore('\n').length, message["entities"][0]["length"].asInt())
         }
     }
 
@@ -108,6 +117,9 @@ class TelegramClientTest {
             assertEquals("sendMessage", method)
             val message = testMapper.readTree(body)
             assertEquals("listing", message["text"].asText())
+            assertEquals("bold", message["entities"][0]["type"].asText())
+            assertEquals(0, message["entities"][0]["offset"].asInt())
+            assertEquals(7, message["entities"][0]["length"].asInt())
             val buttons = message["reply_markup"]["inline_keyboard"]
             assertEquals(1, buttons.size())
             assertEquals(2, buttons[0].size())
@@ -140,6 +152,9 @@ class TelegramClientTest {
             )
             val message = testMapper.readTree(server.requests.last().second)
             assertEquals("listing", message["text"].asText())
+            assertEquals("bold", message["entities"][0]["type"].asText())
+            assertEquals(0, message["entities"][0]["offset"].asInt())
+            assertEquals(7, message["entities"][0]["length"].asInt())
             val buttons = message["reply_markup"]["inline_keyboard"]
             assertEquals(1, buttons.size())
             assertEquals(2, buttons[0].size())
@@ -193,6 +208,7 @@ class TelegramClientTest {
             val json = testMapper.readTree(request)
             assertEquals("-123", json["chat_id"].asText())
             assertEquals("Привет", json["text"].asText())
+            assertFalse(json.has("entities"))
             assertTrue(json["link_preview_options"]["is_disabled"].asBoolean())
         } finally {
             server.stop(0)

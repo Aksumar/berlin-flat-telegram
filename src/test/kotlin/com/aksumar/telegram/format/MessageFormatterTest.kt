@@ -42,8 +42,8 @@ class MessageFormatterTest {
     @Test
     fun `renders Degewo provider and source`() {
         val item = event().copy(source = "degewo", provider = "Degewo")
-        assertTrue(formatter.format(item).contains("🏠 Degewo"))
-        assertTrue(formatter.format(item.copy(provider = null)).contains("🏠 Degewo"))
+        assertTrue(formatter.format(item).endsWith("Компания: Degewo"))
+        assertTrue(formatter.format(item.copy(provider = null)).endsWith("Компания: Degewo"))
     }
 
     @Test
@@ -56,10 +56,10 @@ class MessageFormatterTest {
                     url = "https://www.wbm.de/wohnungen-berlin/angebote/details/example/",
                 )
         val text = formatter.format(item)
-        assertTrue(text.contains("🏠 WBM"))
+        assertTrue(text.endsWith("Компания: WBM"))
         assertFalse(text.contains("Источник: WBM"))
         assertFalse(text.contains(item.url))
-        assertTrue(formatter.format(item.copy(provider = null)).contains("🏠 WBM"))
+        assertTrue(formatter.format(item.copy(provider = null)).endsWith("Компания: WBM"))
     }
 
     @Test
@@ -71,12 +71,17 @@ class MessageFormatterTest {
     @Test
     fun `shows source only when it differs from provider`() {
         val same = formatter.format(event())
-        assertFalse(same.contains("Компания: Gewobag"))
+        assertTrue(same.endsWith("Компания: Gewobag"))
         assertFalse(same.contains("Источник: Gewobag"))
 
         val different = formatter.format(event().copy(provider = "Deutsche Wohnen"))
-        assertTrue(different.contains("Компания: Deutsche Wohnen"))
-        assertTrue(different.startsWith("🏠 Gewobag"))
+        assertTrue(different.endsWith("Компания: Deutsche Wohnen (Gewobag)"))
+        assertTrue(different.startsWith("Musterstraße 12, 10115 Berlin · Mitte\nПлощадь:"))
+
+        val aggregated = formatter.format(event().copy(source = "inberlinwohnen", provider = "Gewobag"))
+        assertTrue(aggregated.endsWith("Компания: Gewobag (InBerlinWohnen)"))
+        assertFalse(aggregated.contains("Адрес:"))
+        assertTrue(formatter.format(event().copy(provider = " gewobag ")).endsWith("Компания: gewobag"))
     }
 
     @Test
@@ -121,7 +126,7 @@ class MessageFormatterTest {
         for (source in listOf("allod", "rbb", "berlinhaus", "berlinovo", "gewobag", "wbm", "degewo", "inberlinwohnen", "deutschewohnen", "howoge")) {
             val lines = formatter.format(empty.copy(source = source, provider = null)).lines().filter { ':' in it }
             assertEquals(expectedLabels, lines.map { it.substringBefore(':') })
-            assertTrue(lines.filterNot { it.startsWith("Адрес:") }.all { it.endsWith("не указано") })
+            assertTrue(lines.filterNot { it.startsWith("Компания:") }.all { it.endsWith("не указано") })
         }
     }
 

@@ -46,7 +46,7 @@ class DeliveryTest {
         listener(sender).receive(record(testMapper.writeValueAsString(payload))).join()
         assertEquals(2, delivered.size)
         delivered.forEach {
-            assertEquals("🏠 Gewobag", it.lineSequence().first())
+            assertEquals("Musterstraße 12, 10115 Berlin", it.lineSequence().first())
             assertFalse(it.contains("район не определён"))
         }
         assertTrue(output.out.contains("Не удалось определить район; source=gewobag, id=123"))
@@ -106,7 +106,7 @@ class DeliveryTest {
                         "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin%2C+Mitte",
                         mapUrl,
                     )
-                    assertTrue(text.startsWith("🏠 Gewobag"))
+                    assertTrue(text.startsWith("Musterstraße 12, 10115 Berlin · Mitte\n"))
                     assertFalse(text.contains("Карта не сгенерирована"))
                     return CompletableFuture<Void>().also { completions += it }
                 }
