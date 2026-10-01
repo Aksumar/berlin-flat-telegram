@@ -38,8 +38,10 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
         } catch (error: InterruptedException) {
             Thread.currentThread().interrupt()
             throw error
-        } catch (_: Exception) {
-            logger.warn("Overview unavailable; keeping main map")
+        } catch (error: Exception) {
+            logger.warn("Overview unavailable; keeping main map: longitude={}, latitude={}, reason={}, {}",
+                location.longitude, location.latitude, (error as? MapGenerationException)?.reason ?: "image processing failed",
+                error.mapFailureDetails())
             null
         }
 
@@ -63,9 +65,14 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
         deadlineNanos: Long,
     ): BufferedImage {
         val bytes = client.get(endpoint, parameters, operation, deadlineNanos)
-        val image = ImageIO.read(bytes.inputStream()) ?: error("Invalid map image")
-        require(image.width == parameters.getValue("width").toInt())
-        require(image.height == parameters.getValue("height").toInt())
+        val image = ImageIO.read(bytes.inputStream())
+            ?: throw MapGenerationException("Geoapify вернул некорректное изображение карты",
+                "operation=$operation, responseBytes=${bytes.size}")
+        if (image.width != parameters.getValue("width").toInt() ||
+            image.height != parameters.getValue("height").toInt()) {
+            throw MapGenerationException("Geoapify вернул изображение карты неверного размера",
+                "operation=$operation, actualSize=${image.width}x${image.height}, expectedSize=${parameters["width"]}x${parameters["height"]}")
+        }
         return image
     }
 

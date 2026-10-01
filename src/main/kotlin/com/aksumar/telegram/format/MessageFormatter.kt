@@ -19,7 +19,7 @@ class MessageFormatter {
             "https://www.google.com/maps/search/?api=1&query=${URLEncoder.encode(it, StandardCharsets.UTF_8)}"
         }
 
-    fun format(item: Listing): String {
+    fun format(item: Listing, mapFailureReason: String? = null): String {
         val lines = mutableListOf<String>()
 
         addHeader(lines, item)
@@ -27,7 +27,8 @@ class MessageFormatter {
         addDetails(lines, item)
         addProviderAndSource(lines, item)
 
-        return truncateWithinTelegramLimit(lines.joinToString("\n"))
+        val mapNote = mapFailureReason?.let { "\n\n⚠️ Карта не сгенерирована, потому что ${text(it)}." }.orEmpty()
+        return truncateWithinTelegramLimit(lines.joinToString("\n"), TELEGRAM_MESSAGE_LIMIT - mapNote.length) + mapNote
     }
 
     private fun addHeader(lines: MutableList<String>, item: Listing) {
@@ -167,12 +168,12 @@ class MessageFormatter {
         return "$prefix${format.format(value)} €"
     }
 
-    private fun truncateWithinTelegramLimit(body: String): String {
-        if (body.length <= TELEGRAM_MESSAGE_LIMIT) {
+    private fun truncateWithinTelegramLimit(body: String, limit: Int): String {
+        if (body.length <= limit) {
             return body
         }
 
-        var end = TELEGRAM_MESSAGE_LIMIT - 1
+        var end = limit - 1
         if (end > 0 && body[end - 1].isHighSurrogate()) {
             end--
         }

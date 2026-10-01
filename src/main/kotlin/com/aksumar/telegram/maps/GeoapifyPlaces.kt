@@ -31,13 +31,21 @@ internal class GeoapifyPlaces(
         private var available = true
 
         fun nearby(categories: String): List<Landmark> {
-            if (!available || System.nanoTime() >= deadlineNanos) return emptyList()
+            if (!available) return emptyList()
+            if (System.nanoTime() >= deadlineNanos) {
+                available = false
+                logger.warn("Nearby landmarks skipped; keeping available map data: reason=map time budget exceeded, categories={}, viewport={}",
+                    categories, viewport.boundsFilter)
+                return emptyList()
+            }
             val results = mutableListOf<Landmark>()
             val seenIds = mutableSetOf<String>()
             var previousPage: List<JsonNode> = emptyList()
+            var offset = 0
             try {
                 for (pageIndex in 0 until MAX_PAGES) {
-                    val page = fetchPage(categories, PAGE_SIZE, pageIndex * PAGE_SIZE)
+                    offset = pageIndex * PAGE_SIZE
+                    val page = fetchPage(categories, PAGE_SIZE, offset)
                     // Protect against a provider ignoring pagination.
                     if (page.isEmpty() || page == previousPage) break
                     for (place in page) {
@@ -50,9 +58,11 @@ internal class GeoapifyPlaces(
             } catch (error: InterruptedException) {
                 Thread.currentThread().interrupt()
                 throw error
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 available = false
-                logger.warn("Nearby landmarks unavailable; keeping available map data")
+                logger.warn("Nearby landmarks unavailable; keeping available map data: categories={}, offset={}, retainedCount={}, viewport={}, reason={}, {}",
+                    categories, offset, results.size, viewport.boundsFilter,
+                    (error as? MapGenerationException)?.reason ?: "places response processing failed", error.mapFailureDetails())
             }
             return results
         }
