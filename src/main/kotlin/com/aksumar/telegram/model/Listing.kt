@@ -16,15 +16,24 @@ data class Address(
     /** City district; null if unspecified. */
     val district: String?,
 ) {
-    fun searchQuery(): String =
-        full?.takeIf { it.isNotBlank() }
-            ?: listOfNotNull(
-                listOfNotNull(street, houseNumber).filter { it.isNotBlank() }
-                    .joinToString(" ").ifBlank { null },
-                postalCode,
-                district,
-                city,
-            ).filter { it.isNotBlank() }.joinToString(", ")
+    fun searchQuery(): String {
+        val parts = mutableListOf<String>()
+        val structuredStreet = !street.isNullOrBlank() &&
+            (!houseNumber.isNullOrBlank() || full.isNullOrBlank())
+        val base = if (structuredStreet) {
+            listOfNotNull(street, houseNumber).filter { it.isNotBlank() }.joinToString(" ")
+        } else full.orEmpty().trim()
+        if (base.isNotBlank()) parts += base
+        val locality = listOfNotNull(postalCode, city).map { it.trim() }
+            .filter { it.isNotBlank() && !containsPart(base, it) }.joinToString(" ")
+        if (locality.isNotBlank()) parts += locality
+        district?.trim()?.takeIf { it.isNotBlank() && !containsPart(parts.joinToString(", "), it) }
+            ?.let { parts += it }
+        return parts.joinToString(", ")
+    }
+
+    private fun containsPart(text: String, part: String): Boolean =
+        Regex("(?iu)(?<![\\p{L}\\p{N}])${Regex.escape(part)}(?![\\p{L}\\p{N}])").containsMatchIn(text)
 }
 
 data class Rent(

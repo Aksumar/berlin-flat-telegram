@@ -130,10 +130,10 @@ class KafkaIntegrationTest {
     }
 
     @Test
-    fun `Degewo Python event is delivered and acknowledged`() {
+    fun `enriched Degewo Python event is delivered and acknowledged`() {
         val topic = topic()
         val group = "test-${UUID.randomUUID()}"
-        publish(topic, javaClass.getResource("/degewo-v2.json")!!.readText())
+        publish(topic, javaClass.getResource("/degewo-charlottenburg-v2.json")!!.readText())
         context(topic, group).use { context ->
             await { offset(group, topic) == 1L }
             assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)

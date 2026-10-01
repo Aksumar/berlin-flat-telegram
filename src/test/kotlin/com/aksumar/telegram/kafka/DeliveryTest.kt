@@ -48,7 +48,7 @@ class DeliveryTest {
                 ): CompletableFuture<Void> {
                     assertSame(expectedMap, map)
                     assertEquals(
-                        "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin",
+                        "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin%2C+Mitte",
                         mapUrl,
                     )
                     assertTrue(text.startsWith("🏠 Gewobag"))
@@ -94,7 +94,7 @@ class DeliveryTest {
                 assertNull(map)
                 assertEquals("https://example.com/123", listingUrl)
                 assertEquals(
-                    "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin",
+                    "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+10115+Berlin%2C+Mitte",
                     mapUrl,
                 )
                 delivered += chat
