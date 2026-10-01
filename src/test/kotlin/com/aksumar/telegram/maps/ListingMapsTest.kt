@@ -33,7 +33,7 @@ class ListingMapsTest {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val requests = mutableListOf<Pair<String, Map<String, String>>>()
         var geocode =
-            """{"results":[{"lon":13.38,"lat":52.53,"result_type":"building","rank":{"confidence":1,"confidence_building_level":1,"match_type":"full_match"}}]}"""
+            """{"results":[{"lon":13.38,"lat":52.53,"postcode":"10115","city":"Berlin","district":"Mitte","street":"Musterstraße","housenumber":"12","result_type":"building","rank":{"confidence":1,"confidence_building_level":1,"match_type":"full_match"}}]}"""
         var mapStatus = 200
         var overviewStatus = 200
         var invalidImage = false
@@ -140,7 +140,7 @@ class ListingMapsTest {
             assertEquals("11", p.requests[2].second["zoom"])
             assertEquals("place_suburb:#4b5563;11|place_other:#4b5563;10", p.requests[2].second["styleCustomization"])
             assertEquals("lonlat:13.38,52.53", p.requests[2].second["center"])
-            assertEquals(event().address.full, p.requests[0].second["text"])
+            assertEquals("Musterstraße 12, 10115 Berlin, Mitte", p.requests[0].second["text"])
             assertEquals("rect:13.08,52.33,13.77,52.68", p.requests[0].second["filter"])
             assertTrue(
                 p.requests
@@ -198,9 +198,10 @@ class ListingMapsTest {
     fun `address parts form geocoding query when full address is blank`() {
         Provider().use { provider ->
             val address = Address(" ", "Invalidenstraße", "42", "10115", "Berlin", "Mitte")
+            provider.geocode = provider.geocode.replace("Musterstraße", "Invalidenstraße").replace("housenumber\":\"12", "housenumber\":\"42")
             assertNotNull(provider.maps().create(event().copy(address = address)))
             assertEquals(
-                "Invalidenstraße 42, 10115, Mitte, Berlin",
+                "Invalidenstraße 42, 10115 Berlin, Mitte",
                 provider.requests.first().second["text"],
             )
         }
@@ -382,6 +383,98 @@ class ListingMapsTest {
                 assertNull(p.maps().create(event()))
                 assertEquals(1, p.requests.size)
             }
+        }
+    }
+
+    @Test
+    fun `wrong postcode city street or house never produces a map even with full confidence`() {
+        Provider().use { p ->
+            val valid = p.geocode
+            for (body in listOf(
+                valid.replace("10115", "12459"),
+                valid.replace("Berlin", "Panketal"),
+                valid.replace("Musterstraße", "Andere Straße"),
+                valid.replace("housenumber\":\"12", "housenumber\":\"34"),
+                valid.replace("\"postcode\":\"10115\",", ""),
+                valid.replace("\"city\":\"Berlin\",", ""),
+            )) {
+                p.requests.clear()
+                p.geocode = body
+                assertNull(p.maps().create(event()))
+                assertEquals(listOf("/geocode"), p.requests.map { it.first })
+            }
+        }
+    }
+
+    @Test
+    fun `Helmholtzstrasse selects Charlottenburg instead of the first wrong postcode`() {
+        Provider().use { p ->
+            val wrong = """{"lon":13.5077344,"lat":52.4668988,"postcode":"12459","city":"Berlin","suburb":"Oberschöneweide","street":"Helmholtzstraße","housenumber":"34","result_type":"building","rank":{"confidence":1,"confidence_building_level":1,"match_type":"full_match"}}"""
+            val right = wrong.replace("12459", "10587").replace("Oberschöneweide", "Charlottenburg")
+                .replace("13.5077344", "13.3236068").replace("52.4668988", "52.5214705")
+            val address = Address("Helmholtzstraße 34", "Helmholtzstraße", "34", "10587", "Berlin", "Charlottenburg")
+            p.geocode = """{"results":[$wrong,$right]}"""
+            assertFalse(requireNotNull(p.maps().create(event().copy(address = address))).approximate)
+            assertEquals("5", p.requests.first().second["limit"])
+            assertEquals("lonlat:13.3236068,52.5214705", p.requests[1].second["center"])
+            assertEquals("lonlat:13.3236068,52.5214705", p.requests[2].second["center"])
+            p.requests.clear()
+            p.geocode = """{"results":[$wrong]}"""
+            assertNull(p.maps().create(event().copy(address = address)))
+            assertEquals(1, p.requests.size)
+        }
+    }
+
+    @Test
+    fun `postcode in legacy full address is validated and street abbreviations match`() {
+        Provider().use { p ->
+            p.geocode = p.geocode.replace("Musterstraße", "Musterstr.")
+            val address = Address("Musterstraße 12, 10115 Berlin", null, null, null, null, null)
+            assertFalse(requireNotNull(p.maps().create(event().copy(address = address))).approximate)
+            p.geocode = p.geocode.replace("10115", "12459")
+            assertNull(p.maps().create(event().copy(address = address)))
+        }
+    }
+
+    @Test
+    fun `missing postcode requires matching borough or neighbourhood and rejects ambiguity`() {
+        Provider().use { p ->
+            val address = event().address.copy(full = "Musterstraße 12", postalCode = null, district = "Mitte")
+            assertNotNull(p.maps().create(event().copy(address = address)))
+            p.geocode = p.geocode.replace("district\":\"Mitte", "suburb\":\"Mitte")
+            assertNotNull(p.maps().create(event().copy(address = address)))
+            val candidate = testMapper.readTree(p.geocode).path("results")[0].toString()
+            p.geocode = """{"results":[$candidate,${candidate.replace("13.38", "13.50")}]}"""
+            assertNull(p.maps().create(event().copy(address = address)))
+            p.geocode = """{"results":[$candidate]}""".replace("Mitte", "Spandau")
+            assertNull(p.maps().create(event().copy(address = address)))
+            p.requests.clear()
+            assertNull(p.maps().create(event().copy(address = address.copy(district = null))))
+            assertTrue(p.requests.isEmpty())
+        }
+    }
+
+    @Test
+    fun `house suffix whitespace is normalized but ranges are not collapsed`() {
+        Provider().use { p ->
+            val address = event().address.copy(houseNumber = "12 A")
+            p.geocode = p.geocode.replace("housenumber\":\"12", "housenumber\":\"12A")
+            assertFalse(requireNotNull(p.maps().create(event().copy(address = address))).approximate)
+            p.geocode = p.geocode.replace("12A", "13")
+            assertNull(p.maps().create(event().copy(address = address.copy(houseNumber = "1-3"))))
+        }
+    }
+
+    @Test
+    fun `postcode only address can show area but never a house`() {
+        Provider().use { p ->
+            val address = Address("10115, Berlin", null, null, "10115", "Berlin", null)
+            assertNull(p.maps().create(event().copy(address = address)))
+            p.requests.clear()
+            p.geocode = p.geocode.replace("building", "postcode")
+            assertTrue(requireNotNull(p.maps().create(event().copy(address = address))).approximate)
+            assertEquals("12.5", p.requests[1].second["zoom"])
+            assertTrue(p.requests[1].second.getValue("marker").contains("type:circle"))
         }
     }
 

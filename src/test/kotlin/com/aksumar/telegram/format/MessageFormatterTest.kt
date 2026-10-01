@@ -15,13 +15,13 @@ class MessageFormatterTest {
         val item = event()
         val url = requireNotNull(formatter.mapUrl(item))
         assertEquals(
-            item.address.full,
+            "Musterstraße 12, 10115 Berlin, Mitte",
             URLDecoder.decode(url.substringAfter("&query="), Charsets.UTF_8),
         )
         val address = Address(null, "Straße & Platz", "12", "10115", "Berlin", "Mitte")
         val partialUrl = requireNotNull(formatter.mapUrl(item.copy(address = address)))
         assertEquals(
-            "Straße & Platz 12, 10115, Mitte, Berlin",
+            "Straße & Platz 12, 10115 Berlin, Mitte",
             URLDecoder.decode(partialUrl.substringAfter("&query="), Charsets.UTF_8),
         )
         assertNull(formatter.mapUrl(item.copy(address = Address(null, " ", null, null, "", null))))
