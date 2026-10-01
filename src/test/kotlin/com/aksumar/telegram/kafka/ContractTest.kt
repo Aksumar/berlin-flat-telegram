@@ -54,7 +54,7 @@ class ContractTest {
             val message = com.aksumar.telegram.format.MessageFormatter().format(item)
 
             assertEquals(source, item.source)
-            assertTrue(message.startsWith("🏠 $displayName"))
+            assertTrue(message.endsWith("Компания: $displayName"))
         }
     }
 

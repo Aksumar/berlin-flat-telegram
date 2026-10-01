@@ -103,9 +103,7 @@ falls back to text with both buttons. Transient text delivery failures remain un
 ## Source coverage
 
 - Degewo: address, area, rooms, Warmmiete, availability, explicit WBS and features.
-
 - WBM: address, district, area, rooms, Warmmiete, explicit WBS and features.
-
 - Berlinhaus: location, area, rooms and labelled rent from result cards.
 - Berlinovo: location, area if provided, rooms, floor, total rent, availability and WBS.
 - Gewobag: address, district, area, rooms, “ab” total, availability, WBS and explicit features.
