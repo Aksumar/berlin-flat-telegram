@@ -44,8 +44,8 @@ class TelegramCommandMenuTest {
             assertEquals(listOf("setMyCommands", "setChatMenuButton"), server.requests.map { it.first })
             val commands = server.requests[0].second
             assertEquals("all_private_chats", commands.path("scope").path("type").asText())
-            assertEquals(listOf("start", "stop", "help"), commands.path("commands").map { it.path("command").asText() })
-            assertEquals(listOf("Setup or modify search", "Pause alerts", "Show help guide"),
+            assertEquals(listOf("start", "stop", "resume", "help"), commands.path("commands").map { it.path("command").asText() })
+            assertEquals(listOf("Мой поиск и фильтры", "Приостановить уведомления", "Возобновить уведомления", "Помощь"),
                 commands.path("commands").map { it.path("description").asText() })
             val button = server.requests[1].second
             assertEquals("commands", button.path("menu_button").path("type").asText())

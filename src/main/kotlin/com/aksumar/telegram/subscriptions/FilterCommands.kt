@@ -22,100 +22,179 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
         require(update.path("update_id").isIntegralNumber)
         val chatId = chat.path("id").asText()
         val updateId = update.path("update_id").asLong()
-        // Polling may redeliver an update after a failed reply. Never apply a wizard answer twice.
+        // Polling may redeliver an update after a failed reply. Never apply an answer twice.
         store.reply(chatId, updateId)?.let { return mapper.readValue(it, CommandReply::class.java) }
-        return respond(chatId, text).also { store.saveReply(chatId, updateId, mapper.writeValueAsString(it)) }
+        val action = if (callback.isObject) callbackAction(chatId, text) else text
+        val reply = if (action == null) {
+            currentScreen(chatId).let { it.copy(text = "Эта кнопка устарела. Используйте кнопки ниже.\n\n${it.text}") }
+        } else respond(chatId, action)
+        return reply.copy(menuId = updateId).also {
+            store.saveReply(chatId, updateId, mapper.writeValueAsString(it))
+        }
     }
+
+    private fun callbackAction(chatId: String, data: String): String? {
+        val parts = data.split(':')
+        if (parts.size != 4 || parts[0] != "menu") return null
+        val menuId = parts[1].toLongOrNull() ?: return null
+        val row = parts[2].toIntOrNull() ?: return null
+        val column = parts[3].toIntOrNull() ?: return null
+        val reply = store.reply(chatId, menuId)?.let { mapper.readValue(it, CommandReply::class.java) } ?: return null
+        if (reply.menuId != menuId) return null
+        return reply.buttons.getOrNull(row)?.getOrNull(column)
+    }
+
+    private fun currentScreen(chatId: String): CommandReply =
+        store.draft(chatId)?.let { prompt(chatId, it) } ?: home(chatId, store.get(chatId))
 
     private fun respond(chatId: String, text: String): CommandReply {
         val parts = text.split(Regex("\\s+"), limit = 2)
         val command = parts[0].substringBefore('@').lowercase()
         val argument = parts.getOrNull(1)?.lowercase()
         val current = store.get(chatId)
-        if (command == "/start" || command == "/cancel" || text == CANCEL) {
+        val draft = store.draft(chatId)
+        if (command in listOf("/start", "/filters") || text == HOME) return home(chatId, current)
+        if (command == "/cancel" || text == CANCEL) {
             store.clearDraft(chatId)
-            return home(chatId, current)
+            return home(chatId, current).let { it.copy(text = "Изменения отменены.\n\n${it.text}") }
         }
-        if (text in listOf(SETUP, MODIFY) || command in listOf("/setup", "/modify")) {
-            val draft = SearchDraft(SearchStep.WBS, current?.filter ?: ListingFilter())
-            store.saveDraft(chatId, draft)
-            return prompt(chatId, draft)
+        if (text in listOf(SETUP, MODIFY, RESUME_DRAFT) || command in listOf("/setup", "/modify")) {
+            val next = draft ?: SearchDraft(if (current == null) SearchStep.WBS else SearchStep.CONFIRM,
+                current?.filter ?: ListingFilter())
+            store.saveDraft(chatId, next)
+            return prompt(chatId, next)
         }
         if (command == "/stop" || command == "/resume" || text == PAUSE || text == CONTINUE) {
-            store.clearDraft(chatId)
             if (current == null) return home(chatId, null)
             val updated = current.copy(active = command == "/resume" || text == CONTINUE)
             store.save(updated)
             return home(chatId, updated)
         }
-        val draft = store.draft(chatId)
         if (command == "/help") {
             val reply = draft?.let { prompt(chatId, it) } ?: home(chatId, current)
-            return reply.copy(text = "$HELP\n\n${reply.text}")
+            val note = if (draft == null) "Команды параметров сразу меняют сохранённый поиск."
+                else "Сейчас команды параметров меняют только черновик. Примените его кнопкой «Сохранить»."
+            return reply.copy(text = "$HELP\n\n$note\n\n${reply.text}")
+        }
+        if (command in listOf("/reset", "/wbs", "/area", "/warm")) {
+            if (draft == null && current == null) return home(chatId, null)
+            val filter = draft?.filter ?: current!!.filter
+            val updated = try {
+                when (command) {
+                    "/reset" -> ListingFilter()
+                    "/wbs" -> filter.copy(wbs = wbs(argument))
+                    "/area" -> filter.copy(minArea = number(argument, "м²"))
+                    else -> filter.copy(maxWarm = number(argument, "€"))
+                }
+            } catch (_: IllegalArgumentException) {
+                return currentScreen(chatId).let { it.copy(text = "${inputHint(command)}\n\n${it.text}") }
+            }
+            if (draft != null) {
+                val next = draft.copy(filter = updated)
+                store.saveDraft(chatId, next)
+                return prompt(chatId, next).let { it.copy(text = "Черновик обновлён. Изменения ещё не сохранены.\n\n${it.text}") }
+            }
+            val saved = current!!.copy(filter = updated)
+            store.save(saved)
+            return home(chatId, saved).let { it.copy(text = "Параметры сохранены.\n\n${it.text}") }
+        }
+        if (command.startsWith('/') && command != "/save") {
+            return currentScreen(chatId).let { it.copy(text = "Неизвестная команда. Справка: /help.\n\n${it.text}") }
         }
         if (draft != null) return advance(chatId, text, draft, current)
-        if (current == null || command == "/filters") return home(chatId, current)
-        val updated = try {
-            when (command) {
-                "/reset" -> current.copy(filter = ListingFilter())
-                "/wbs" -> current.copy(filter = current.filter.copy(wbs = wbs(argument)))
-                "/area" -> current.copy(filter = current.filter.copy(minArea = number(argument)))
-                "/warm" -> current.copy(filter = current.filter.copy(maxWarm = number(argument)))
-                else -> return home(chatId, current)
-            }
-        } catch (_: IllegalArgumentException) {
-            return home(chatId, current).copy(text = if (command == "/wbs")
-                "Используйте /wbs any, /wbs yes или /wbs no."
-            else "Введите неотрицательное число, например $command 50,5. Для снятия ограничения: $command any.")
-        }
-        store.save(updated)
-        return home(chatId, updated)
+        return home(chatId, current)
     }
 
     private fun advance(chatId: String, text: String, draft: SearchDraft, current: Subscription?): CommandReply {
+        if (text == BACK) {
+            val step = if (draft.singleField) SearchStep.CONFIRM else when (draft.step) {
+                SearchStep.WBS -> return home(chatId, current)
+                SearchStep.AREA -> SearchStep.WBS
+                SearchStep.WARM -> SearchStep.AREA
+                SearchStep.CONFIRM -> SearchStep.WARM
+            }
+            return saveDraft(chatId, draft.copy(step = step, singleField = false))
+        }
         if (draft.step == SearchStep.CONFIRM) {
+            val editStep = when (text) {
+                EDIT_WBS -> SearchStep.WBS
+                EDIT_AREA -> SearchStep.AREA
+                EDIT_WARM -> SearchStep.WARM
+                else -> null
+            }
+            if (editStep != null) return saveDraft(chatId, draft.copy(step = editStep, singleField = true))
             if (text != SAVE && text != "/save") return prompt(chatId, draft)
             val saved = Subscription(chatId, current?.active ?: true, draft.filter)
             store.save(saved)
             store.clearDraft(chatId)
             return home(chatId, saved).let { it.copy(text = "Поиск сохранён.\n\n${it.text}") }
         }
+        if (text == "/save") return prompt(chatId, draft).let {
+            it.copy(text = "Сначала завершите настройку и проверьте параметры.\n\n${it.text}")
+        }
         val next = try {
             when (draft.step) {
                 SearchStep.WBS -> SearchDraft(SearchStep.AREA, draft.filter.copy(
                     wbs = if (text == KEEP) draft.filter.wbs else wbs(text.lowercase())))
                 SearchStep.AREA -> SearchDraft(SearchStep.WARM, draft.filter.copy(
-                    minArea = if (text == KEEP) draft.filter.minArea else number(text.lowercase())))
+                    minArea = if (text == KEEP) draft.filter.minArea else number(text.lowercase(), "м²")))
                 SearchStep.WARM -> SearchDraft(SearchStep.CONFIRM, draft.filter.copy(
-                    maxWarm = if (text == KEEP) draft.filter.maxWarm else number(text.lowercase())))
+                    maxWarm = if (text == KEEP) draft.filter.maxWarm else number(text.lowercase(), "€")))
                 SearchStep.CONFIRM -> error("Already handled")
             }
         } catch (_: IllegalArgumentException) {
-            val message = if (draft.step == SearchStep.WBS) "Выберите вариант WBS кнопкой."
-                else "Введите неотрицательное число (до 10 цифр и 2 знаков после запятой), например 50,5."
-            return prompt(chatId, draft).let { it.copy(text = "$message\n\n${it.text}") }
+            val hint = when (draft.step) {
+                SearchStep.WBS -> "Выберите вариант WBS кнопкой."
+                SearchStep.AREA -> inputHint("/area")
+                else -> inputHint("/warm")
+            }
+            return prompt(chatId, draft).let { it.copy(text = "$hint\n\n${it.text}") }
         }
-        store.saveDraft(chatId, next)
-        return prompt(chatId, next)
+        return saveDraft(chatId, if (draft.singleField) next.copy(step = SearchStep.CONFIRM) else next)
     }
 
-    private fun home(chatId: String, subscription: Subscription?): CommandReply =
-        if (subscription == null) CommandReply(chatId,
-            "Настройте свой поиск квартиры. У вас будет один поиск с несколькими параметрами.", listOf(listOf(SETUP)))
-        else CommandReply(chatId, "Ваш текущий поиск\n\n${summary(subscription.filter)}\n\n" +
-            (if (subscription.active) "Уведомления включены." else "Уведомления приостановлены."),
-            listOf(listOf(CONTINUE), listOf(MODIFY), listOf(PAUSE)))
+    private fun saveDraft(chatId: String, draft: SearchDraft): CommandReply {
+        store.saveDraft(chatId, draft)
+        return prompt(chatId, draft)
+    }
 
-    private fun prompt(chatId: String, draft: SearchDraft): CommandReply = when (draft.step) {
-        SearchStep.WBS -> CommandReply(chatId, "1/3. Какие квартиры показывать по WBS?\nСейчас: ${draft.filter.wbs.label}",
-            listOf(listOf("Все", "Только с WBS", "Только без WBS"), listOf(KEEP, CANCEL)))
-        SearchStep.AREA -> CommandReply(chatId, "2/3. Минимальная площадь в м²? Например: 50 или 50,5.\nСейчас: ${amount(draft.filter.minArea, "м²")}",
-            listOf(listOf(NO_LIMIT, KEEP), listOf(CANCEL)))
-        SearchStep.WARM -> CommandReply(chatId, "3/3. Максимальная Warmmiete в € за месяц? Например: 1000.\nСейчас: ${amount(draft.filter.maxWarm, "€ / месяц")}",
-            listOf(listOf(NO_LIMIT, KEEP), listOf(CANCEL)))
-        SearchStep.CONFIRM -> CommandReply(chatId, "Проверьте параметры поиска:\n${summary(draft.filter)}\n\n" +
-            "Все условия применяются одновременно, границы включены. Если значение параметра в объявлении не указано, объявление всё равно проходит это условие.",
-            listOf(listOf(SAVE, CANCEL)))
+    private fun home(chatId: String, subscription: Subscription?): CommandReply {
+        val hasDraft = store.draft(chatId) != null
+        val text = if (subscription == null) "Настройте поиск квартиры: WBS, площадь и бюджет.\nУведомления начнут приходить после сохранения."
+            else "Ваш текущий поиск\n\n${summary(subscription.filter)}\n\n$UNKNOWN_VALUES\n\n" +
+                if (subscription.active) "Уведомления включены." else "Уведомления приостановлены."
+        val buttons = if (hasDraft) listOf(listOf(RESUME_DRAFT), listOf(CANCEL))
+            else listOf(listOf(if (subscription == null) SETUP else MODIFY))
+        return CommandReply(chatId, text + if (hasDraft) "\n\nЕсть несохранённые изменения. Можно продолжить настройку." else "",
+            buttons + if (subscription == null) emptyList() else listOf(listOf(if (subscription.active) PAUSE else CONTINUE)))
+    }
+
+    private fun prompt(chatId: String, draft: SearchDraft): CommandReply {
+        val navigation = listOf(listOf(BACK, HOME), listOf(CANCEL))
+        val prefix = if (draft.singleField) "" else when (draft.step) {
+            SearchStep.WBS -> "1/3. "
+            SearchStep.AREA -> "2/3. "
+            SearchStep.WARM -> "3/3. "
+            SearchStep.CONFIRM -> ""
+        }
+        return when (draft.step) {
+            SearchStep.WBS -> CommandReply(chatId, "${prefix}Какие квартиры показывать по WBS?\n" +
+                "WBS — документ, подтверждающий право на социальное жильё.\n" +
+                "Объявления с неизвестным статусом WBS проходят любой вариант.\nСейчас: ${draft.filter.wbs.label}",
+                listOf(listOf("Все"), listOf("Только с WBS"), listOf("Только без WBS"), listOf(KEEP)) + navigation)
+            SearchStep.AREA -> CommandReply(chatId, "${prefix}Минимальная площадь в м²?\nВведите, например: 50 или 50,5 м².\n" +
+                "Объявления без указанной площади тоже будут приходить.\nСейчас: ${amount(draft.filter.minArea, "м²")}",
+                listOf(listOf(NO_LIMIT, KEEP)) + navigation)
+            SearchStep.WARM -> CommandReply(chatId, "${prefix}Максимальная Warmmiete в € за месяц?\nВведите, например: 1 000 €.\n" +
+                "Warmmiete — аренда с коммунальными платежами по объявлению.\n" +
+                "Объявления без Warmmiete тоже будут приходить.\nСейчас: ${amount(draft.filter.maxWarm, "€ / месяц")}",
+                listOf(listOf(NO_LIMIT, KEEP)) + navigation)
+            SearchStep.CONFIRM -> CommandReply(chatId, "Проверьте параметры поиска\n\n${summary(draft.filter)}\n\n" +
+                "$UNKNOWN_VALUES\nВсе условия действуют одновременно, границы включены.\n\n" +
+                "Изменения применятся после сохранения." +
+                if (store.get(chatId)?.active == false) " Уведомления останутся на паузе." else "",
+                listOf(listOf(SAVE), listOf(EDIT_WBS), listOf(EDIT_AREA), listOf(EDIT_WARM), listOf(HOME, CANCEL)))
+        }
     }
 
     private fun wbs(value: String?): WbsFilter = when (value) {
@@ -125,36 +204,54 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
         else -> throw IllegalArgumentException("Invalid WBS choice")
     }
 
-    private fun number(value: String?): BigDecimal? {
+    private fun number(value: String?, unit: String): BigDecimal? {
         if (value == "any" || value == NO_LIMIT.lowercase()) return null
-        require(value != null && Regex("[0-9]{1,10}([.,][0-9]{1,2})?").matches(value))
-        return value.replace(',', '.').toBigDecimal()
+        require(value != null)
+        val normalized = value.removeSuffix(unit).trim().replace('\u00a0', ' ').replace('\u202f', ' ')
+        require(Regex("(?:[0-9]{1,10}|[0-9]{1,3}(?: [0-9]{3}){1,3})([.,][0-9]{1,2})?").matches(normalized))
+        val digits = normalized.replace(" ", "").replace(',', '.')
+        require(digits.substringBefore('.').length <= 10)
+        return digits.toBigDecimal()
     }
 
-    private fun amount(value: BigDecimal?, unit: String) = value?.stripTrailingZeros()?.toPlainString()?.let { "$it $unit" } ?: "без ограничения"
+    private fun inputHint(command: String) = when (command) {
+        "/wbs" -> "Используйте /wbs any, /wbs yes или /wbs no."
+        "/area" -> "Введите площадь не меньше нуля, например 50,5 м² (до 10 цифр и 2 знаков после запятой). Без ограничения: /area any."
+        else -> "Введите бюджет не меньше нуля, например 1 000 € (до 10 цифр и 2 знаков после запятой). Без ограничения: /warm any."
+    }
+
+    private fun amount(value: BigDecimal?, unit: String) = value?.stripTrailingZeros()?.toPlainString()?.replace('.', ',')?.let { "$it $unit" } ?: "без ограничения"
 
     private fun summary(filter: ListingFilter): String =
-        "📋 WBS\n${filter.wbs.label}\n\n📏 Минимальная площадь\n${amount(filter.minArea, "м²")}\n\n💰 Максимальная Warmmiete\n${amount(filter.maxWarm, "€ / месяц")}"
+        "📋 WBS: ${filter.wbs.label}\n📏 Площадь: ${filter.minArea?.let { "от " } ?: ""}${amount(filter.minArea, "м²")}\n" +
+            "💰 Warmmiete: ${filter.maxWarm?.let { "до " } ?: ""}${amount(filter.maxWarm, "€ / месяц")}"
 
     companion object {
-        const val SETUP = "Setup Search"
-        const val MODIFY = "⚙️ Modify Search"
-        const val CONTINUE = "▶️ Continue Search"
-        const val PAUSE = "⏸ Pause Alerts"
+        const val SETUP = "Настроить поиск"
+        const val MODIFY = "⚙️ Изменить фильтры"
+        const val CONTINUE = "▶️ Возобновить уведомления"
+        const val PAUSE = "⏸ Приостановить уведомления"
+        const val RESUME_DRAFT = "Продолжить настройку"
+        const val HOME = "Мой поиск"
+        const val BACK = "Назад"
+        const val EDIT_WBS = "Изменить WBS"
+        const val EDIT_AREA = "Изменить площадь"
+        const val EDIT_WARM = "Изменить бюджет"
         const val KEEP = "Оставить как есть"
         const val CANCEL = "Отмена"
         const val SAVE = "Сохранить"
         const val NO_LIMIT = "Без ограничения"
+        const val UNKNOWN_VALUES = "Объявления без данных о WBS, площади или Warmmiete проходят соответствующий фильтр. Цена в другой валюте не проверяется."
         val HELP = """
-            /start — открыть свой поиск
-            /setup или /modify — настроить параметры пошагово
-            /cancel — отменить изменения
+            /start — открыть свой поиск, сохранив черновик
+            /setup или /modify — настроить параметры или продолжить черновик
+            /cancel — отменить несохранённые изменения
             /filters — показать сохранённый поиск
             /stop — приостановить рассылку
             /resume — возобновить рассылку
 
-            Параметры также можно изменить командами /wbs any|yes|no, /area 50, /warm 1000.
-            /area any и /warm any — снять ограничение; /reset — сбросить параметры поиска.
+            /wbs any|yes|no — WBS; /area 50 — площадь; /warm 1000 — бюджет.
+            /area any и /warm any — снять ограничение; /reset — сбросить параметры.
         """.trimIndent()
     }
 }

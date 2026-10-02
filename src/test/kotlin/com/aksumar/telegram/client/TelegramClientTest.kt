@@ -50,14 +50,15 @@ class TelegramClientTest {
     @Test
     fun `search menu sends inline buttons under a bold heading`() {
         PhotoServer().use { server ->
-            val buttons = listOf(listOf("Setup Search"), listOf("⚙️ Modify Search"))
-            server.client().sendMenu("123", "Ваш текущий поиск\n\nWBS: все", buttons).join()
+            val buttons = listOf(listOf("Настроить поиск"), listOf("⚙️ Изменить фильтры"))
+            server.client().sendMenu("123", "Ваш текущий поиск\n\nWBS: все", buttons, 42).join()
             val (method, body) = server.requests.single()
             assertEquals("sendMessage", method)
             val json = testMapper.readTree(body)
             val keyboard = json.path("reply_markup").path("inline_keyboard")
-            assertEquals("Setup Search", keyboard[0][0].path("callback_data").asText())
-            assertEquals("⚙️ Modify Search", keyboard[1][0].path("text").asText())
+            assertEquals("menu:42:0:0", keyboard[0][0].path("callback_data").asText())
+            assertEquals("menu:42:1:0", keyboard[1][0].path("callback_data").asText())
+            assertEquals("⚙️ Изменить фильтры", keyboard[1][0].path("text").asText())
             assertEquals("bold", json.path("entities")[0].path("type").asText())
         }
     }

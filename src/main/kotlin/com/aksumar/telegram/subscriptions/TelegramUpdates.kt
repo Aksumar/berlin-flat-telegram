@@ -33,9 +33,18 @@ class TelegramUpdates(
                         log.debug("Could not acknowledge Telegram button click")
                     }
                 }
-                commands.handle(update)?.let { (chat, text, buttons) ->
+                commands.handle(update)?.let { (chat, text, buttons, menuId) ->
                     try {
-                        sender.sendMenu(chat, text, buttons).get()
+                        sender.sendMenu(chat, text, buttons, menuId ?: update.path("update_id").asLong()).get()
+                        update.path("callback_query").path("message").path("message_id")
+                            .takeIf { it.isIntegralNumber }?.let {
+                                try {
+                                    transport.clearMenu(chat, it.asLong()).get()
+                                } catch (_: ExecutionException) {
+                                    // Old messages may no longer be editable. Their callbacks are still rejected.
+                                    log.debug("Could not remove old Telegram menu buttons")
+                                }
+                            }
                     } catch (error: ExecutionException) {
                         val cause = error.cause
                         if (cause !is TelegramDeliveryException || cause.retryable) throw error

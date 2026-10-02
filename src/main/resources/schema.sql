@@ -24,3 +24,5 @@ CREATE TABLE IF NOT EXISTS command_replies (
     update_id BIGINT NOT NULL,
     reply CLOB NOT NULL
 );
+
+ALTER TABLE search_drafts ADD COLUMN IF NOT EXISTS single_field BOOLEAN NOT NULL DEFAULT FALSE;
