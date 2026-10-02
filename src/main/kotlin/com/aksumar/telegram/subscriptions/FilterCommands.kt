@@ -114,7 +114,7 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
         SearchStep.WARM -> CommandReply(chatId, "3/3. Максимальная Warmmiete в € за месяц? Например: 1000.\nСейчас: ${amount(draft.filter.maxWarm, "€ / месяц")}",
             listOf(listOf(NO_LIMIT, KEEP), listOf(CANCEL)))
         SearchStep.CONFIRM -> CommandReply(chatId, "Проверьте параметры поиска:\n${summary(draft.filter)}\n\n" +
-            "Все условия применяются одновременно, границы включены. Объявления с неизвестным значением заданного параметра не проходят фильтр.",
+            "Все условия применяются одновременно, границы включены. Если значение параметра в объявлении не указано, объявление всё равно проходит это условие.",
             listOf(listOf(SAVE, CANCEL)))
     }
 
