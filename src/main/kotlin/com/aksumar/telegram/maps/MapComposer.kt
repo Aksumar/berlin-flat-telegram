@@ -35,7 +35,9 @@ internal class MapComposer {
         graphics.drawRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 14, 14)
         graphics.font = Font(Font.SANS_SERIF, Font.BOLD, 13)
         graphics.drawString("БЕРЛИН", bounds.x + 10, bounds.y + 19)
-        graphics.drawImage(overview, bounds.x + 6, bounds.y + 27, null)
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+        graphics.drawImage(overview, bounds.x + 6, bounds.y + 27,
+            MapLayout.OVERVIEW_WIDTH, MapLayout.OVERVIEW_HEIGHT, null)
     }
 
     private fun drawApproximateLocationNotice(graphics: Graphics2D) {

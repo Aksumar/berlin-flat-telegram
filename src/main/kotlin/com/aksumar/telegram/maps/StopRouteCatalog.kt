@@ -32,6 +32,10 @@ internal fun stopKey(name: String): String = stationDisplayName(name)
     .replace("ß", "ss").replace("str.", "strasse")
     .replace(Regex("[\\s./+-]"), "")
 
+/** Intersections can be named as "Street A / Street B" by the map provider. */
+internal fun stopKeys(name: String): Set<String> =
+    (listOf(name) + name.split('/')).map(::stopKey).filter(String::isNotBlank).toSet()
+
 internal fun distanceMeters(lon1: Double, lat1: Double, lon2: Double, lat2: Double): Double {
     val latitude = Math.toRadians(lat2 - lat1)
     val longitude = Math.toRadians(lon2 - lon1)
@@ -54,14 +58,14 @@ internal class StopRouteCatalog(platforms: List<StopPlatform>) {
             if (group == null) candidates.add(mutableListOf(platform)) else group.add(platform)
         }
         stopsByName = groups.values.flatten().map { members -> RouteStop(members.first().parent.ifBlank { members.first().id }, members) }
-            .flatMap { stop -> stop.platforms.map { stopKey(it.name) }.distinct().map { it to stop } }
+            .flatMap { stop -> stop.platforms.flatMap { platform -> stopKeys(platform.name).map { it to stop } }.distinct() }
             .groupBy({ it.first }, { it.second })
     }
 
     fun find(name: String, longitude: Double?, latitude: Double?): RouteStop? {
         if (longitude == null || latitude == null || !longitude.isFinite() || !latitude.isFinite()) return null
         // Multiple possible groups are deliberately left unmatched instead of guessing a route.
-        return stopsByName[stopKey(name)].orEmpty().filter { stop ->
+        return stopKeys(name).flatMap { stopsByName[it].orEmpty() }.distinctBy { it.id }.filter { stop ->
             stop.platforms.any { distanceMeters(longitude, latitude, it.longitude, it.latitude) <= 180 }
         }.singleOrNull()
     }

@@ -160,7 +160,7 @@ class ListingMapsTest {
                 exchange.sendResponseHeaders(
                     if (path == "/geocode") 200
                     else if (path == "/places") placesStatus
-                    else if (query["width"] == "288") overviewStatus else mapStatus,
+                    else if (query["style"] == "positron") overviewStatus else mapStatus,
                     body.size.toLong(),
                 )
                 exchange.responseBody.use { it.write(body) }
@@ -221,10 +221,13 @@ class ListingMapsTest {
                 "circle:13.38,52.53,6;fillcolor:#e53935;fillopacity:1;linecolor:#ffffff;linewidth:1",
                 p.requests[2].second["geometry"],
             )
-            assertEquals("288", p.requests[2].second["width"])
-            assertEquals("240", p.requests[2].second["height"])
+            assertEquals("360", p.requests[2].second["width"])
+            assertEquals("300", p.requests[2].second["height"])
             assertEquals("11", p.requests[2].second["zoom"])
-            assertEquals("place_suburb:#4b5563;11|place_other:#4b5563;10", p.requests[2].second["styleCustomization"])
+            assertEquals(
+                "park:#a8d98d|landcover_wood:#a8d98d|water:#a8cde8|waterway:#a8cde8|place_suburb:#111827;15|place_other:#111827;14",
+                p.requests[2].second["styleCustomization"],
+            )
             assertEquals("lonlat:13.38,52.53", p.requests[2].second["center"])
             assertEquals("Musterstraße 12, 10115 Berlin, Mitte", p.requests[0].second["text"])
             assertEquals("rect:13.08,52.33,13.77,52.68", p.requests[0].second["filter"])

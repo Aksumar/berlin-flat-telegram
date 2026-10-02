@@ -28,7 +28,7 @@ class MapExamples {
         val deadline = System.nanoTime() + Duration.ofMinutes(2).toNanos()
         val detail = cachedImage("detail-exact-local-names.png") { maps.detail(location, deadline) }
         val approximate = cachedImage("detail-approximate-local-names.png") { maps.detail(location.copy(approximate = true), deadline) }
-        val overview = cachedImage("overview-districts.png") { requireNotNull(maps.overviewOrNull(location, deadline)) }
+        val overview = cachedImage("overview-districts-wide-contrast.png") { requireNotNull(maps.overviewOrNull(location, deadline)) }
         val stations = cachedStations(client, location, deadline)
         val scenarios = listOf(
             Example("01-normal", "Обычная карта", "Реальные станции из Geoapify возле условной точки в центре Берлина.", stations),
