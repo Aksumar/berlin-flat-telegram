@@ -22,13 +22,20 @@ internal fun stationKey(value: String): String =
         .trim()
         .lowercase()
 
-/** Rail lines/colors and bus routes loaded once from bundled VBB-derived resources at startup. */
+/** Rail lines/colors and bus/tram routes loaded once from bundled VBB-derived resources at startup. */
 @Component
-class VbbTransitCache internal constructor(private val busCatalog: BusRouteCatalog) {
-    constructor() : this(BusRouteCatalog.load())
+class VbbTransitCache internal constructor(
+    private val busCatalog: StopRouteCatalog,
+    private val tramCatalog: StopRouteCatalog = StopRouteCatalog.load(ClassPathResource("berlin_tram_routes.json")),
+) {
+    constructor() : this(StopRouteCatalog.load(ClassPathResource("berlin_bus_routes.json")))
 
-    internal fun busStopFor(station: Landmark): BusStop? =
-        if (station.kind == LandmarkKind.BUS) busCatalog.find(station.name, station.longitude, station.latitude) else null
+    internal fun stopFor(station: Landmark): RouteStop? =
+        when (station.kind) {
+            LandmarkKind.BUS -> busCatalog
+            LandmarkKind.TRAM -> tramCatalog
+            else -> null
+        }?.find(station.name, station.longitude, station.latitude)
 
     private val logger = LoggerFactory.getLogger(VbbTransitCache::class.java)
     private val linesByStation: Map<String, List<TransitLine>> = load()

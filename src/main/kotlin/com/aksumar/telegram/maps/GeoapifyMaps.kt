@@ -33,7 +33,7 @@ class GeoapifyMaps(
     private val client = GeoapifyClient(apiKey, metrics)
     private val geocoder = GeoapifyGeocoder(client, mapper, geocodeUrl)
     private val staticMaps = GeoapifyStaticMaps(client, staticMapUrl)
-    private val places = GeoapifyPlaces(client, mapper, placesUrl)
+    private val places = GeoapifyPlaces(client, mapper, placesUrl, transitCache)
     private val landmarkRenderer = LandmarkRenderer(transitCache)
     private val composer = MapComposer()
 

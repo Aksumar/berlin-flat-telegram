@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a small, dated Berlin bus catalog from the official VBB GTFS ZIP."""
+"""Build a small, dated Berlin bus or tram catalog from the official VBB GTFS ZIP."""
 import argparse
 import csv
 from collections import defaultdict
@@ -37,12 +37,13 @@ def active_services(archive, start, end):
     return {service for service, dates in active.items() if dates}
 
 
-def build_catalog(path, start, days=7):
+def build_catalog(path, start, days=7, mode="bus"):
+    route_types = {"bus": {3, *range(700, 717)}, "tram": {0, *range(900, 907)}}[mode]
     end = start + timedelta(days=days - 1)
     with zipfile.ZipFile(path) as archive:
         services = active_services(archive, start, end)
         routes = {r['route_id']: r['route_short_name'].strip() for r in rows(archive, 'routes.txt')
-                  if (int(r['route_type']) == 3 or 700 <= int(r['route_type']) <= 716)
+                  if int(r['route_type']) in route_types
                   and r['route_short_name'].strip()}
         trips = {t['trip_id']: routes[t['route_id']] for t in rows(archive, 'trips.txt')
                  if t['route_id'] in routes and t['service_id'] in services}
@@ -61,7 +62,7 @@ def build_catalog(path, start, days=7):
                                 lon=round(float(stop['stop_lon']), 6), lat=round(float(stop['stop_lat']), 6),
                                 lines=sorted(names)))
     if not entries:
-        raise ValueError('No active Berlin bus stops in the requested period; output was not replaced')
+        raise ValueError(f'No active Berlin {mode} stops in the requested period; output was not replaced')
     return dict(source=SOURCE, license='CC BY 4.0',
                 generatedAt=datetime.now(timezone.utc).isoformat(),
                 feedSha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
@@ -72,9 +73,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('gtfs', type=Path)
     parser.add_argument('--date', type=date.fromisoformat, default=date.today())
-    parser.add_argument('--output', type=Path, default=Path(__file__).resolve().parents[2] / 'src/main/resources/berlin_bus_routes.json')
+    parser.add_argument('--mode', choices=('bus', 'tram'), default='bus')
+    parser.add_argument('--output', type=Path)
     args = parser.parse_args()
-    catalog = build_catalog(args.gtfs, args.date)
+    if args.output is None:
+        args.output = Path(__file__).resolve().parents[2] / f'src/main/resources/berlin_{args.mode}_routes.json'
+    catalog = build_catalog(args.gtfs, args.date, mode=args.mode)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_suffix('.tmp')
     stops = catalog.pop('stops')
