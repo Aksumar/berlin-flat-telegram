@@ -12,6 +12,21 @@
 У каждого пользователя **один поиск** с тремя параметрами: WBS, минимальная площадь
 и максимальная Warmmiete. `/start` открывает карточку поиска в личном чате.
 
+Рядом с полем сообщения доступна стандартная кнопка Telegram **Меню**:
+
+| Пункт меню | Команда |
+| --- | --- |
+| Setup or modify search | `/start` |
+| Pause alerts | `/stop` |
+| Show help guide | `/help` |
+
+Приложение регистрирует команды для личных чатов и включает кнопку меню автоматически
+после запуска через [setMyCommands](https://core.telegram.org/bots/api#setmycommands)
+и [setChatMenuButton](https://core.telegram.org/bots/api#setchatmenubutton).
+Если Telegram недоступен, регистрация повторяется; после успеха запросы прекращаются
+до следующего запуска. При `TELEGRAM_UPDATES_ENABLED=false` регистрация отключена.
+Справка доступна на любом шаге настройки и не сбрасывает введённые параметры.
+
 - Если поиск ещё не настроен, под сообщением появляется **Setup Search**.
 - Для существующего поиска доступны **Continue Search**, **Modify Search**, **Pause Alerts**.
 - **Setup Search** и **Modify Search** проводят через WBS → площадь → Warmmiete →

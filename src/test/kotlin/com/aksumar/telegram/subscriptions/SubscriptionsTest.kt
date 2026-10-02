@@ -165,6 +165,22 @@ class SubscriptionsTest {
 
     private var updateId = 0L
 
+    @Test
+    fun `help menu command works during setup without losing the current step`() {
+        val store = subscriptionStore()
+        val commands = FilterCommands(store, testMapper)
+        commands.handle(update("/setup"))
+        commands.handle(update("Только без WBS"))
+        val before = store.draft("123")
+        val help = commands.handle(update("/help"))!!
+        assertTrue(help.text.contains("/start — открыть свой поиск"))
+        assertTrue(help.text.contains("2/3."))
+        assertEquals(before, store.draft("123"))
+        commands.handle(update("50"))
+        assertEquals(SearchStep.WARM, store.draft("123")!!.step)
+        assertEquals("50.00".toBigDecimal(), store.draft("123")!!.filter.minArea)
+    }
+
     private fun update(text: String, chat: Long = 123, type: String = "private", sender: Long = chat) =
         testMapper.valueToTree<com.fasterxml.jackson.databind.JsonNode>(mapOf(
             "update_id" to ++updateId,
