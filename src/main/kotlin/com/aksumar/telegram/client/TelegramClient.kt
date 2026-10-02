@@ -14,6 +14,11 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
     TelegramSender {
     override fun send(chat: String, text: String): CompletableFuture<Void> = sendText(chat, text)
 
+    override fun sendMenu(chat: String, text: String, buttons: List<List<String>>): CompletableFuture<Void> =
+        sendText(chat, text, keyboard = mapOf("inline_keyboard" to buttons.map { row ->
+            row.map { label -> mapOf("text" to label, "callback_data" to label) }
+        }), boldHeading = true)
+
     private fun sendText(
         chatId: String,
         text: String,

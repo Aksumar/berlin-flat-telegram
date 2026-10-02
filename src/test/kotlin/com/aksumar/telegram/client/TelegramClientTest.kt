@@ -48,6 +48,21 @@ class TelegramClientTest {
     private val mapUrl = "https://www.google.com/maps/search/?api=1&query=Musterstra%C3%9Fe+12%2C+Berlin"
 
     @Test
+    fun `search menu sends inline buttons under a bold heading`() {
+        PhotoServer().use { server ->
+            val buttons = listOf(listOf("Setup Search"), listOf("⚙️ Modify Search"))
+            server.client().sendMenu("123", "Ваш текущий поиск\n\nWBS: все", buttons).join()
+            val (method, body) = server.requests.single()
+            assertEquals("sendMessage", method)
+            val json = testMapper.readTree(body)
+            val keyboard = json.path("reply_markup").path("inline_keyboard")
+            assertEquals("Setup Search", keyboard[0][0].path("callback_data").asText())
+            assertEquals("⚙️ Modify Search", keyboard[1][0].path("text").asText())
+            assertEquals("bold", json.path("entities")[0].path("type").asText())
+        }
+    }
+
+    @Test
     fun `uploads photo with caption and both buttons`() {
         PhotoServer().use { server ->
             server

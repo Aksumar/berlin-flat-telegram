@@ -24,6 +24,25 @@ class TelegramTransport(properties: AppProperties, private val mapper: ObjectMap
         endpoint = "${properties.telegramBaseUrl}/bot${properties.botToken}"
     }
 
+    fun getUpdates(offset: Long): CompletableFuture<com.fasterxml.jackson.databind.JsonNode> =
+        request("getUpdates", "application/json", mapper.writeValueAsBytes(mapOf(
+            "offset" to offset, "timeout" to 20, "allowed_updates" to listOf("message", "callback_query"),
+        ))).thenApply { response ->
+            check(response.statusCode() in 200..299 && isTelegramSuccess(response.body())) {
+                "Telegram getUpdates failed (HTTP ${response.statusCode()}); check token, webhook and other polling instances"
+            }
+            mapper.readTree(response.body()).path("result").also {
+                check(it.isArray) { "Invalid Telegram updates response" }
+            }
+        }.exceptionallyCompose {
+            // HTTP client exceptions can include the URL containing the bot token.
+            CompletableFuture.failedFuture(DeliveryException("Telegram getUpdates failed; check token, webhook and other polling instances"))
+        }
+
+    fun answerCallback(id: String): CompletableFuture<Void> = deliver(
+        "answerCallbackQuery", "application/json", mapper.writeValueAsBytes(mapOf("callback_query_id" to id)),
+    )
+
     fun deliver(
         method: String,
         contentType: String,
