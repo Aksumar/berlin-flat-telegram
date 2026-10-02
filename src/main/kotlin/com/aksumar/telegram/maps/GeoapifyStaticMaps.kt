@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 
 internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private val endpoint: String) {
     private val logger = LoggerFactory.getLogger(GeoapifyStaticMaps::class.java)
+    private val districtBoundaries = BerlinDistrictBoundaries()
 
     fun detail(location: GeocodedLocation, deadlineNanos: Long): BufferedImage =
         fetchImage(
@@ -24,17 +25,18 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
             fetchImage(
                 (commonParameters(location) - "marker") + mapOf(
                     "style" to "positron",
-                    "width" to MapLayout.OVERVIEW_WIDTH.toString(),
-                    "height" to MapLayout.OVERVIEW_HEIGHT.toString(),
-                    // At zoom 11 the provider includes nearby district names in the overview.
+                    // A larger source image widens the view without losing district names below zoom 11.
+                    "width" to (MapLayout.OVERVIEW_WIDTH * OVERVIEW_RENDER_SCALE).toInt().toString(),
+                    "height" to (MapLayout.OVERVIEW_HEIGHT * OVERVIEW_RENDER_SCALE).toInt().toString(),
                     "zoom" to "11",
-                    "styleCustomization" to "place_suburb:#4b5563;11|place_other:#4b5563;10",
+                    "styleCustomization" to
+                        "park:#a8d98d|landcover_wood:#a8d98d|water:#a8cde8|waterway:#a8cde8|place_suburb:#111827;15|place_other:#111827;14",
                     // Circle markers are offset vertically by the provider; geometry is centred on the coordinates.
                     "geometry" to "circle:${location.longitude},${location.latitude},6;fillcolor:#e53935;fillopacity:1;linecolor:#ffffff;linewidth:1",
                 ),
                 "overview map",
                 deadlineNanos,
-            )
+            ).also { districtBoundaries.draw(it, location) }
         } catch (error: InterruptedException) {
             Thread.currentThread().interrupt()
             throw error
@@ -77,6 +79,7 @@ internal class GeoapifyStaticMaps(private val client: GeoapifyClient, private va
     }
 
     private companion object {
+        const val OVERVIEW_RENDER_SCALE = 1.25
         // Keep priority POIs, railway station and airport labels; hide lower-priority POIs.
         const val BASE_MAP_STYLE =
             "poi-level-2:none|poi-level-3:none"
