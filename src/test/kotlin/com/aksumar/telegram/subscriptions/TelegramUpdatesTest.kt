@@ -16,12 +16,13 @@ class TelegramUpdatesTest {
     @Test
     fun `polling receives private commands and confirms saved updates on next request`() {
         val requests = mutableListOf<com.fasterxml.jackson.databind.JsonNode>()
+        val clearedMenus = mutableListOf<com.fasterxml.jackson.databind.JsonNode>()
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         server.createContext("/bottest/getUpdates") { exchange ->
             requests.add(testMapper.readTree(exchange.requestBody))
             val result = if (requests.size == 1) listOf(
-                update(10, "/start"), callback(11, FilterCommands.SETUP), callback(12, "Только без WBS"),
-                update(13, "50,5"), update(14, "1000"), callback(15, FilterCommands.SAVE),
+                update(10, "/start"), callback(11, "menu:10:0:0"), callback(12, "menu:11:2:0"),
+                update(13, "50,5"), update(14, "1000"), callback(15, "menu:14:0:0"),
             ) else emptyList()
             val body = testMapper.writeValueAsBytes(mapOf("ok" to true, "result" to result))
             exchange.sendResponseHeaders(200, body.size.toLong())
@@ -31,6 +32,14 @@ class TelegramUpdatesTest {
             exchange.requestBody.close()
             val body = "{\"ok\":true,\"result\":true}".toByteArray()
             exchange.sendResponseHeaders(200, body.size.toLong())
+            exchange.responseBody.use { it.write(body) }
+        }
+        server.createContext("/bottest/editMessageReplyMarkup") { exchange ->
+            clearedMenus.add(testMapper.readTree(exchange.requestBody))
+            // An already removed or inaccessible keyboard must not block saving or polling.
+            val status = if (clearedMenus.size == 3) 400 else 200
+            val body = "{\"ok\":${status == 200},\"result\":true}".toByteArray()
+            exchange.sendResponseHeaders(status, body.size.toLong())
             exchange.responseBody.use { it.write(body) }
         }
         server.start()
@@ -47,6 +56,9 @@ class TelegramUpdatesTest {
             assertEquals(listOf(0L, 16L), requests.map { it.path("offset").asLong() })
             assertEquals(listOf("message", "callback_query"), requests[0].path("allowed_updates").map { it.asText() })
             assertEquals(6, replies.size)
+            assertEquals(listOf(111L, 112L, 115L), clearedMenus.map { it.path("message_id").asLong() })
+            assertTrue(clearedMenus.all { it.path("chat_id").asText() == "123" &&
+                it.path("reply_markup").path("inline_keyboard").isEmpty })
             assertEquals(ListingFilter(WbsFilter.NOT_REQUIRED, "50.50".toBigDecimal(), "1000.00".toBigDecimal()),
                 store.get("123")!!.filter)
         } finally {
@@ -96,7 +108,7 @@ class TelegramUpdatesTest {
         "update_id" to id,
         "callback_query" to mapOf("id" to "callback-$id", "data" to data,
             "from" to mapOf("id" to 123, "is_bot" to false),
-            "message" to mapOf("chat" to mapOf("id" to 123, "type" to "private"))),
+            "message" to mapOf("message_id" to id + 100, "chat" to mapOf("id" to 123, "type" to "private"))),
     )
 
     private fun update(id: Long, text: String) = mapOf(

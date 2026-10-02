@@ -43,13 +43,21 @@ class TelegramTransport(properties: AppProperties, private val mapper: ObjectMap
         "answerCallbackQuery", "application/json", mapper.writeValueAsBytes(mapOf("callback_query_id" to id)),
     )
 
+    fun clearMenu(chatId: String, messageId: Long): CompletableFuture<Void> = deliver(
+        "editMessageReplyMarkup", "application/json", mapper.writeValueAsBytes(mapOf(
+            "chat_id" to chatId, "message_id" to messageId,
+            "reply_markup" to mapOf("inline_keyboard" to emptyList<Any>()),
+        )),
+    )
+
     fun configureCommandMenu(): CompletableFuture<Void> =
         deliver("setMyCommands", "application/json", mapper.writeValueAsBytes(mapOf(
             "scope" to mapOf("type" to "all_private_chats"),
             "commands" to listOf(
-                mapOf("command" to "start", "description" to "Setup or modify search"),
-                mapOf("command" to "stop", "description" to "Pause alerts"),
-                mapOf("command" to "help", "description" to "Show help guide"),
+                mapOf("command" to "start", "description" to "Мой поиск и фильтры"),
+                mapOf("command" to "stop", "description" to "Приостановить уведомления"),
+                mapOf("command" to "resume", "description" to "Возобновить уведомления"),
+                mapOf("command" to "help", "description" to "Помощь"),
             ),
         ))).thenCompose {
             deliver("setChatMenuButton", "application/json", mapper.writeValueAsBytes(mapOf(

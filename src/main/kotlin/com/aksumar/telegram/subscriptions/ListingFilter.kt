@@ -31,6 +31,6 @@ data class Subscription(
 
 enum class SearchStep { WBS, AREA, WARM, CONFIRM }
 
-data class SearchDraft(val step: SearchStep, val filter: ListingFilter)
+data class SearchDraft(val step: SearchStep, val filter: ListingFilter, val singleField: Boolean = false)
 
-data class CommandReply(val chat: String, val text: String, val buttons: List<List<String>>)
+data class CommandReply(val chat: String, val text: String, val buttons: List<List<String>>, val menuId: Long? = null)

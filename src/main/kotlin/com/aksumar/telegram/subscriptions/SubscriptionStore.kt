@@ -40,13 +40,13 @@ class SubscriptionStore(private val jdbc: JdbcTemplate, private val properties: 
         "SELECT * FROM search_drafts WHERE chat_id = ?", RowMapper { rs, _ ->
             SearchDraft(SearchStep.valueOf(rs.getString("step")), ListingFilter(
                 WbsFilter.valueOf(rs.getString("wbs")), rs.getBigDecimal("min_area"), rs.getBigDecimal("max_warm"),
-            ))
+            ), rs.getBoolean("single_field"))
         }, chatId,
     ).firstOrNull()
 
     fun saveDraft(chatId: String, draft: SearchDraft) {
-        jdbc.update("MERGE INTO search_drafts (chat_id, step, wbs, min_area, max_warm) KEY(chat_id) VALUES (?, ?, ?, ?, ?)",
-            chatId, draft.step.name, draft.filter.wbs.name, draft.filter.minArea, draft.filter.maxWarm)
+        jdbc.update("MERGE INTO search_drafts (chat_id, step, wbs, min_area, max_warm, single_field) KEY(chat_id) VALUES (?, ?, ?, ?, ?, ?)",
+            chatId, draft.step.name, draft.filter.wbs.name, draft.filter.minArea, draft.filter.maxWarm, draft.singleField)
     }
 
     fun clearDraft(chatId: String) {
