@@ -30,23 +30,20 @@ internal class StationLabels(private val transitCache: VbbTransitCache) {
         val result = mutableListOf<Landmark>()
         val railKeys = mutableSetOf<String>()
         for (station in stations) {
-            if (station.kind == LandmarkKind.BUS) {
-                val stop = transitCache.busStopFor(station)
+            if (!station.kind.isRail) {
+                val stop = transitCache.stopFor(station)
                 val duplicate = result.any { previous ->
-                    if (previous.kind != LandmarkKind.BUS) false
+                    if (previous.kind != station.kind) false
                     else {
-                        val previousStop = transitCache.busStopFor(previous)
+                        val previousStop = transitCache.stopFor(previous)
                         if (stop != null || previousStop != null) stop != null && stop.id == previousStop?.id
-                        else busStopKey(station.name) == busStopKey(previous.name) && nearby(station, previous)
+                        else stopKey(station.name) == stopKey(previous.name) && nearby(station, previous)
                     }
                 }
                 if (!duplicate) result.add(station)
             } else {
-                val key = when {
-                    station.kind.isRail && transitCache.linesFor(station.name).isNotEmpty() -> "rail:${stationKey(station.name)}"
-                    station.kind.isRail -> "${station.kind}:${stationKey(station.name)}"
-                    else -> "${station.kind}:${station.name}"
-                }
+                val key = if (transitCache.linesFor(station.name).isNotEmpty()) "rail:${stationKey(station.name)}"
+                    else "${station.kind}:${stationKey(station.name)}"
                 if (railKeys.add(key)) result.add(station)
             }
         }
@@ -60,8 +57,8 @@ internal class StationLabels(private val transitCache: VbbTransitCache) {
 
     fun measure(station: Landmark, metrics: FontMetrics, preferredWidth: Int = 300): StationLabel {
         val lines = if (station.kind.isRail) transitCache.linesFor(station.name) else emptyList()
-        val rows = if (station.kind == LandmarkKind.BUS) {
-            busRows(transitCache.busStopFor(station)?.lines.orEmpty(), metrics, preferredWidth)
+        val rows = if (!station.kind.isRail) {
+            stopRows(station.kind, transitCache.stopFor(station)?.lines.orEmpty(), metrics, preferredWidth)
         } else listOf(LandmarkKind.SUBURBAN_RAIL, LandmarkKind.SUBWAY).mapNotNull { kind ->
             lines.filter { it.name.startsWith(kind.badge) }
                 .takeIf { it.isNotEmpty() }
@@ -73,7 +70,7 @@ internal class StationLabels(private val transitCache: VbbTransitCache) {
             }
         } ?: 0
         val horizontalPadding = StationLabel.HORIZONTAL_PADDING * 2
-        // Rail rows stay intact; bus rows are already wrapped to the available width.
+        // Rail rows stay intact; bus/tram rows are already wrapped to the available width.
         val contentWidth = maxOf(preferredWidth - horizontalPadding, measuredRowsWidth)
         val title = if (station.kind.isRail) stationDisplayName(station.name) else station.name
         val titleBadgeWidth = if (rows.isEmpty()) StationLabel.BADGE_COLUMN_WIDTH else 0
@@ -85,7 +82,7 @@ internal class StationLabels(private val transitCache: VbbTransitCache) {
         return StationLabel(station, titleLines, rows, width, height)
     }
 
-    private fun busRows(lines: List<TransitLine>, metrics: FontMetrics, preferredWidth: Int): List<StationLineRow> {
+    private fun stopRows(kind: LandmarkKind, lines: List<TransitLine>, metrics: FontMetrics, preferredWidth: Int): List<StationLineRow> {
         val rows = mutableListOf<StationLineRow>()
         val available = preferredWidth - StationLabel.HORIZONTAL_PADDING * 2 - StationLabel.BADGE_COLUMN_WIDTH
         var row = mutableListOf<TransitLine>()
@@ -93,14 +90,14 @@ internal class StationLabels(private val transitCache: VbbTransitCache) {
         for (line in lines) {
             val chipWidth = metrics.stringWidth(line.name) + StationLabel.CHIP_PADDING + StationLabel.CHIP_GAP
             if (row.isNotEmpty() && width + chipWidth > available) {
-                rows.add(StationLineRow(LandmarkKind.BUS, row))
+                rows.add(StationLineRow(kind, row))
                 row = mutableListOf()
                 width = 0
             }
             row.add(line)
             width += chipWidth
         }
-        if (row.isNotEmpty()) rows.add(StationLineRow(LandmarkKind.BUS, row))
+        if (row.isNotEmpty()) rows.add(StationLineRow(kind, row))
         return rows
     }
 

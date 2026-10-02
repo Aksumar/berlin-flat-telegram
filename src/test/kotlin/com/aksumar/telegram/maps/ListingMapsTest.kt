@@ -184,6 +184,13 @@ class ListingMapsTest {
                     it.second["categories"]?.startsWith("public_transport") == true
             }
 
+        fun visibleStations() = GeoapifyPlaces(
+            GeoapifyClient("test-secret"), testMapper, "http://127.0.0.1:${server.address.port}/places",
+        ).findVisible(
+            MapViewport(13.38, 52.53, 15.5), MapLayout(hasOverview = true, approximate = false),
+            System.nanoTime() + TimeUnit.SECONDS.toNanos(30),
+        )
+
         override fun close() {
             server.stop(0)
         }
@@ -261,15 +268,45 @@ class ListingMapsTest {
     }
 
     @Test
-    fun `tram takes priority over bus when there are no visible rail stations`() {
+    fun `tram and bus are both drawn when fewer than five stops are available`() {
         Provider().use { provider ->
             val tram = """{"properties":{"name":"Tram stop","lon":13.375,"lat":52.53,"categories":["public_transport.tram"]}}"""
             val bus = """{"properties":{"name":"Bus stop","lon":13.3825,"lat":52.53,"categories":["public_transport.bus"]}}"""
-            provider.stops = """{"features":[$tram]}"""
-            val tramOnly = requireNotNull(provider.maps().create(event())).png
-
             provider.stops = """{"features":[$tram,$bus]}"""
-            assertArrayEquals(tramOnly, requireNotNull(provider.maps().create(event())).png)
+            val image = ImageIO.read(requireNotNull(provider.maps().create(event())).png.inputStream())
+            assertEquals(Color(118, 78, 151).rgb, image.getRGB(150, 300))
+            assertEquals(Color(118, 78, 151).rgb, image.getRGB(645, 300))
+        }
+    }
+
+    @Test
+    fun `nearest distinct tram and bus stops fill up to five without limiting rail stations`() {
+        fun feature(name: String, category: String, longitude: Double) =
+            """{"properties":{"name":"$name","lon":$longitude,"lat":52.53,"categories":["public_transport.$category"],"datasource":{"raw":{"railway":"station"}}}}"""
+        val stops = listOf(
+            feature("Nearest bus", "bus", 13.3805),
+            feature("Near tram", "tram", 13.381),
+            feature("Next bus", "bus", 13.3815),
+            feature("Next tram", "tram", 13.382),
+            feature("Far bus", "bus", 13.374),
+        )
+        val stopNames = listOf("Nearest bus", "Near tram", "Next bus", "Next tram", "Far bus")
+        for ((railCount, stopCount) in listOf(0 to 0, 0 to 2, 0 to 5, 1 to 5, 2 to 5, 3 to 5, 4 to 5, 5 to 5, 6 to 5)) {
+            Provider().use { p ->
+                val railNames = (1..railCount).map { "${if (it % 2 == 0) "U" else "S"} Station $it" }
+                val rail = railNames.map { feature(it, if (it.startsWith("U")) "subway" else "train", 13.375) }
+                p.places = """{"features":[${(rail + rail.take(1)).joinToString(",")}]}"""
+                val duplicates = if (stopCount > 0) listOf(feature("Nearest bus", "bus", 13.379)) else emptyList()
+                // Provider order and duplicate platforms must not determine the selected stops.
+                p.stops = """{"features":[${(stops.take(stopCount).reversed() + duplicates).joinToString(",")}]}"""
+
+                val selected = p.visibleStations()
+                val expected = railNames +
+                    stopNames.take(minOf(stopCount, (5 - railCount).coerceAtLeast(0)))
+                assertEquals(expected, selected.map { it.name }, "rail=$railCount, stops=$stopCount")
+                assertEquals(if (railCount >= 5) 1 else 2, p.transportRequests().size)
+                selected.find { it.name == "Nearest bus" }?.let { assertEquals(13.3805, it.longitude) }
+            }
         }
     }
 
@@ -320,15 +357,14 @@ class ListingMapsTest {
     }
 
     @Test
-    fun `bus is queried only when no rail station is found`() {
+    fun `bus supplements a single rail station`() {
         Provider().use { p ->
             val station =
                 """{"properties":{"name":"U Station","lon":13.385,"lat":52.5315,"categories":["public_transport.subway"],"datasource":{"raw":{"railway":"station"}}}}"""
             p.places = """{"features":[$station]}"""
             p.maps().create(event())
-            assertEquals(1, p.transportRequests().size)
+            assertEquals(2, p.transportRequests().size)
             p.requests.clear()
-            p.places = """{"features":[]}"""
             p.stops =
                 """{"features":[{"properties":{"name":"Bus stop","lon":13.385,"lat":52.5315,"categories":["public_transport.bus"]}}]}"""
             val fallback = ImageIO.read(requireNotNull(p.maps().create(event())).png.inputStream())
@@ -364,7 +400,7 @@ class ListingMapsTest {
             }
 
             assertNotNull(p.maps().create(event()))
-            assertEquals(2, p.transportRequests().size)
+            assertEquals(3, p.transportRequests().size)
         }
     }
 

@@ -8,16 +8,20 @@ internal class GeoapifyPlaces(
     private val client: GeoapifyClient,
     private val mapper: ObjectMapper,
     private val endpoint: String,
+    transitCache: VbbTransitCache = VbbTransitCache(),
 ) {
     private val logger = LoggerFactory.getLogger(GeoapifyPlaces::class.java)
+    private val labels = StationLabels(transitCache)
 
     fun findVisible(viewport: MapViewport, layout: MapLayout, deadlineNanos: Long): List<Landmark> {
         val search = Search(viewport, layout, deadlineNanos)
-        val transport = search.nearby(RAIL_CATEGORIES).toMutableList()
-        if (transport.none { it.kind.isRail }) {
-            val stops = search.nearby(STOP_CATEGORIES)
-            val preferred = if (stops.any { it.kind == LandmarkKind.TRAM }) LandmarkKind.TRAM else LandmarkKind.BUS
-            transport.addAll(stops.filter { it.kind == preferred })
+        val transport = labels.distinctStations(search.nearby(RAIL_CATEGORIES)).toMutableList()
+        if (transport.size < MIN_TRANSPORT_STOPS) {
+            val stops = search.nearby(STOP_CATEGORIES).sortedBy {
+                distanceMeters(viewport.longitude, viewport.latitude,
+                    requireNotNull(it.longitude), requireNotNull(it.latitude))
+            }
+            transport.addAll(labels.distinctStations(stops).take(MIN_TRANSPORT_STOPS - transport.size))
         }
         return transport
     }
@@ -118,6 +122,7 @@ internal class GeoapifyPlaces(
     }
 
     private companion object {
+        const val MIN_TRANSPORT_STOPS = 5
         const val PAGE_SIZE = 500
         const val MAX_PAGES = 2
         const val RAIL_CATEGORIES = "public_transport.subway,public_transport.train,public_transport.light_rail"

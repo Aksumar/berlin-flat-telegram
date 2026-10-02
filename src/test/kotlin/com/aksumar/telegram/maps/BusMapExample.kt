@@ -34,10 +34,10 @@ class BusMapExample {
         Files.write(output, bytes)
         assertNotNull(ImageIO.read(bytes.inputStream()))
         Files.write(output.resolveSibling("bus-stops.json"), testMapper.writeValueAsBytes(stations))
-        visible.forEach { println("${it.name}: ${cache.busStopFor(it)?.lines?.joinToString { line -> line.name }}") }
-        assertTrue(visible.size >= 6)
+        visible.forEach { println("${it.name}: ${cache.stopFor(it)?.lines?.joinToString { line -> line.name }}") }
+        assertEquals(5, visible.size)
         assertTrue(visible.all { it.kind == LandmarkKind.BUS })
-        assertTrue(visible.all { cache.busStopFor(it)?.lines?.isNotEmpty() == true },
-            "Unmatched stops: ${visible.filter { cache.busStopFor(it) == null }.map { it.name }}")
+        assertTrue(visible.all { cache.stopFor(it)?.lines?.isNotEmpty() == true },
+            "Unmatched stops: ${visible.filter { cache.stopFor(it) == null }.map { it.name }}")
     }
 }
