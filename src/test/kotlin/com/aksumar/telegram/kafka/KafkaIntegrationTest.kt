@@ -5,6 +5,7 @@ import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.support.fixture
 import com.aksumar.telegram.support.testMapper
+import com.aksumar.telegram.subscriptions.FilterCommands
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -78,6 +79,8 @@ class KafkaIntegrationTest {
                 "--app.group-id=$group",
                 "--app.chat-ids=123,456",
                 "--app.bot-token=fake",
+                "--app.telegram-updates-enabled=false",
+                "--spring.datasource.url=jdbc:h2:mem:$group",
                 "--server.port=0",
             )
 
@@ -138,6 +141,31 @@ class KafkaIntegrationTest {
         context(topic, group).use { context ->
             await { offset(group, topic) == 1L }
             assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)
+        }
+    }
+
+    @Test
+    fun `saved search selects Kafka recipients through Spring command handler`() {
+        val topic = topic()
+        val group = "test-${UUID.randomUUID()}"
+        context(topic, group).use { context ->
+            val commands = context.getBean(FilterCommands::class.java)
+            var updateId = 0L
+            fun command(chat: Long, text: String) {
+                commands.handle(testMapper.valueToTree(mapOf(
+                    "update_id" to ++updateId,
+                    "message" to mapOf("text" to text, "from" to mapOf("id" to chat),
+                        "chat" to mapOf("id" to chat, "type" to "private")),
+                )))
+            }
+            command(123, "/warm 800")
+            command(456, "/stop")
+            for (text in listOf("/start", FilterCommands.SETUP, "Только без WBS", "60", "900", FilterCommands.SAVE)) {
+                command(789, text)
+            }
+            publish(topic)
+            await { offset(group, topic) == 1L }
+            assertEquals(listOf("789"), context.getBean(TestSender::class.java).chats)
         }
     }
 

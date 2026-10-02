@@ -11,6 +11,5 @@ class AppProperties {
     var botToken: String = ""
     var chatIds: List<String> = emptyList()
 
-    fun chats(): List<String> =
-        chatIds.also { require(it.isNotEmpty()) { "Telegram destination is required" } }
+    fun chats(): List<String> = chatIds.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
 }

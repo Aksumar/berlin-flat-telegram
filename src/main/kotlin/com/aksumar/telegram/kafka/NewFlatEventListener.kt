@@ -2,7 +2,7 @@ package com.aksumar.telegram.kafka
 
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
-import com.aksumar.telegram.config.AppProperties
+import com.aksumar.telegram.subscriptions.SubscriptionStore
 import com.aksumar.telegram.exception.DeliveryException
 import com.aksumar.telegram.format.MessageFormatter
 import com.aksumar.telegram.maps.ListingMaps
@@ -21,7 +21,7 @@ class NewFlatEventListener(
     private val contract: ListingContract,
     private val formatter: MessageFormatter,
     private val sender: TelegramSender,
-    private val properties: AppProperties,
+    private val subscriptions: SubscriptionStore,
     private val mapper: ObjectMapper,
     private val maps: ListingMaps = ListingMaps { null },
 ) {
@@ -41,6 +41,13 @@ class NewFlatEventListener(
                 throw DeliveryException("Invalid Kafka event identity")
             }
 
+            val recipients = try {
+                subscriptions.recipients(item)
+            } catch (error: Exception) {
+                // A storage outage must not acknowledge and lose a valid Kafka listing.
+                return CompletableFuture.failedFuture(error)
+            }
+            if (recipients.isEmpty()) return CompletableFuture.completedFuture(null)
             val mapUrl = formatter.mapUrl(item)
             var resolvedItem = item
             var mapFailureReason: String? = null
@@ -78,7 +85,7 @@ class NewFlatEventListener(
                 )
             }
             val text = formatter.format(resolvedItem, mapFailureReason)
-            val deliveries = properties.chats().map { sender.sendListing(it, text, item.url, map, mapUrl) }
+            val deliveries = recipients.map { sender.sendListing(it, text, item.url, map, mapUrl) }
 
             CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->
                 val failures = deliveries.mapNotNull(::failure)

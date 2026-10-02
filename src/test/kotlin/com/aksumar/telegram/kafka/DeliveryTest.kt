@@ -2,13 +2,18 @@ package com.aksumar.telegram.kafka
 
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
-import com.aksumar.telegram.config.AppProperties
 import com.aksumar.telegram.format.MessageFormatter
 import com.aksumar.telegram.maps.ListingMap
 import com.aksumar.telegram.maps.ListingMaps
 import com.aksumar.telegram.maps.MapGenerationException
 import com.aksumar.telegram.support.fixture
 import com.aksumar.telegram.support.testMapper
+import com.aksumar.telegram.support.subscriptionStore
+import com.aksumar.telegram.subscriptions.ListingFilter
+import com.aksumar.telegram.subscriptions.Subscription
+import com.aksumar.telegram.subscriptions.SubscriptionStore
+import com.aksumar.telegram.support.event
+import org.mockito.Mockito
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -20,7 +25,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension
 
 @ExtendWith(OutputCaptureExtension::class)
 class DeliveryTest {
-    private fun properties() = AppProperties().apply { chatIds = listOf("123", "456") }
+    private fun subscriptions() = subscriptionStore(listOf("123", "456"))
 
     private fun record(value: String = fixture(), key: String = "[\"gewobag\",\"123\"]") =
         ConsumerRecord("test", 0, 0, key, value)
@@ -30,7 +35,7 @@ class DeliveryTest {
             ListingContract(testMapper),
             MessageFormatter(),
             sender,
-            properties(),
+            subscriptions(),
             testMapper,
         )
 
@@ -76,7 +81,7 @@ class DeliveryTest {
                     }
                 }
                 val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(), sender,
-                    properties(), testMapper, maps)
+                    subscriptions(), testMapper, maps)
                 listener.receive(record(testMapper.writeValueAsString(payload), "[\"$source\",\"123\"]")).join()
                 assertEquals(2, delivered.size, source)
                 delivered.forEach { assertTrue(it.lineSequence().first().endsWith(" · ${supplied?.takeIf { it.isNotBlank() } ?: "Mitte"}"), it) }
@@ -116,7 +121,7 @@ class DeliveryTest {
                 ListingContract(testMapper),
                 MessageFormatter(),
                 sender,
-                properties(),
+                subscriptions(),
                 testMapper,
                 ListingMaps {
                     mapCalls++
@@ -172,7 +177,7 @@ class DeliveryTest {
                 ListingContract(testMapper),
                 MessageFormatter(),
                 sender,
-                properties(),
+                subscriptions(),
                 testMapper,
                 maps,
             )
@@ -201,7 +206,7 @@ class DeliveryTest {
                     fail<Unit>("Must not send")
                     CompletableFuture.completedFuture(null)
                 },
-                properties(),
+                subscriptions(),
                 testMapper,
                 ListingMaps { throw InterruptedException("stopped") },
             )
@@ -302,5 +307,34 @@ class DeliveryTest {
             )) {
             listener.receive(record).join()
         }
+    }
+
+    @Test
+    fun `only matching subscribers receive listings and empty audience skips map generation`() {
+        val store = subscriptions()
+        store.save(Subscription("123", filter = ListingFilter(maxWarm = "800".toBigDecimal())))
+        store.save(Subscription("789", filter = ListingFilter(minArea = "64.5".toBigDecimal())))
+        val delivered = mutableListOf<String>()
+        var mapCalls = 0
+        val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(),
+            TelegramSender { chat, _ -> delivered += chat; CompletableFuture.completedFuture(null) },
+            store, testMapper, ListingMaps { mapCalls++; null })
+        listener.receive(record()).join()
+        assertEquals(listOf("456", "789"), delivered)
+        assertEquals(1, mapCalls)
+        store.save(Subscription("456", active = false))
+        store.save(Subscription("789", active = false))
+        listener.receive(record()).join()
+        assertEquals(2, delivered.size)
+        assertEquals(1, mapCalls)
+    }
+
+    @Test
+    fun `database failure does not acknowledge listing`() {
+        val store = Mockito.mock(SubscriptionStore::class.java)
+        Mockito.`when`(store.recipients(event())).thenThrow(IllegalStateException("database unavailable"))
+        val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(),
+            TelegramSender { _, _ -> error("Must not send") }, store, testMapper)
+        assertThrows(CompletionException::class.java) { listener.receive(record()).join() }
     }
 }

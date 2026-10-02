@@ -13,7 +13,8 @@ import org.springframework.boot.test.context.TestComponent
 import org.springframework.context.annotation.Configuration
 
 @AutoConfigureObservability
-@SpringBootTest(classes = [PrometheusEndpointTest.Config::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = [PrometheusEndpointTest.Config::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = ["spring.datasource.url=jdbc:h2:mem:metrics-test"])
 class PrometheusEndpointTest {
     @TestComponent
     @Configuration(proxyBeanMethods = false)
