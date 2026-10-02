@@ -33,6 +33,7 @@ class MessageFormatter {
 
     private fun addHeader(lines: MutableList<String>, item: Listing) {
         lines += heading(item)
+        lines += ""
         lines += "Площадь: ${number(item.areaM2)}${if (item.areaM2 != null) " м²" else ""}"
         lines += "Комнат: ${number(item.rooms)}"
         lines += "Этаж: ${floor(item.floor)}"
@@ -65,8 +66,9 @@ class MessageFormatter {
 
     private fun addProviderAndSource(lines: MutableList<String>, item: Listing) {
         val source = sourceName(item.source)
-        val provider = item.provider?.takeIf { it.isNotBlank() }?.let { text(it) } ?: source
-        val sourceSuffix = if (source.equals(provider, ignoreCase = true)) "" else " ($source)"
+        val rawProvider = item.provider?.takeIf { it.isNotBlank() }?.let { text(it) }
+        val provider = rawProvider?.takeUnless { source.equals(it, ignoreCase = true) } ?: source
+        val sourceSuffix = if (rawProvider == null || source.equals(provider, ignoreCase = true)) "" else " ($source)"
         lines += ""
         lines += "Компания: $provider$sourceSuffix"
     }

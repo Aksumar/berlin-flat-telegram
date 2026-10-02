@@ -76,12 +76,12 @@ class MessageFormatterTest {
 
         val different = formatter.format(event().copy(provider = "Deutsche Wohnen"))
         assertTrue(different.endsWith("Компания: Deutsche Wohnen (Gewobag)"))
-        assertTrue(different.startsWith("Musterstraße 12, 10115 Berlin · Mitte\nПлощадь:"))
+        assertTrue(different.startsWith("Musterstraße 12, 10115 Berlin · Mitte\n\nПлощадь:"))
 
         val aggregated = formatter.format(event().copy(source = "inberlinwohnen", provider = "Gewobag"))
         assertTrue(aggregated.endsWith("Компания: Gewobag (InBerlinWohnen)"))
         assertFalse(aggregated.contains("Адрес:"))
-        assertTrue(formatter.format(event().copy(provider = " gewobag ")).endsWith("Компания: gewobag"))
+        assertTrue(formatter.format(event().copy(provider = " gewobag ")).endsWith("Компания: Gewobag"))
     }
 
     @Test
