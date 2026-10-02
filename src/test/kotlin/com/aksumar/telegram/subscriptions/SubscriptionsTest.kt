@@ -10,12 +10,12 @@ class SubscriptionsTest {
     @TempDir lateinit var directory: Path
 
     @Test
-    fun `WBS distinguishes unknown from no and applies all three modes`() {
+    fun `unknown WBS passes every filter while known values respect all three modes`() {
         for (required in listOf(true, false, null)) {
             val item = event().copy(wbs = event().wbs.copy(required = required))
             assertTrue(ListingFilter().matches(item))
-            assertEquals(required == true, ListingFilter(WbsFilter.REQUIRED).matches(item))
-            assertEquals(required == false, ListingFilter(WbsFilter.NOT_REQUIRED).matches(item))
+            assertEquals(required != false, ListingFilter(WbsFilter.REQUIRED).matches(item))
+            assertEquals(required != true, ListingFilter(WbsFilter.NOT_REQUIRED).matches(item))
         }
     }
 
@@ -26,9 +26,11 @@ class SubscriptionsTest {
         assertTrue(filter.matches(item))
         assertFalse(filter.matches(item.copy(areaM2 = "64.49".toBigDecimal())))
         assertFalse(filter.matches(item.copy(rent = item.rent.copy(warm = "890.01".toBigDecimal()))))
-        assertFalse(filter.matches(item.copy(areaM2 = null)))
-        assertFalse(filter.matches(item.copy(rent = item.rent.copy(warm = null))))
-        assertTrue(ListingFilter().matches(item.copy(areaM2 = null, rent = item.rent.copy(warm = null))))
+        assertTrue(filter.matches(item.copy(areaM2 = null)))
+        assertTrue(filter.matches(item.copy(rent = item.rent.copy(warm = null))))
+        assertTrue(filter.matches(item.copy(areaM2 = null, rent = item.rent.copy(warm = null),
+            wbs = item.wbs.copy(required = null))))
+        assertTrue(filter.matches(item.copy(rent = item.rent.copy(currency = "USD", warm = "999999".toBigDecimal()))))
     }
 
     @Test
@@ -164,6 +166,22 @@ class SubscriptionsTest {
     }
 
     private var updateId = 0L
+
+    @Test
+    fun `help menu command works during setup without losing the current step`() {
+        val store = subscriptionStore()
+        val commands = FilterCommands(store, testMapper)
+        commands.handle(update("/setup"))
+        commands.handle(update("Только без WBS"))
+        val before = store.draft("123")
+        val help = commands.handle(update("/help"))!!
+        assertTrue(help.text.contains("/start — открыть свой поиск"))
+        assertTrue(help.text.contains("2/3."))
+        assertEquals(before, store.draft("123"))
+        commands.handle(update("50"))
+        assertEquals(SearchStep.WARM, store.draft("123")!!.step)
+        assertEquals("50.00".toBigDecimal(), store.draft("123")!!.filter.minArea)
+    }
 
     private fun update(text: String, chat: Long = 123, type: String = "private", sender: Long = chat) =
         testMapper.valueToTree<com.fasterxml.jackson.databind.JsonNode>(mapOf(

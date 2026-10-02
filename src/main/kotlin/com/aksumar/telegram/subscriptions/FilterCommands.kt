@@ -49,8 +49,11 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
             return home(chatId, updated)
         }
         val draft = store.draft(chatId)
+        if (command == "/help") {
+            val reply = draft?.let { prompt(chatId, it) } ?: home(chatId, current)
+            return reply.copy(text = "$HELP\n\n${reply.text}")
+        }
         if (draft != null) return advance(chatId, text, draft, current)
-        if (command == "/help") return home(chatId, current).let { it.copy(text = "$HELP\n\n${it.text}") }
         if (current == null || command == "/filters") return home(chatId, current)
         val updated = try {
             when (command) {
@@ -111,7 +114,7 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
         SearchStep.WARM -> CommandReply(chatId, "3/3. Максимальная Warmmiete в € за месяц? Например: 1000.\nСейчас: ${amount(draft.filter.maxWarm, "€ / месяц")}",
             listOf(listOf(NO_LIMIT, KEEP), listOf(CANCEL)))
         SearchStep.CONFIRM -> CommandReply(chatId, "Проверьте параметры поиска:\n${summary(draft.filter)}\n\n" +
-            "Все условия применяются одновременно, границы включены. Объявления с неизвестным значением заданного параметра не проходят фильтр.",
+            "Все условия применяются одновременно, границы включены. Если значение параметра в объявлении не указано, объявление всё равно проходит это условие.",
             listOf(listOf(SAVE, CANCEL)))
     }
 

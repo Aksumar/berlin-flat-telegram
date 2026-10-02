@@ -18,9 +18,9 @@ data class ListingFilter(
     }
 
     fun matches(item: Listing): Boolean =
-        (wbs == WbsFilter.ANY || item.wbs.required == (wbs == WbsFilter.REQUIRED)) &&
-            (minArea == null || item.areaM2?.let { it >= minArea } == true) &&
-            (maxWarm == null || (item.rent.currency == "EUR" && item.rent.warm?.let { it <= maxWarm } == true))
+        (wbs == WbsFilter.ANY || item.wbs.required == null || item.wbs.required == (wbs == WbsFilter.REQUIRED)) &&
+            (minArea == null || item.areaM2 == null || item.areaM2 >= minArea) &&
+            (maxWarm == null || item.rent.currency != "EUR" || item.rent.warm == null || item.rent.warm <= maxWarm)
 }
 
 data class Subscription(
