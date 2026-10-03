@@ -55,6 +55,8 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
         val draft = store.draft(chatId)
         if (command in listOf("/start", "/filters") || text == HOME) return home(chatId, current)
         if (command == "/cancel" || text == CANCEL) {
+            if (draft != null) return applyTransition(chatId,
+                SearchSetup.transition(draft, SearchAction.Cancel), draft, current)
             store.clearDraft(chatId)
             return home(chatId, current).let { it.copy(text = "Изменения отменены.\n\n${it.text}") }
         }
@@ -106,41 +108,23 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
     }
 
     private fun advance(chatId: String, text: String, draft: SearchDraft, current: Subscription?): CommandReply {
-        if (text == BACK) {
-            val step = if (draft.singleField) SearchStep.CONFIRM else when (draft.step) {
-                SearchStep.WBS -> return home(chatId, current)
-                SearchStep.AREA -> SearchStep.WBS
-                SearchStep.WARM -> SearchStep.AREA
-                SearchStep.CONFIRM -> SearchStep.WARM
-            }
-            return saveDraft(chatId, draft.copy(step = step, singleField = false))
-        }
-        if (draft.step == SearchStep.CONFIRM) {
-            val editStep = when (text) {
-                EDIT_WBS -> SearchStep.WBS
-                EDIT_AREA -> SearchStep.AREA
-                EDIT_WARM -> SearchStep.WARM
-                else -> null
-            }
-            if (editStep != null) return saveDraft(chatId, draft.copy(step = editStep, singleField = true))
-            if (text != SAVE && text != "/save") return prompt(chatId, draft)
-            val saved = Subscription(chatId, current?.active ?: true, draft.filter)
-            store.save(saved)
-            store.clearDraft(chatId)
-            return home(chatId, saved).let { it.copy(text = "Поиск сохранён.\n\n${it.text}") }
-        }
-        if (text == "/save") return prompt(chatId, draft).let {
-            it.copy(text = "Сначала завершите настройку и проверьте параметры.\n\n${it.text}")
-        }
-        val next = try {
-            when (draft.step) {
-                SearchStep.WBS -> SearchDraft(SearchStep.AREA, draft.filter.copy(
-                    wbs = if (text == KEEP) draft.filter.wbs else wbs(text.lowercase())))
-                SearchStep.AREA -> SearchDraft(SearchStep.WARM, draft.filter.copy(
-                    minArea = if (text == KEEP) draft.filter.minArea else number(text.lowercase(), "м²")))
-                SearchStep.WARM -> SearchDraft(SearchStep.CONFIRM, draft.filter.copy(
-                    maxWarm = if (text == KEEP) draft.filter.maxWarm else number(text.lowercase(), "€")))
-                SearchStep.CONFIRM -> error("Already handled")
+        val action = try {
+            when {
+                text == BACK -> SearchAction.Back
+                text == SAVE || text == "/save" -> SearchAction.Save
+                draft.step == SearchStep.CONFIRM -> when (text) {
+                    EDIT_WBS -> SearchAction.Edit(SearchStep.WBS)
+                    EDIT_AREA -> SearchAction.Edit(SearchStep.AREA)
+                    EDIT_WARM -> SearchAction.Edit(SearchStep.WARM)
+                    else -> return prompt(chatId, draft)
+                }
+                text == KEEP -> SearchAction.Keep
+                else -> when (draft.step) {
+                    SearchStep.WBS -> SearchAction.Wbs(wbs(text.lowercase()))
+                    SearchStep.AREA -> SearchAction.Area(number(text.lowercase(), "м²"))
+                    SearchStep.WARM -> SearchAction.Warm(number(text.lowercase(), "€"))
+                    SearchStep.CONFIRM -> error("Confirmation already handled")
+                }
             }
         } catch (_: IllegalArgumentException) {
             val hint = when (draft.step) {
@@ -150,7 +134,27 @@ class FilterCommands(private val store: SubscriptionStore, private val mapper: O
             }
             return prompt(chatId, draft).let { it.copy(text = "$hint\n\n${it.text}") }
         }
-        return saveDraft(chatId, if (draft.singleField) next.copy(step = SearchStep.CONFIRM) else next)
+        return applyTransition(chatId, SearchSetup.transition(draft, action), draft, current)
+    }
+
+    private fun applyTransition(
+        chatId: String, transition: SearchTransition, draft: SearchDraft, current: Subscription?,
+    ): CommandReply = when (transition) {
+        is SearchTransition.Draft -> saveDraft(chatId, transition.value)
+        is SearchTransition.Saved -> {
+            val saved = Subscription(chatId, current?.active ?: true, transition.filter)
+            store.save(saved)
+            store.clearDraft(chatId)
+            home(chatId, saved).let { it.copy(text = "Поиск сохранён.\n\n${it.text}") }
+        }
+        SearchTransition.Cancelled -> {
+            store.clearDraft(chatId)
+            home(chatId, current).let { it.copy(text = "Изменения отменены.\n\n${it.text}") }
+        }
+        SearchTransition.Home -> home(chatId, current)
+        SearchTransition.Incomplete -> prompt(chatId, draft).let {
+            it.copy(text = "Сначала завершите настройку и проверьте параметры.\n\n${it.text}")
+        }
     }
 
     private fun saveDraft(chatId: String, draft: SearchDraft): CommandReply {
