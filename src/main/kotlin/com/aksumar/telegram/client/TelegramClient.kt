@@ -25,10 +25,10 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
         silent: Boolean = false,
         keyboard: Map<String, Any>? = null,
         boldHeading: Boolean = false,
+        queued: Boolean = false,
     ): CompletableFuture<Void> =
-        transport.deliver(
+        deliver(
             "sendMessage",
-            "application/json",
             mapper.writeValueAsBytes(
                 mapOf(
                     "chat_id" to chatId,
@@ -37,7 +37,7 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
                     "link_preview_options" to mapOf("is_disabled" to true),
                 ) + (if (keyboard == null) emptyMap() else mapOf("reply_markup" to keyboard)) +
                     (if (boldHeading) mapOf("entities" to headingEntities(text)) else emptyMap())
-            ),
+            ), chatId, queued,
         )
 
     override fun sendListing(
@@ -46,19 +46,31 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
         listingUrl: String,
         map: ListingMap?,
         mapUrl: String?,
+    ): CompletableFuture<Void> = deliverListing(chat, text, listingUrl, map, mapUrl, false)
+
+    override fun sendQueuedListing(
+        chat: String,
+        text: String,
+        listingUrl: String,
+        map: ListingMap?,
+        mapUrl: String?,
+    ): CompletableFuture<Void> = deliverListing(chat, text, listingUrl, map, mapUrl, true)
+
+    private fun deliverListing(
+        chat: String, text: String, listingUrl: String, map: ListingMap?, mapUrl: String?, queued: Boolean,
     ): CompletableFuture<Void> {
         val keyboard = createListingKeyboard(mapUrl, listingUrl)
-        if (map == null) return sendText(chat, text, keyboard = keyboard, boldHeading = true)
+        if (map == null) return sendText(chat, text, keyboard = keyboard, boldHeading = true, queued = queued)
 
         val locationNote = if (map.approximate) "\n📍 Примерное расположение" else ""
         val fullTextFitsCaption = text.length + locationNote.length <= 1024
         val caption = createMapCaption(text, locationNote, fullTextFitsCaption)
 
-        return sendMapPhoto(chat, caption, keyboard, map)
+        return sendMapPhoto(chat, caption, keyboard, map, queued)
             .handle { _, failure ->
-                if (failure != null) handlePhotoDeliveryFailure(chat, text, keyboard, failure)
+                if (failure != null) handlePhotoDeliveryFailure(chat, text, keyboard, failure, queued)
                 else if (fullTextFitsCaption) CompletableFuture.completedFuture<Void>(null)
-                else sendText(chat, text, silent = true, boldHeading = true)
+                else sendText(chat, text, silent = true, boldHeading = true, queued = queued)
             }
             .thenCompose { it }
     }
@@ -79,11 +91,17 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
         caption: String,
         keyboard: Map<String, Any>,
         map: ListingMap,
+        queued: Boolean,
     ): CompletableFuture<Void> {
         val boundary = "map-${UUID.randomUUID()}"
         val body = buildMapPhotoBody(chat, caption, mapper.writeValueAsString(keyboard), map.png, boundary)
-        return transport.deliver("sendPhoto", "multipart/form-data; boundary=$boundary", body)
+        return deliver("sendPhoto", body, chat, queued, "multipart/form-data; boundary=$boundary")
     }
+
+    private fun deliver(
+        method: String, body: ByteArray, chat: String, queued: Boolean, contentType: String = "application/json",
+    ): CompletableFuture<Void> = if (queued) transport.deliverQueued(method, contentType, body, chat)
+    else transport.deliver(method, contentType, body, chatId = chat)
 
     private fun createListingKeyboard(mapUrl: String?, listingUrl: String): Map<String, Any> =
         mapOf(
@@ -131,10 +149,12 @@ class TelegramClient(private val transport: TelegramTransport, private val mappe
         text: String,
         keyboard: Map<String, Any>,
         failure: Throwable,
+        queued: Boolean,
     ): CompletableFuture<Void> {
         val cause = unwrap(failure)
-        // After photo delivery fails (including exhausted retries), try text with the same buttons.
-        return if (cause is TelegramDeliveryException) sendText(chat, text, keyboard = keyboard, boldHeading = true)
+        // Permanent photo rejection falls back to text; temporary failures retain the retry delay.
+        return if (cause is TelegramDeliveryException && !cause.retryable)
+            sendText(chat, text, keyboard = keyboard, boldHeading = true, queued = queued)
         else CompletableFuture.failedFuture(cause)
     }
 

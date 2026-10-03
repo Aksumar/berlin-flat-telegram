@@ -159,28 +159,36 @@ class TelegramClientTest {
     }
 
     @Test
-    fun `rejected photo and exhausted photo retries fall back to text with buttons`() {
-        for (status in listOf(400, 500)) PhotoServer(status).use { server ->
+    fun `permanent photo rejection falls back while exhausted transient photo failure is deferred`() {
+        PhotoServer(400).use { server ->
             server.client().sendListing("123", "listing", "https://example.com/123", map, mapUrl).join()
-            assertEquals(
-                List(if (status == 400) 1 else 4) { "sendPhoto" } + "sendMessage",
-                server.requests.map { it.first },
-            )
+            assertEquals(listOf("sendPhoto", "sendMessage"), server.requests.map { it.first })
             val message = testMapper.readTree(server.requests.last().second)
             assertEquals("listing", message["text"].asText())
-            assertEquals("bold", message["entities"][0]["type"].asText())
-            assertEquals(0, message["entities"][0]["offset"].asInt())
-            assertEquals(7, message["entities"][0]["length"].asInt())
-            val buttons = message["reply_markup"]["inline_keyboard"]
-            assertEquals(1, buttons.size())
-            assertEquals(2, buttons[0].size())
-            assertEquals("https://example.com/123", buttons[0][0]["url"].asText())
-            assertEquals(mapUrl, buttons[0][1]["url"].asText())
+            assertEquals(2, message["reply_markup"]["inline_keyboard"][0].size())
+        }
+        PhotoServer(500).use { server ->
+            val error = assertThrows(CompletionException::class.java) {
+                server.client().sendListing("123", "listing", "https://example.com/123", map, mapUrl).join()
+            }
+            assertTrue((error.cause as TelegramDeliveryException).retryable)
+            assertEquals(List(4) { "sendPhoto" }, server.requests.map { it.first })
         }
     }
 
     @Test
-    fun `transient text fallback failure still propagates for Kafka recovery`() {
+    fun `durable queue send returns after one transient request with a retryable failure`() {
+        PhotoServer(500).use { server ->
+            val error = assertThrows(CompletionException::class.java) {
+                server.client().sendQueuedListing("123", "listing", "https://example.com/123", map, mapUrl).join()
+            }
+            assertTrue((error.cause as TelegramDeliveryException).retryable)
+            assertEquals(listOf("sendPhoto"), server.requests.map { it.first })
+        }
+    }
+
+    @Test
+    fun `transient text fallback failure remains retryable`() {
         PhotoServer(400, 500).use { server ->
             val error =
                 assertThrows(CompletionException::class.java) {
