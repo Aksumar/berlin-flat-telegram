@@ -123,7 +123,7 @@ class MessageFormatterTest {
             features = Features(null, null, null),
         )
         val expectedLabels = formatter.format(base).lines().filter { ':' in it }.map { it.substringBefore(':') }
-        for (source in listOf("allod", "rbb", "berlinhaus", "berlinovo", "gewobag", "wbm", "degewo", "inberlinwohnen", "deutschewohnen", "howoge")) {
+        for (source in listOf("allod", "rbb", "berlinhaus", "berlinovo", "gewobag", "wbm", "degewo", "inberlinwohnen", "deutschewohnen", "howoge", "heimstaden")) {
             val lines = formatter.format(empty.copy(source = source, provider = null)).lines().filter { ':' in it }
             assertEquals(expectedLabels, lines.map { it.substringBefore(':') })
             assertTrue(lines.filterNot { it.startsWith("Компания:") }.all { it.endsWith("не указано") })

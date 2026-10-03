@@ -41,6 +41,19 @@ class ContractTest {
     }
 
     @Test
+    fun `accepts Heimstaden listing source and company label`() {
+        val tree = testMapper.readTree(fixture()) as ObjectNode
+        tree.put("source", "heimstaden")
+        tree.put("provider", "Heimstaden")
+
+        val item = contract.decode(tree.toString())
+        val message = com.aksumar.telegram.format.MessageFormatter().format(item)
+
+        assertEquals("heimstaden", item.source)
+        assertTrue(message.endsWith("Компания: Heimstaden"))
+    }
+
+    @Test
     fun `accepts Deutsche Wohnen and HOWOGE listings`() {
         for ((source, displayName) in listOf(
             "deutschewohnen" to "Deutsche Wohnen",

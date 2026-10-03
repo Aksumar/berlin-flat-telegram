@@ -144,6 +144,7 @@ class MessageFormatter {
             "howoge" -> "HOWOGE"
             "stadtundland" -> "STADT UND LAND"
             "vonovia" -> "Vonovia"
+            "heimstaden" -> "Heimstaden"
             else -> error("Unsupported source: $source")
         }
 
