@@ -1,5 +1,6 @@
 package com.aksumar.telegram.kafka
 
+import com.aksumar.telegram.delivery.DeliverListing
 import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.format.MessageFormatter
@@ -25,19 +26,45 @@ import org.springframework.boot.test.system.OutputCaptureExtension
 
 @ExtendWith(OutputCaptureExtension::class)
 class DeliveryTest {
+    private fun newListener(
+        contract: ListingContract,
+        formatter: MessageFormatter,
+        sender: TelegramSender,
+        store: SubscriptionStore,
+        mapper: com.fasterxml.jackson.databind.ObjectMapper,
+        maps: ListingMaps = ListingMaps { null },
+    ) = NewFlatEventListener(contract, DeliverListing(formatter, sender, store, maps), mapper)
+
     private fun subscriptions() = subscriptionStore(listOf("123", "456"))
 
     private fun record(value: String = fixture(), key: String = "[\"gewobag\",\"123\"]") =
         ConsumerRecord("test", 0, 0, key, value)
 
     private fun listener(sender: TelegramSender) =
-        NewFlatEventListener(
+        newListener(
             ListingContract(testMapper),
             MessageFormatter(),
             sender,
             subscriptions(),
             testMapper,
         )
+
+    @Test
+    fun `delivery scenario accepts a listing without Kafka`() {
+        val delivered = mutableListOf<String>()
+        DeliverListing(MessageFormatter(), TelegramSender { chat, _ ->
+            delivered += chat
+            CompletableFuture.completedFuture(null)
+        }, subscriptions()).deliver(event()).join()
+        assertEquals(listOf("123", "456"), delivered)
+    }
+
+    @Test
+    fun `synchronous sender failure is not mistaken for invalid input`() {
+        assertThrows(CompletionException::class.java) {
+            listener(TelegramSender { _, _ -> error("sender unavailable") }).receive(record()).join()
+        }
+    }
 
     @Test
     fun `unresolved district is logged but omitted from message`(output: CapturedOutput) {
@@ -80,7 +107,7 @@ class DeliveryTest {
                         throw MapGenerationException("тестовая ошибка карты")
                     }
                 }
-                val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(), sender,
+                val listener = newListener(ListingContract(testMapper), MessageFormatter(), sender,
                     subscriptions(), testMapper, maps)
                 listener.receive(record(testMapper.writeValueAsString(payload), "[\"$source\",\"123\"]")).join()
                 assertEquals(2, delivered.size, source)
@@ -117,7 +144,7 @@ class DeliveryTest {
                 }
             }
         val listener =
-            NewFlatEventListener(
+            newListener(
                 ListingContract(testMapper),
                 MessageFormatter(),
                 sender,
@@ -173,7 +200,7 @@ class DeliveryTest {
         for ((maps, reason) in failures) {
             delivered.clear()
             expectedReason = reason
-            NewFlatEventListener(
+            newListener(
                 ListingContract(testMapper),
                 MessageFormatter(),
                 sender,
@@ -187,7 +214,7 @@ class DeliveryTest {
             assertTrue(output.out.lineSequence().any {
                 it.contains("WARN") && it.contains("Карта не сгенерирована, потому что $reason") &&
                     it.contains("source=gewobag, id=123") && it.contains("address=Musterstraße 12") &&
-                    it.contains("topic=test, partition=0, offset=0") && it.contains("elapsedMs=")
+                    it.contains("elapsedMs=")
             })
         }
         assertTrue(output.all.contains("operation=detail map, httpStatus=429, timeoutMs=20000"))
@@ -199,7 +226,7 @@ class DeliveryTest {
     @Test
     fun `interrupted map generation does not acknowledge the listing`() {
         val listener =
-            NewFlatEventListener(
+            newListener(
                 ListingContract(testMapper),
                 MessageFormatter(),
                 TelegramSender { _, _ ->
@@ -316,7 +343,7 @@ class DeliveryTest {
         store.save(Subscription("789", filter = ListingFilter(minArea = "64.5".toBigDecimal())))
         val delivered = mutableListOf<String>()
         var mapCalls = 0
-        val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(),
+        val listener = newListener(ListingContract(testMapper), MessageFormatter(),
             TelegramSender { chat, _ -> delivered += chat; CompletableFuture.completedFuture(null) },
             store, testMapper, ListingMaps { mapCalls++; null })
         listener.receive(record()).join()
@@ -333,7 +360,7 @@ class DeliveryTest {
     fun `database failure does not acknowledge listing`() {
         val store = Mockito.mock(SubscriptionStore::class.java)
         Mockito.`when`(store.recipients(event())).thenThrow(IllegalStateException("database unavailable"))
-        val listener = NewFlatEventListener(ListingContract(testMapper), MessageFormatter(),
+        val listener = newListener(ListingContract(testMapper), MessageFormatter(),
             TelegramSender { _, _ -> error("Must not send") }, store, testMapper)
         assertThrows(CompletionException::class.java) { listener.receive(record()).join() }
     }
