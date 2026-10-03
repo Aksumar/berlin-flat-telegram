@@ -7,6 +7,8 @@ import com.aksumar.telegram.support.fixture
 import com.aksumar.telegram.support.testMapper
 import com.aksumar.telegram.subscriptions.FilterCommands
 import java.util.UUID
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -71,7 +73,8 @@ class KafkaIntegrationTest {
         @Bean @Primary fun testSender() = TestSender()
     }
 
-    private fun context(topic: String, group: String) =
+    private fun context(topic: String, group: String) = run {
+        Files.createDirectories(Path.of("build/integration-db"))
         SpringApplicationBuilder(Application::class.java, Overrides::class.java)
             .run(
                 "--app.bootstrap-servers=${kafka.bootstrapServers}",
@@ -80,9 +83,10 @@ class KafkaIntegrationTest {
                 "--app.chat-ids=123,456",
                 "--app.bot-token=fake",
                 "--app.telegram-updates-enabled=false",
-                "--spring.datasource.url=jdbc:h2:mem:$group",
+                "--spring.datasource.url=jdbc:h2:file:./build/integration-db/$group",
                 "--server.port=0",
             )
+    }
 
     private fun topic(): String {
         val name = "test-${UUID.randomUUID()}"
@@ -139,8 +143,9 @@ class KafkaIntegrationTest {
         val group = "test-${UUID.randomUUID()}"
         publish(topic, javaClass.getResource("/degewo-charlottenburg-v2.json")!!.readText())
         context(topic, group).use { context ->
-            await { offset(group, topic) == 1L }
-            assertEquals(listOf("123", "456"), context.getBean(TestSender::class.java).chats)
+            val sender = context.getBean(TestSender::class.java)
+            await { offset(group, topic) == 1L && sender.chats.size == 2 }
+            assertEquals(listOf("123", "456"), sender.chats)
         }
     }
 
@@ -164,32 +169,34 @@ class KafkaIntegrationTest {
                 command(789, text)
             }
             publish(topic)
-            await { offset(group, topic) == 1L }
-            assertEquals(listOf("789"), context.getBean(TestSender::class.java).chats)
+            val sender = context.getBean(TestSender::class.java)
+            await { offset(group, topic) == 1L && sender.chats.size == 1 }
+            assertEquals(listOf("789"), sender.chats)
         }
     }
 
     @Test
-    fun `transient Telegram failure keeps offset for retry`() {
+    fun `transient Telegram failure stays queued after Kafka commit and resumes after restart`() {
         val topic = topic()
         val group = "test-${UUID.randomUUID()}"
         context(topic, group).use { context ->
             val sender = context.getBean(TestSender::class.java)
             sender.failSecond.set(true)
-
             publish(topic)
-            val registry = context.getBean(KafkaListenerEndpointRegistry::class.java)
-            await { !registry.getListenerContainer("listings")!!.isRunning }
-
-            assertNotEquals(1L, offset(group, topic))
+            val jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate::class.java)
+            await { offset(group, topic) == 1L && jdbc.queryForObject(
+                "SELECT COUNT(*) FROM delivery_jobs WHERE status = 'PENDING'", Int::class.java) == 1 }
+            assertEquals(listOf("123", "456"), sender.chats)
         }
 
         context(topic, group).use { context ->
             val sender = context.getBean(TestSender::class.java)
-            sender.failSecond.set(false)
-
-            await { offset(group, topic) == 1L }
-            assertEquals(listOf("123", "456"), sender.chats)
+            val jdbc = context.getBean(org.springframework.jdbc.core.JdbcTemplate::class.java)
+            jdbc.update("UPDATE delivery_jobs SET available_at = 0 WHERE status = 'PENDING'")
+            await { jdbc.queryForObject(
+                "SELECT COUNT(*) FROM delivery_jobs WHERE status = 'PENDING'", Int::class.java) == 0 }
+            assertEquals(listOf("456"), sender.chats)
+            assertEquals(1L, offset(group, topic))
         }
     }
 }

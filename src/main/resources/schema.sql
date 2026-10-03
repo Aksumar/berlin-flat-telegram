@@ -26,3 +26,26 @@ CREATE TABLE IF NOT EXISTS command_replies (
 );
 
 ALTER TABLE search_drafts ADD COLUMN IF NOT EXISTS single_field BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS delivery_events (
+    event_key VARCHAR(512) PRIMARY KEY,
+    payload CLOB,
+    created_at BIGINT NOT NULL,
+    completed_at BIGINT,
+    message_text CLOB,
+    map_png BLOB,
+    map_approximate BOOLEAN NOT NULL DEFAULT FALSE,
+    map_url VARCHAR(2048)
+);
+
+CREATE TABLE IF NOT EXISTS delivery_jobs (
+    event_key VARCHAR(512) NOT NULL REFERENCES delivery_events(event_key),
+    chat_id VARCHAR(64) NOT NULL,
+    status VARCHAR(16) NOT NULL CHECK (status IN ('PENDING', 'SENT', 'REJECTED')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    available_at BIGINT NOT NULL,
+    finished_at BIGINT,
+    PRIMARY KEY (event_key, chat_id)
+);
+
+CREATE INDEX IF NOT EXISTS delivery_jobs_due ON delivery_jobs(status, available_at);

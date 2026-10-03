@@ -26,6 +26,23 @@ import org.springframework.boot.test.system.OutputCaptureExtension
 
 @ExtendWith(OutputCaptureExtension::class)
 class DeliveryTest {
+    private class DeliveryHarness(
+        private val contract: ListingContract,
+        private val delivery: DeliverListing,
+        private val mapper: com.fasterxml.jackson.databind.ObjectMapper,
+    ) {
+        fun receive(record: ConsumerRecord<String, String>): CompletableFuture<Void> {
+            val item = try {
+                contract.decode(record.value()).also {
+                    require(mapper.matchesListingKey(record.key(), it.source, it.id))
+                }
+            } catch (_: Exception) {
+                return CompletableFuture.completedFuture(null)
+            }
+            return delivery.deliver(item)
+        }
+    }
+
     private fun newListener(
         contract: ListingContract,
         formatter: MessageFormatter,
@@ -33,7 +50,7 @@ class DeliveryTest {
         store: SubscriptionStore,
         mapper: com.fasterxml.jackson.databind.ObjectMapper,
         maps: ListingMaps = ListingMaps { null },
-    ) = NewFlatEventListener(contract, DeliverListing(formatter, sender, store, maps), mapper)
+    ) = DeliveryHarness(contract, DeliverListing(formatter, sender, store, maps), mapper)
 
     private fun subscriptions() = subscriptionStore(listOf("123", "456"))
 

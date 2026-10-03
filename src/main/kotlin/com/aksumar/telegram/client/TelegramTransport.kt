@@ -15,7 +15,11 @@ import java.util.concurrent.TimeUnit
 import org.springframework.stereotype.Component
 
 @Component
-class TelegramTransport(properties: AppProperties, private val mapper: ObjectMapper) {
+class TelegramTransport(
+    properties: AppProperties,
+    private val mapper: ObjectMapper,
+    private val limiter: TelegramRateLimiter = TelegramRateLimiter(),
+) {
     private val endpoint: String
     private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30)).build()
 
@@ -70,13 +74,18 @@ class TelegramTransport(properties: AppProperties, private val mapper: ObjectMap
         contentType: String,
         body: ByteArray,
         attempt: Int = 1,
+        chatId: String? = null,
     ): CompletableFuture<Void> =
-        request(method, contentType, body)
+        limiter.schedule(chatId) { request(method, contentType, body) }
             .handle { response, failure -> decideDeliveryOutcome(response, failure, attempt) }
             .thenCompose { decision ->
-                completeOrRetryDelivery(decision, method, contentType, body, attempt)
+                completeOrRetryDelivery(decision, method, contentType, body, attempt, chatId)
             }
             .exceptionallyCompose { error -> propagateDeliveryFailure(error) }
+
+    /** Make one request; the durable queue owns the retry schedule. */
+    fun deliverQueued(method: String, contentType: String, body: ByteArray, chatId: String): CompletableFuture<Void> =
+        deliver(method, contentType, body, attempt = MAX_ATTEMPTS, chatId = chatId)
 
     private fun decideDeliveryOutcome(
         response: HttpResponse<String>?,
@@ -99,16 +108,18 @@ class TelegramTransport(properties: AppProperties, private val mapper: ObjectMap
         contentType: String,
         body: ByteArray,
         attempt: Int,
+        chatId: String?,
     ): CompletableFuture<Void> =
         when {
             decision.success -> CompletableFuture.completedFuture(null)
-            decision.retryDelay != null && attempt < MAX_ATTEMPTS ->
-                retryDeliveryAfterDelay(method, contentType, body, attempt, decision.retryDelay)
+            decision.retryDelay != null && decision.retryDelay.seconds <= MAX_INLINE_RETRY_SECONDS && attempt < MAX_ATTEMPTS ->
+                retryDeliveryAfterDelay(method, contentType, body, attempt, decision.retryDelay, chatId)
             else ->
                 CompletableFuture.failedFuture(
                     TelegramDeliveryException(
                         "Telegram delivery failed",
                         retryable = decision.retryDelay != null || decision.retryable,
+                        retryAfterSeconds = decision.retryDelay?.seconds,
                     )
                 )
         }
@@ -119,12 +130,13 @@ class TelegramTransport(properties: AppProperties, private val mapper: ObjectMap
         body: ByteArray,
         attempt: Int,
         delay: Duration,
+        chatId: String?,
     ): CompletableFuture<Void> =
         CompletableFuture.runAsync(
                 {},
                 CompletableFuture.delayedExecutor(delay.seconds, TimeUnit.SECONDS),
             )
-            .thenCompose { deliver(method, contentType, body, attempt + 1) }
+            .thenCompose { deliver(method, contentType, body, attempt + 1, chatId) }
 
     private fun propagateDeliveryFailure(error: Throwable): CompletableFuture<Void> {
         val cause = unwrap(error)
@@ -169,7 +181,6 @@ class TelegramTransport(properties: AppProperties, private val mapper: ObjectMap
                     ?.takeIf { it.isIntegralNumber }
                     ?.asLong()
                     ?.coerceAtLeast(1)
-                    ?.coerceAtMost(MAX_RETRY_AFTER_SECONDS)
                     ?.let(Duration::ofSeconds)
             }
             .getOrNull()
@@ -199,6 +210,6 @@ class TelegramTransport(properties: AppProperties, private val mapper: ObjectMap
     companion object {
         private const val MAX_ATTEMPTS = 4
         private const val MAX_BACKOFF_SECONDS = 4L
-        private const val MAX_RETRY_AFTER_SECONDS = 30L
+        private const val MAX_INLINE_RETRY_SECONDS = 30L
     }
 }

@@ -4,6 +4,7 @@ import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import com.aksumar.telegram.subscriptions.SubscriptionStore
 import com.aksumar.telegram.format.MessageFormatter
+import com.aksumar.telegram.maps.ListingMap
 import com.aksumar.telegram.maps.ListingMaps
 import com.aksumar.telegram.maps.MapGenerationException
 import com.aksumar.telegram.maps.mapFailureDetails
@@ -12,6 +13,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+
+data class PreparedListing(val text: String, val listingUrl: String, val map: ListingMap?, val mapUrl: String?)
 
 @Component
 class DeliverListing(
@@ -22,6 +25,46 @@ class DeliverListing(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    /** Build a durable snapshot once so all recipients can share the same text and map. */
+    fun prepare(item: Listing): PreparedListing {
+        val mapUrl = formatter.mapUrl(item)
+        var resolvedItem = item
+        var mapFailureReason: String? = null
+        var mapFailureDetails = "result=null"
+        val mapStartedNanos = System.nanoTime()
+        val map = try {
+            maps.create(item) { district ->
+                if (item.address.district.isNullOrBlank()) {
+                    resolvedItem = item.copy(address = item.address.copy(district = district))
+                }
+            }
+        } catch (error: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw error
+        } catch (error: Exception) {
+            mapFailureDetails = error.mapFailureDetails()
+            mapFailureReason = (error as? MapGenerationException)?.reason
+                ?: "произошла непредвиденная ошибка генерации карты"
+            null
+        }
+        if (map == null) {
+            mapFailureReason = mapFailureReason ?: "сервис генерации карты не вернул изображение"
+            log.warn(
+                "Карта не сгенерирована, потому что {}; source={}, id={}, address={}, elapsedMs={}, {}",
+                mapFailureReason, item.source, item.id, item.address.searchQuery(),
+                (System.nanoTime() - mapStartedNanos) / 1_000_000, mapFailureDetails,
+            )
+        }
+        if (resolvedItem.address.district.isNullOrBlank()) {
+            log.warn("Не удалось определить район; source={}, id={}, address={}",
+                item.source, item.id, item.address.searchQuery())
+        }
+        return PreparedListing(formatter.format(resolvedItem, mapFailureReason), item.url, map, mapUrl)
+    }
+
+    fun sendQueued(chatId: String, content: PreparedListing): CompletableFuture<Void> =
+        sender.sendQueuedListing(chatId, content.text, content.listingUrl, content.map, content.mapUrl)
+
     fun deliver(item: Listing): CompletableFuture<Void> {
         return try {
             val recipients = try {
@@ -31,68 +74,20 @@ class DeliverListing(
                 return CompletableFuture.failedFuture(error)
             }
             if (recipients.isEmpty()) return CompletableFuture.completedFuture(null)
-            val mapUrl = formatter.mapUrl(item)
-            var resolvedItem = item
-            var mapFailureReason: String? = null
-            var mapFailureDetails = "result=null"
-            val mapStartedNanos = System.nanoTime()
-            val map =
-                try {
-                    maps.create(item) { district ->
-                        if (item.address.district.isNullOrBlank()) {
-                            resolvedItem = item.copy(address = item.address.copy(district = district))
-                        }
-                    }
-                } catch (error: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    throw error
-                } catch (error: Exception) {
-                    mapFailureDetails = error.mapFailureDetails()
-                    mapFailureReason = (error as? MapGenerationException)?.reason
-                        ?: "произошла непредвиденная ошибка генерации карты"
-                    null
-                }
-            if (map == null) {
-                mapFailureReason = mapFailureReason ?: "сервис генерации карты не вернул изображение"
-                log.warn(
-                    "Карта не сгенерирована, потому что {}; source={}, id={}, address={}, elapsedMs={}, {}",
-                    mapFailureReason, item.source, item.id, item.address.searchQuery(),
-                    (System.nanoTime() - mapStartedNanos) / 1_000_000, mapFailureDetails,
-                )
+            val prepared = prepare(item)
+            val deliveries = recipients.map {
+                sender.sendListing(it, prepared.text, prepared.listingUrl, prepared.map, prepared.mapUrl)
             }
-            if (resolvedItem.address.district.isNullOrBlank()) {
-                log.warn(
-                    "Не удалось определить район; source={}, id={}, address={}",
-                    item.source, item.id, item.address.searchQuery(),
-                )
-            }
-            val text = formatter.format(resolvedItem, mapFailureReason)
-            val deliveries = recipients.map { sender.sendListing(it, text, item.url, map, mapUrl) }
-
             CompletableFuture.allOf(*deliveries.toTypedArray()).handle<Void> { _, _ ->
                 val failures = deliveries.mapNotNull(::failure)
-
-                if (failures.isEmpty()) {
-                    return@handle null
-                }
-
-                val transient =
-                    failures.firstOrNull { it !is TelegramDeliveryException || it.retryable }
-
+                if (failures.isEmpty()) return@handle null
+                val transient = failures.firstOrNull { it !is TelegramDeliveryException || it.retryable }
                 if (transient != null) {
-                    log.error(
-                        "Telegram delivery failed after retries: source={}, id={}",
-                        item.source, item.id,
-                        transient,
-                    )
+                    log.error("Telegram delivery failed after retries: source={}, id={}", item.source, item.id, transient)
                     throw CompletionException(transient)
                 }
-
-                log.error(
-                    "Skipping listing after permanent Telegram rejection: source={}, id={}",
-                    item.source, item.id,
-                    failures.first(),
-                )
+                log.error("Skipping listing after permanent Telegram rejection: source={}, id={}",
+                    item.source, item.id, failures.first())
                 null
             }
         } catch (error: InterruptedException) {
@@ -103,16 +98,12 @@ class DeliverListing(
         }
     }
 
-    private fun failure(future: CompletableFuture<Void>): Throwable? {
-        if (!future.isCompletedExceptionally) {
-            return null
-        }
-
-        return try {
+    private fun failure(future: CompletableFuture<Void>): Throwable? =
+        if (!future.isCompletedExceptionally) null
+        else try {
             future.join()
             null
         } catch (error: CompletionException) {
             error.cause ?: error
         }
-    }
 }
