@@ -35,7 +35,7 @@ class NewFlatEventListener(
             return CompletableFuture.completedFuture(null)
         }
         return try {
-            // Kafka topics cannot contain ':'. The identity distinguishes updates to the same listing.
+            // Kafka topics cannot contain ':'. Offset-based identity also distinguishes listing updates.
             queue.enqueue("${record.topic()}:${record.partition()}:${record.offset()}", item)
             CompletableFuture.completedFuture(null)
         } catch (error: Exception) {

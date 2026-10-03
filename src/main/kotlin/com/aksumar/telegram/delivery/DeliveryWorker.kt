@@ -1,6 +1,5 @@
 package com.aksumar.telegram.delivery
 
-import com.aksumar.telegram.client.TelegramSender
 import com.aksumar.telegram.client.exceptions.TelegramDeliveryException
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
@@ -13,8 +12,7 @@ import java.util.concurrent.ExecutionException
 @Component
 class DeliveryWorker(
     private val queue: DeliveryQueue,
-    private val prepare: PrepareListing,
-    private val sender: TelegramSender,
+    private val delivery: DeliverListing,
     registry: MeterRegistry,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -35,8 +33,8 @@ class DeliveryWorker(
             return
         } ?: return
         try {
-            val content = job.prepared ?: prepare.prepare(job.listing).also { queue.savePrepared(job.eventKey, it) }
-            sender.sendQueuedListing(job.chatId, content.text, content.listingUrl, content.map, content.mapUrl).get()
+            val content = job.prepared ?: delivery.prepare(job.listing).also { queue.savePrepared(job.eventKey, it) }
+            delivery.sendQueued(job.chatId, content).get()
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
             return // Still pending; recover after restart.
