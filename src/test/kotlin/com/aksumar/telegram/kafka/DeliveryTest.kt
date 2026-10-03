@@ -87,7 +87,7 @@ class DeliveryTest {
     @Test
     fun `all sources use resolved district even when map fails and preserve supplied district`() {
         val sources = listOf("allod", "rbb", "berlinhaus", "berlinovo", "gewobag", "wbm",
-            "degewo", "inberlinwohnen", "deutschewohnen", "howoge")
+            "degewo", "inberlinwohnen", "deutschewohnen", "howoge", "heimstaden")
         for (source in sources) {
             for (supplied in listOf(null, " ", "Wedding")) {
                 val payload = testMapper.readTree(fixture()) as com.fasterxml.jackson.databind.node.ObjectNode

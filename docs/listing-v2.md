@@ -102,6 +102,7 @@ falls back to text with both buttons. Transient text delivery failures remain un
 
 ## Source coverage
 
+- Heimstaden: accepts v2 events and displays the Heimstaden company name.
 - Degewo: address, area, rooms, Warmmiete, availability, explicit WBS and features.
 - WBM: address, district, area, rooms, Warmmiete, explicit WBS and features.
 - Berlinhaus: location, area, rooms and labelled rent from result cards.

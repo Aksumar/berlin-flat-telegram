@@ -447,3 +447,6 @@ Codex читает такие инструкции при начале рабо�
 не настраивает Kafka и не участвует в исполнении приложения. Новые договорённости
 можно записывать туда обычным текстом; согласно самому файлу новые явные указания
 пользователя имеют приоритет над прежними рекомендациями.
+
+The v2 consumer accepts the `heimstaden` source and displays the company as Heimstaden.
+Update Telegram before enabling this source in the watcher.

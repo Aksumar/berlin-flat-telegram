@@ -113,6 +113,7 @@ class ListingContract(private val mapper: ObjectMapper) {
                 "howoge",
                 "stadtundland",
                 "vonovia",
+                "heimstaden",
             )
     }
 }
